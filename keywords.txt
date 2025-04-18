@@ -1,0 +1,50 @@
+######################################
+# Syntax Coloring Map Agaligo
+######################################
+
+#######################################
+# Classes and Structured Type (KEYWORD1)
+#######################################
+
+Agaligo KEYWORD1
+IMAPClient  KEYWORD1
+SMTPClient  KEYWORD1
+SMTPMessage KEYWORD1
+MailboxInfo KEYWORD1
+Attachment  KEYWORD1
+
+###############################################
+# Methods and Functions (KEYWORD2)
+###############################################
+
+connect KEYWORD2
+isConnected KEYWORD2
+login   KEYWORD2
+loginWithAccesstoken    KEYWORD2
+fetch   KEYWORD2
+fetchUID    KEYWORD2
+getMailbox  KEYWORD2
+send    KEYWORD2
+list    KEYWORD2
+select  KEYWORD2
+append  KEYWORD2
+logout  KEYWORD2
+stop    KEYWORD2
+close   KEYWORD2
+loop    KEYWORD2
+available   KEYWORD2
+isAuthenticated KEYWORD2
+currentState    KEYWORD2
+idleStatus  KEYWORD2
+currentMessage  KEYWORD2
+sendCommand KEYWORD2
+addAttachment   KEYWORD2
+addInlineImage  KEYWORD2
+isComplete  KEYWORD2
+
+#######################################
+# Struct and Enum (KEYWORD3)
+#######################################
+
+imap_state  KEYWORD3
+smtp_state  KEYWORD3
