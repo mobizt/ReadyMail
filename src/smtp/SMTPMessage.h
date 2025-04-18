@@ -209,7 +209,7 @@ namespace ReadyMailSMTP
     int attachmentCount(smtp_attach_type type)
     {
       int count = 0;
-      for (int i = 0; i < attachments.size(); i++)
+      for (int i = 0; i < (int)attachments.size(); i++)
       {
         if (attachments[i].type == type)
           count++;
@@ -219,7 +219,7 @@ namespace ReadyMailSMTP
 
     void inlineToAttachment()
     {
-      for (int i = 0; i < attachments.size(); i++)
+      for (int i = 0; i < (int)attachments.size(); i++)
       {
         if (attachments[i].type == attach_type_inline)
           attachments[i].type = attach_type_attachment;
@@ -233,7 +233,7 @@ namespace ReadyMailSMTP
       inline_idx = 0;
       parallel_idx = 0;
       rfc822_idx = 0;
-      for (int i = 0; i < attachments.size(); i++)
+      for (int i = 0; i < (int)attachments.size(); i++)
       {
         attachments[i].data_index = 0;
         attachments[i].data_size = 0;

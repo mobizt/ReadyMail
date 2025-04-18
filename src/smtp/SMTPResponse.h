@@ -39,7 +39,6 @@ namespace ReadyMailSMTP
                 return cCode();
             }
 
-            bool canForward = smtp_ctx->canForward;
             smtp_ctx->canForward = false;
 
             sys_yield();
@@ -164,7 +163,7 @@ namespace ReadyMailSMTP
                 int codeLength = 3;
                 int textLength = resp.length() - codeLength - 1;
 
-                if (resp.length() > codeLength && (resp[codeLength] == ' ' || resp[codeLength] == '-') && textLength > 0)
+                if ((int)resp.length() > codeLength && (resp[codeLength] == ' ' || resp[codeLength] == '-') && textLength > 0)
                 {
                     int code = resp.substring(0, codeLength).toInt();
                     if (resp[codeLength] == ' ')
@@ -177,11 +176,11 @@ namespace ReadyMailSMTP
                     if (code == smtp_server_status_code_334 || code >= smtp_server_status_code_421)
                     {
                         // find the next sp
-                        while (i < resp.length() && resp[i] != ' ')
+                        while (i < (int)resp.length() && resp[i] != ' ')
                             i++;
 
                         // if sp found, set index to the next pos, otherwise set index to num length + 1
-                        i = (i < resp.length() - 1) ? i + 1 : codeLength + 1;
+                        i = (i < (int)resp.length() - 1) ? i + 1 : codeLength + 1;
                         status.text += resp.substring(i);
                     }
                     else

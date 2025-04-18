@@ -27,7 +27,7 @@ namespace ReadyMailSMTP
 
         bool awaitLoop()
         {
-            smtp_function_return_code code;
+            smtp_function_return_code code = function_return_undefined;
             while (code != function_return_exit && code != function_return_failure)
             {
                 code = conn.loop();

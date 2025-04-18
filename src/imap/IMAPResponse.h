@@ -37,7 +37,6 @@ namespace ReadyMailIMAP
             }
 
             cCode() = function_return_undefined;
-            bool ret = false;
             if (!imap_ctx->options.multiline)
                 clear(line);
 
@@ -215,7 +214,7 @@ namespace ReadyMailIMAP
                 {
                     buf += (char)res;
                     p++;
-                    if (res == '\n' || (p >= limit && res == ' '))
+                    if (res == '\n' || (p >= (int)limit && res == ' '))
                         return p;
                 }
             }

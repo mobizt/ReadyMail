@@ -8,8 +8,7 @@ namespace ReadyMailIMAP
 {
     typedef struct mailbox_info
     {
-        uint32_t msgCount = 0, RecentCount = 0, UIDValidity = 0, nextUID = 0, UnseenIndex = 0;
-        String highestModseq;
+        uint32_t msgCount = 0, RecentCount = 0, UIDValidity = 0, nextUID = 0, UnseenIndex = 0, highestModseq;
         bool noModseq = false;
         std::vector<String> flags, permanentFlags;
         String name;

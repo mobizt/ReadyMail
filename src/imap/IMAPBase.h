@@ -19,14 +19,14 @@ namespace ReadyMailIMAP
             if (imap_ctx->status)
             {
                 int i = 0, j = 0;
-                while (j < info.length())
+                while (j < (int)info.length())
                 {
-                    while (info[j] != '\r' && info[j] != '\n' && j < info.length())
+                    while (info[j] != '\r' && info[j] != '\n' && j < (int)info.length())
                         j++;
 
                     imap_ctx->status->text = (core ? "[core] " : " ");
                     imap_ctx->status->text += info.substring(i, j);
-                    if (info[j] == '\n' && j == info.length() - 1)
+                    if (info[j] == '\n' && j == (int)info.length() - 1)
                         imap_ctx->status->text += "\n";
 
                     print(imap_ctx);
@@ -166,7 +166,7 @@ namespace ReadyMailIMAP
         // current message
         imap_msg_ctx &cMsg()
         {
-            if (cMsgIndex() >= messagesVec().size())
+            if (cMsgIndex() >= (int)messagesVec().size())
             {
                 imap_msg_ctx d;
                 messagesVec().push_back(d);

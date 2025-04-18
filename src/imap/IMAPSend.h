@@ -108,7 +108,7 @@ namespace ReadyMailIMAP
                 setDebug(imap_ctx, "The message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " envelope is fetched successfully\n");
                 if (imap_ctx->options.searching)
                 {
-                    if (cMsgIndex() >= msgNumVec().size() - 1)
+                    if (cMsgIndex() >= (int)msgNumVec().size() - 1)
                     {
                         exitState(cCode(), imap_ctx->options.searching);
                         exitState(cCode(), imap_ctx->options.processing);
@@ -133,7 +133,7 @@ namespace ReadyMailIMAP
             case imap_state_fetch_body_part:
                 setDebug(imap_ctx, "The message body[" + cPart().section + "] is fetched successfully\n");
                 cPartIndex()++;
-                if (cPartIndex() == cMsg().parts.size())
+                if (cPartIndex() == (int)cMsg().parts.size())
                 {
                     setDebug(imap_ctx, "The message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " is fetched successfully\n");
                     exitState(cCode(), imap_ctx->options.processing);
@@ -211,7 +211,7 @@ namespace ReadyMailIMAP
                 while (name == "mixed" || name == "alternative" || name == "related")
                 {
                     cPartIndex()++;
-                    if (cPartIndex() >= cMsg().parts.size())
+                    if (cPartIndex() >= (int)cMsg().parts.size())
                         break;
                     name = cPart().name;
                 }
@@ -229,7 +229,7 @@ namespace ReadyMailIMAP
                     imap_ctx->options.skipping = true;
                 }
 
-                if (!sizeLimit && cPartIndex() < cMsg().parts.size())
+                if (!sizeLimit && cPartIndex() < (int)cMsg().parts.size())
                     rd_print_to(buf, 200, " %sFETCH %s BODY%s[%s] (CHANGEDSINCE %d)", imap_ctx->options.fetch_uid.length() ? "UID " : "", imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid.c_str() : imap_ctx->options.fetch_number.c_str(), imap_ctx->options.read_only_mode ? ".PEEK" : "", section.c_str(), imap_ctx->options.modsequence);
             }
 
@@ -327,7 +327,7 @@ namespace ReadyMailIMAP
 
             if (mailbox.length() > 0)
             {
-                for (int i = 0; i < imap_ctx->mailboxes->size(); i++)
+                for (int i = 0; i < (int)imap_ctx->mailboxes->size(); i++)
                 {
                     if (mailbox == (*imap_ctx->mailboxes)[i][2])
                     {
@@ -418,7 +418,7 @@ namespace ReadyMailIMAP
 
 #endif
 
-        bool fetch(int number, bool fetch_uid, uint32_t bodySizeLimit)
+        bool fetch(uint32_t number, bool fetch_uid, uint32_t bodySizeLimit)
         {
             if (number == 0 || (fetch_uid && number > res->mailbox_info.nextUID) || (!fetch_uid && number > res->mailbox_info.msgCount))
                 return setError(imap_ctx, __func__, IMAP_ERROR_MESSAGE_NOT_EXISTS);

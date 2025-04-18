@@ -58,14 +58,14 @@ namespace ReadyMailIMAP
         void setSection(std::vector<part_ctx> &parts)
         {
             int max_depth = 0;
-            for (int i = 0; i < parts.size(); i++)
+            for (int i = 0; i < (int)parts.size(); i++)
             {
                 if (max_depth < parts[i].depth)
                     max_depth = parts[i].depth;
             }
 
             String section[max_depth + 1];
-            for (int i = 0; i < parts.size(); i++)
+            for (int i = 0; i < (int)parts.size(); i++)
             {
                 if (i > 0 && parts[i - 1].name == "message")
                 {
@@ -229,14 +229,13 @@ namespace ReadyMailIMAP
             int i = 0;
             if (cpart.field.size())
             {
-                while (cpart.field[i].index != field_type && i < cpart.field.size())
+                while (cpart.field[i].index != field_type && i < (int)cpart.field.size())
                     i++;
 
                 if (index > -1)
                 {
                     int cnt = 0;
-                    bool is_key = true;
-                    while (cpart.field[i].index == field_type && i < cpart.field.size())
+                    while (cpart.field[i].index == field_type && i < (int)cpart.field.size())
                     {
                         if (key && cnt == index * 2)
                             return cpart.field[i].token;
@@ -249,7 +248,7 @@ namespace ReadyMailIMAP
                     }
                 }
             }
-            return i < cpart.field.size() ? cpart.field[i].token : String();
+            return i < (int)cpart.field.size() ? cpart.field[i].token : String();
         }
 
         void getPartTransferEncoding(part_ctx &cpart)
@@ -404,13 +403,13 @@ namespace ReadyMailIMAP
             {
                 imap_ctx->cb_data.progressUpdated = true;
                 imap_ctx->cb_data.progress = cpart.progress;
-
-                if (imap_ctx->cb.data)
-                    imap_ctx->cb.data(imap_ctx->cb_data);
-
                 cpart.last_progress = cpart.progress;
-                imap_ctx->cb_data.progressUpdated = false;
             }
+
+            if (imap_ctx->cb.data)
+                imap_ctx->cb.data(imap_ctx->cb_data);
+
+            imap_ctx->cb_data.progressUpdated = false;
 
 #if defined(ENABLE_FS)
             if (imap_ctx->file && imap_ctx->cb.file)
@@ -423,12 +422,12 @@ namespace ReadyMailIMAP
         {
             // handle rfc2047 Q (quoted printable) and B (base64) decodings
             QBDecoder decoder;
-            size_t pos1 = 0, pos2 = 0;
+            int pos1 = 0, pos2 = 0;
             String headerEnc;
 
             if (strlen(enc) == 0)
             {
-                while (str[pos1] == ' ' && pos1 < str.length() - 1)
+                while (str[pos1] == ' ' && pos1 < (int)str.length() - 1)
                     pos1++;
 
                 if (str[pos1] == '=' && str[pos1 + 1] == '?')
@@ -979,7 +978,7 @@ namespace ReadyMailIMAP
         void debugBodystructure(imap_msg_ctx &cmsg, imap_context *imap_ctx)
         {
 #if defined(READYMAIL_CORE_DEBUG)
-            for (int i = 0; i < cmsg.parts.size(); i++)
+            for (int i = 0; i < (int)cmsg.parts.size(); i++)
             {
                 String tab;
                 for (int j = 0; j < cmsg.parts[i].depth; j++)
@@ -995,7 +994,7 @@ namespace ReadyMailIMAP
                     buf.remove(0, buf.length());
                     rd_print_to(buf, 200, "%s Part Fields", tab.c_str());
                     IMAPBase::setDebug(imap_ctx, buf, true);
-                    for (int k = 0; k < cmsg.parts[i].field.size(); k++)
+                    for (int k = 0; k < (int)cmsg.parts[i].field.size(); k++)
                     {
                         buf.remove(0, buf.length());
                         rd_print_to(buf, 200, "%s  Index: %d, Token: %s", tab.c_str(), cmsg.parts[i].field[k].index, cmsg.parts[i].field[k].token.c_str());

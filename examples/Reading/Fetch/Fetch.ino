@@ -154,7 +154,7 @@ void setup()
     // List all mailboxes.
     imap.list();
 
-    for (int i = 0; i < imap.mailboxes.size(); i++)
+    for (size_t i = 0; i < imap.mailboxes.size(); i++)
         ReadyMail.printf("Attributes: %s, Delimiter: %s, Name: %s\n%s", imap.mailboxes[i][0].c_str(), imap.mailboxes[i][1].c_str(), imap.mailboxes[i][2].c_str(), (i == imap.mailboxes.size() - 1 ? "\n" : ""));
 
     // Select INBOX mailbox.

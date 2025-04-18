@@ -48,8 +48,6 @@ static void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
     a3[2] = ((a4[2] & 0x3) << 6) + a4[3];
 }
 
-static int rd_encode_len(int raw_len) { return (raw_len + 2 - ((raw_len + 2) % 3)) / 3 * 4; }
-
 static uint8_t *rd_base64_decode_impl(const char *encoded, int &size)
 {
     int encoded_len = strlen(encoded);
@@ -140,7 +138,7 @@ static char *rd_base64_encode(const unsigned char *raw, int len)
     encoded[c] = '\0';
     return encoded;
 }
-static void *rd_alloc(int len) { return malloc(len); }
+
 static void rd_release(void *buf)
 {
     free(buf);

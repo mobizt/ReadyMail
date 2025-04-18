@@ -132,7 +132,7 @@ namespace ReadyMailSMTP
                 name = recpVec(msg)[msg.recipient_index].name;
                 msg.recipient_index++;
                 is_recipient = true;
-                rd_print_to(msg.header, 250, "%s\"%s\" <%s>%s", i == 0 ? "To: " : ",", encodeWord(name.c_str()).c_str(), email.c_str(), i == recpVec(msg).size() - 1 ? "\r\n" : "");
+                rd_print_to(msg.header, 250, "%s\"%s\" <%s>%s", i == 0 ? "To: " : ",", encodeWord(name.c_str()).c_str(), email.c_str(), i == (int)recpVec(msg).size() - 1 ? "\r\n" : "");
             }
             else if (msg.cc_index < ccVec(msg).size())
             {
@@ -141,7 +141,7 @@ namespace ReadyMailSMTP
                 name = ccVec(msg)[msg.cc_index].name;
                 msg.cc_index++;
                 is_cc_bcc = true;
-                rd_print_to(msg.header, 250, "%s<%s>%s", i == 0 ? "Cc: " : ",", email.c_str(), i == ccVec(msg).size() - 1 ? "\r\n" : "");
+                rd_print_to(msg.header, 250, "%s<%s>%s", i == 0 ? "Cc: " : ",", email.c_str(), i == (int)ccVec(msg).size() - 1 ? "\r\n" : "");
             }
             else if (msg.bcc_index < bccVec(msg).size())
             {
@@ -288,7 +288,7 @@ namespace ReadyMailSMTP
             case smtp_send_state_body_type_4P_6:
             case smtp_send_state_body_type_5P_4:
 
-                if (msg.rfc822.size() && msg.rfc822_idx < msg.rfc822.size())
+                if (msg.rfc822.size() && msg.rfc822_idx < (int)msg.rfc822.size())
                 {
                     return sendRFC822Message(msg);
                 }
@@ -510,7 +510,7 @@ namespace ReadyMailSMTP
                 String buf, ct_prop;
                 getTextContent(msg, html);
                 bool embed = (html && msg.html.embed.enable) || (!html && msg.text.embed.enable);
-                bool embed_inline = embed && (html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline);
+                bool embed_inline = embed && ((html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline));
                 rd_print_to(ct_prop, 250, "; charset=\"%s\";%s%s", html ? msg.html.charSet.c_str() : msg.text.charSet.c_str(), html ? "" : (msg.text.flowed ? " format=\"flowed\"; delsp=\"no\";" : ""), msg.html.embed.enable ? (html ? " Name=\"msg.html\";" : " Name=\"msg.txt\";") : "");
                 setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, html ? msg.html.content_type.c_str() : msg.text.content_type.c_str(), ct_prop, html ? msg.html.transfer_encoding : msg.text.transfer_encoding, embed ? (embed_inline ? "inline" : "attachment") : "", html ? msg.html.embed.filename : msg.text.embed.filename, 0, html ? msg.html.embed.filename : msg.text.embed.filename, embed_inline ? getRandomUID() : "");
 
@@ -589,7 +589,7 @@ namespace ReadyMailSMTP
             String buf[size];
             size = split(content, "\r\n", buf, size);
             clear(content);
-            for (size_t i = 0; i < size; i++)
+            for (int i = 0; i < size; i++)
             {
                 if (buf[i].length() > 0)
                 {
@@ -618,7 +618,7 @@ namespace ReadyMailSMTP
             String buf[size];
             size = split(content, " ", buf, size);
             clear(content);
-            for (size_t i = 0; i < size; i++)
+            for (int i = 0; i < size; i++)
             {
                 if (buf[i].length() > 0)
                 {
@@ -677,7 +677,7 @@ namespace ReadyMailSMTP
 
         bool sendAttachment(SMTPMessage &msg, smtp_attach_type type, int content_type_index, bool close_parent_boundary)
         {
-            if (msg.attachments_idx < msg.attachments.size() && cAttach(msg).type == type)
+            if (msg.attachments_idx < (int)msg.attachments.size() && cAttach(msg).type == type)
             {
                 if (cAttach(msg).data_index == 0)
                 {
@@ -721,7 +721,7 @@ namespace ReadyMailSMTP
                         default:
                             break;
                         }
-                       
+
                         if (str.length())
                             setDebugState(smtp_state_send_body, str);
 
@@ -771,7 +771,7 @@ namespace ReadyMailSMTP
             {
                 this->msg_ptr = msg.parent;
                 msg.parent->rfc822_idx++;
-                if (msg.parent->rfc822_idx == msg.parent->rfc822.size())
+                if (msg.parent->rfc822_idx == (int)msg.parent->rfc822.size())
                     setState(smtp_state_send_body, smtp_server_status_code_0);
                 return true;
             }
@@ -821,7 +821,6 @@ namespace ReadyMailSMTP
                     cAttach(msg).data_index += read;
                     updateUploadStatus(cAttach(msg));
 
-                    int remaining = cAttach(msg).data_size - cAttach(msg).data_index;
                     if (cAttach(msg).content_encoding != cAttach(msg).transfer_encoding)
                     {
                         char *enc = rd_base64_encode(readBuf, read);
@@ -1041,7 +1040,7 @@ namespace ReadyMailSMTP
                 if (msg.hasAttachment(attach_type_parallel))
                     msg.content_types.push_back(content_type_data("parallel"));
 
-                for (int i = 0; i < msg.rfc822.size(); i++)
+                for (size_t i = 0; i < msg.rfc822.size(); i++)
                     msg.rfc822[i].parent = &msg;
             }
         }

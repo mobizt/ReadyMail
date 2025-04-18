@@ -220,7 +220,7 @@ namespace ReadyMailIMAP
             if (lcriteria.length() == 0 || lcriteria.indexOf("fetch ") > -1 || lcriteria.indexOf("search ") == -1 || lcriteria.indexOf("uid ") > 0 || (lcriteria.indexOf("uid ") == -1 && lcriteria.indexOf("search ") > 0))
                 return sender.setError(&imap_ctx, __func__, IMAP_ERROR_INVALID_SEARCH_CRITERIA);
 
-            if (lcriteria.indexOf("modseq") > -1 && !res.mailbox_info.highestModseq.length() && res.mailbox_info.noModseq)
+            if (lcriteria.indexOf("modseq") > -1 && res.mailbox_info.highestModseq == 0 && res.mailbox_info.noModseq)
                 return sender.setError(&imap_ctx, __func__, IMAP_ERROR_MODSEQ_WAS_NOT_SUPPORTED);
 
             imap_ctx.options.search_limit = searchLimit;
@@ -233,7 +233,7 @@ namespace ReadyMailIMAP
             return ret;
         }
 
-        bool fetchUID(int uid, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
+        bool fetchUID(uint32_t uid, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
         {
             validateMailboxesChange();
 #if defined(ENABLE_FS)
@@ -244,7 +244,7 @@ namespace ReadyMailIMAP
             return fetchImpl(uid, true, await, bodySizeLimit);
         }
 
-        bool fetch(int number, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
+        bool fetch(uint32_t number, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
         {
             validateMailboxesChange();
 #if defined(ENABLE_FS)
@@ -267,7 +267,7 @@ namespace ReadyMailIMAP
 
         bool awaitLoop()
         {
-            imap_function_return_code code;
+            imap_function_return_code code = function_return_undefined;
             while (code != function_return_exit && code != function_return_failure)
             {
                 code = conn.loop();

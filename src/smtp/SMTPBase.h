@@ -91,14 +91,14 @@ namespace ReadyMailSMTP
             if (smtp_ctx->status)
             {
                 int i = 0, j = 0;
-                while (j < info.length())
+                while (j < (int)info.length())
                 {
-                    while (info[j] != '\r' && info[j] != '\n' && j < info.length())
+                    while (info[j] != '\r' && info[j] != '\n' && j < (int)info.length())
                         j++;
 
                     smtp_ctx->status->text = (core ? "[core] " : " ");
                     smtp_ctx->status->text += info.substring(i, j);
-                    if (info[j] == '\n' && j == info.length() - 1)
+                    if (info[j] == '\n' && j == (int)info.length() - 1)
                         smtp_ctx->status->text += "\n";
 
                     print();

@@ -19,8 +19,7 @@ Attachment  KEYWORD1
 
 connect KEYWORD2
 isConnected KEYWORD2
-login   KEYWORD2
-loginWithAccesstoken    KEYWORD2
+authenticate    KEYWORD2
 fetch   KEYWORD2
 fetchUID    KEYWORD2
 getMailbox  KEYWORD2

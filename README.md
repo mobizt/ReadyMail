@@ -105,7 +105,7 @@ auto dataCallback = [](IMAPCallbackData data)
 {
     if (data.isEnvelope) // For showing message headers.
     {
-        for (int i = 0; i < data.header.size(); i++)
+        for (size_t i = 0; i < data.header.size(); i++)
         ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), (i == data.header.size() - 1 ? "\n" : ""));
     }
 };
