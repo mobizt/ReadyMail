@@ -75,7 +75,7 @@ This requires less memory than storing the message. The little memory is require
 
 User can compile or store the message by himself.
 
-TWhen the `FileCallback` function was assigned to the `IMAPClient::fetch` or `IMAPClient::fetchUID` function, the content will be downloaded as files automatically.
+When the `FileCallback` function was assigned to the `IMAPClient::fetch` or `IMAPClient::fetchUID` function, the content will be downloaded as files automatically.
 
 The user can limit the size of parts (text, message, application, audio and video) content to be ignored from download and redirect to `IMAPCallbackData`.
 
