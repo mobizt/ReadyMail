@@ -15,14 +15,21 @@ static void __attribute__((used)) sys_yield()
 #endif
 }
 
+static void rd_release(void *buf)
+{
+    free(buf);
+    buf = nullptr;
+}
+
 void rd_print_to(String &buff, int size, const char *format, ...)
 {
     size += strlen(format) + 10;
-    char s[size];
+    char *s = (char *)malloc(size);
     va_list va;
     va_start(va, format);
     vsnprintf(s, size, format, va);
     va_end(va);
+    rd_release((void *)s);
     buff += (const char *)s;
 }
 
@@ -139,12 +146,6 @@ static char *rd_base64_encode(const unsigned char *raw, int len)
     return encoded;
 }
 
-static void rd_release(void *buf)
-{
-    free(buf);
-    buf = nullptr;
-}
-
 static void rd_encode_qp(const char *buf, char *out)
 {
     int n = 0, p = 0, pos = 0;
@@ -247,7 +248,7 @@ static char *rd_decode_8bit_utf8(const char *buf)
     char *decoded = (char *)malloc(s.length() + 1);
     memset(decoded, 0, s.length() + 1);
     strcpy(decoded, s.c_str());
-    s.clear();
+    s.remove(0, s.length());
     return decoded;
 }
 
@@ -259,7 +260,7 @@ static void rd_encode_qb(String &content, const String &buf, const String &encod
         {
             char *enc = rd_base64_encode((const unsigned char *)buf.c_str(), buf.length());
             content += enc;
-            rd_release(enc);
+            rd_release((void *)enc);
         }
         else if (strcmp(encoding.c_str(), "quoted-printable") == 0)
         {
@@ -267,7 +268,7 @@ static void rd_encode_qb(String &content, const String &buf, const String &encod
             memset(enc, 0, buf.length() * 3 + 1);
             rd_encode_qp(buf.c_str(), enc);
             content += enc;
-            rd_release(enc);
+            rd_release((void *)enc);
         }
         else
             content += buf;
@@ -295,7 +296,7 @@ String rd_enc_plain(const String &email, const String &password)
     // rfc4616
     String out;
     int len = email.length() + password.length() + 2;
-    uint8_t buf[len];
+    uint8_t *buf = (uint8_t *)malloc(len);
     memset(buf, 0, len);
     memcpy(buf + 1, email.c_str(), email.length());
     memcpy(buf + email.length() + 2, password.c_str(), password.length());
@@ -305,6 +306,7 @@ String rd_enc_plain(const String &email, const String &password)
         out = enc;
         rd_release((void *)enc);
     }
+    rd_release((void *)buf);
     return out;
 }
 

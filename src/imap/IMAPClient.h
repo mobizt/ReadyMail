@@ -9,7 +9,7 @@
 #include "Parser.h"
 
 using namespace ReadyMailIMAP;
-using namespace ReadyMailNS;
+using namespace ReadyMailCallbackNS;
 
 namespace ReadyMailIMAP
 {
@@ -315,10 +315,11 @@ namespace ReadyMailIMAP
             return ret;
         }
 
-        bool fetchImpl(int number, bool fetchUID, bool await, uint32_t bodySizeLimit)
+        bool fetchImpl(int number, bool uidFetch, bool await, uint32_t bodySizeLimit)
         {
-            sender.setFechNumber(number, fetchUID);
-            sender.setDebugState(imap_state_fetch_envelope, "Fetching message " + (imap_ctx.options.fetch_uid.length() ? imap_ctx.options.fetch_uid : imap_ctx.options.fetch_number) + " envelope...");
+            imap_ctx.options.fetch_number = number;
+            imap_ctx.options.uid_fetch = uidFetch;
+            sender.setDebugState(imap_state_fetch_envelope, "Fetching message " + sender.getFetchString() + " envelope...");
 
             if (!conn.isIdleState(__func__))
                 return false;
@@ -339,7 +340,7 @@ namespace ReadyMailIMAP
                 awaitLoop();
             }
 
-            bool ret = sender.fetch(number, fetchUID, bodySizeLimit);
+            bool ret = sender.fetch(number, uidFetch, bodySizeLimit);
             if (ret && await)
                 return awaitLoop();
             return ret;

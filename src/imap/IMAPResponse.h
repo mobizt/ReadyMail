@@ -43,7 +43,7 @@ namespace ReadyMailIMAP
             sys_yield();
 
             int readLen = readLine(line);
-            if (!imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout())
+            if (!(imap_ctx->client && imap_ctx->client->connected()) || (!imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout()))
             {
                 cCode() = function_return_failure;
                 goto exit;
@@ -53,7 +53,7 @@ namespace ReadyMailIMAP
             {
 
 #if defined(READYMAIL_CORE_DEBUG)
-                if (cState() != imap_state_search && cState() != imap_state_fetch_body_part)
+                if (cState() != imap_state_search && cState() != imap_state_fetch_body_part && !imap_ctx->options.multiline)
                     setDebug(imap_ctx, line, true);
 #endif
 
@@ -96,7 +96,7 @@ namespace ReadyMailIMAP
                                     cCode() = function_return_failure;
                                     setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION, decoded);
                                 }
-                                rd_release(decoded);
+                                rd_release((void *)decoded);
                                 decoded = nullptr;
                             }
                         }

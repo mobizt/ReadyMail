@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "Common.h"
 #include "SMTPBase.h"
+#include "SMTPConnection.h"
 
 namespace ReadyMailSMTP
 {
@@ -43,7 +44,7 @@ namespace ReadyMailSMTP
 
             sys_yield();
             int readLen = readLine(line);
-            if (readTimeout())
+            if (readTimeout() || !(smtp_ctx->client && smtp_ctx->client->connected()) )
             {
                 cCode() = function_return_failure;
                 goto exit;
@@ -90,7 +91,7 @@ namespace ReadyMailSMTP
                             else if ((cState() == smtp_state_auth_login && indexOf(decoded, "Username:") > -1) ||
                                      (cState() == smtp_state_login_user && indexOf(decoded, "Password:") > -1))
                                 setReturn(true, complete, ret);
-                            rd_release(decoded);
+                            rd_release((void *)decoded);
                             decoded = nullptr;
                         }
                     }

@@ -2,8 +2,16 @@
 #define READYMAIL_H
 
 #include <Arduino.h>
+#include <array>
+#include <vector>
+#include <algorithm>
+#include <time.h> 
+#include <Client.h>
+#include "./core/ReadyTimer.h"
+#include "./core/ReadyCodec.h"
+#include "./core/NumString.h"
 
-#define READYMAIL_VERSION "0.0.1"
+#define READYMAIL_VERSION "0.0.3"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -116,14 +124,13 @@ enum readymail_file_operating_mode
     readymail_file_mode_remove
 };
 
-namespace ReadyMailNS
+namespace ReadyMailCallbackNS
 {
 #if defined(ENABLE_FS)
     typedef void (*FileCallback)(File &file, const char *filename, readymail_file_operating_mode mode);
 #else
     typedef void (*FileCallback)();
 #endif
-
     typedef void (*TLSHandshakeCallback)(bool &success);
 }
 
@@ -161,9 +168,9 @@ public:
     void printf(const char *format, ...)
     {
 #if defined(READYMAIL_PRINTF_BUFFER)
-        int size = READYMAIL_PRINTF_BUFFER;
+        const int size = READYMAIL_PRINTF_BUFFER;
 #else
-        int size = 1024;
+       const int size = 1024;
 #endif
         char s[size];
         va_list va;

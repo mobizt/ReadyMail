@@ -3,8 +3,6 @@
 #if defined(ENABLE_IMAP)
 #include <Arduino.h>
 #include "Common.h"
-#include "./core/ReadyTimer.h"
-#include "./core/ReadyCodec.h"
 
 namespace ReadyMailIMAP
 {
@@ -217,9 +215,9 @@ namespace ReadyMailIMAP
         static void printf(const char *format, ...)
         {
 #if defined(READYMAIL_PRINTF_BUFFER)
-            int size = READYMAIL_PRINTF_BUFFER;
+            const int size = READYMAIL_PRINTF_BUFFER;
 #else
-            int size = 1024;
+            const int size = 1024;
 #endif
             char s[size];
             va_list va;

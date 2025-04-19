@@ -3,6 +3,7 @@
 #if defined(ENABLE_SMTP)
 #include <Arduino.h>
 #include "Common.h"
+#include "./core/NumString.h"
 
 namespace ReadyMailSMTP
 {
@@ -13,6 +14,7 @@ namespace ReadyMailSMTP
   private:
     String mime;
     String boundary;
+
     content_type_data(const String &mime)
     {
       this->mime = mime;
@@ -107,7 +109,7 @@ namespace ReadyMailSMTP
     void addInlineImage(Attachment &att)
     {
       att.type = attach_type_inline;
-      att.cid = random(2000, 4000);
+      att.cid = numString.get(random(2000, 4000));
       attachments.push_back(att);
     }
     void addMessage(SMTPMessage &msg, const String &name = "msg.eml", const String &filename = "msg.eml")
@@ -187,6 +189,7 @@ namespace ReadyMailSMTP
     friend class SMTPSend;
     friend class SMTPBase;
 
+    NumString numString;
     int attachments_idx = 0, attachment_idx = 0, inline_idx = 0, parallel_idx = 0, rfc822_idx = 0;
     String buf, header, rfc822_name, rfc822_filename;
 #if defined(ENABLE_FS)

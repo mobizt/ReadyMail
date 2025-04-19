@@ -16,6 +16,7 @@ namespace ReadyMailIMAP
     private:
         IMAPConnection *conn = nullptr;
         IMAPResponse *res = nullptr;
+        NumString numString;
 
         void begin(imap_context *imap_ctx, IMAPResponse *res, IMAPConnection *conn)
         {
@@ -94,7 +95,8 @@ namespace ReadyMailIMAP
                 {
                     if (cMsgNum() > 0)
                     {
-                        setFechNumber(cMsgNum(), imap_ctx->options.uid_search);
+                        imap_ctx->options.fetch_number = cMsgNum();
+                        imap_ctx->options.uid_fetch = imap_ctx->options.uid_search;
                         sendFetch(imap_fetch_envelope);
                     }
                     else
@@ -105,7 +107,7 @@ namespace ReadyMailIMAP
                 break;
 
             case imap_state_fetch_envelope:
-                setDebug(imap_ctx, "The message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " envelope is fetched successfully\n");
+                setDebug(imap_ctx, "The message " + getFetchString() + " envelope is fetched successfully\n");
                 if (imap_ctx->options.searching)
                 {
                     if (cMsgIndex() >= (int)msgNumVec().size() - 1)
@@ -117,7 +119,8 @@ namespace ReadyMailIMAP
                     else
                     {
                         cMsgIndex()++;
-                        setFechNumber(cMsgNum(), imap_ctx->options.uid_search);
+                        imap_ctx->options.fetch_number = cMsgNum();
+                        imap_ctx->options.uid_fetch = imap_ctx->options.uid_search;
                         sendFetch(imap_fetch_envelope);
                     }
                 }
@@ -135,7 +138,7 @@ namespace ReadyMailIMAP
                 cPartIndex()++;
                 if (cPartIndex() == (int)cMsg().parts.size())
                 {
-                    setDebug(imap_ctx, "The message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " is fetched successfully\n");
+                    setDebug(imap_ctx, "The message " + getFetchString() + " is fetched successfully\n");
                     exitState(cCode(), imap_ctx->options.processing);
                     cMsgIndex() = 0;
                 }
@@ -181,6 +184,8 @@ namespace ReadyMailIMAP
             }
         }
 
+        String getFetchString() { return imap_ctx->options.uid_fetch ? "UID" : "" + numString.get(imap_ctx->options.fetch_number); }
+
         bool sendFetch(imap_fetch_mode mode)
         {
             String buf;
@@ -193,16 +198,16 @@ namespace ReadyMailIMAP
                 imap_ctx->options.skipping = false;
 
                 if (imap_ctx->options.searching)
-                    setDebugState(state, "Fetching message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " envelope...");
+                    setDebugState(state, "Fetching message " + getFetchString() + " envelope...");
 
                 // Fetching full for ENVELOPE and BODY to count attachment.
-                rd_print_to(buf, 200, " %sFETCH %s FULL (CHANGEDSINCE %d)", imap_ctx->options.fetch_uid.length() ? "UID " : "", imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid.c_str() : imap_ctx->options.fetch_number.c_str(), imap_ctx->options.modsequence);
+                rd_print_to(buf, 200, " %sFETCH %d FULL (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.modsequence);
             }
             else if (mode == imap_fetch_body_structure)
             {
                 state = imap_state_fetch_body_structure;
-                setDebugState(state, "Fetching message " + (imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid : imap_ctx->options.fetch_number) + " body...");
-                rd_print_to(buf, 200, " %sFETCH %s BODYSTRUCTURE (CHANGEDSINCE %d)", imap_ctx->options.fetch_uid.length() ? "UID " : "", imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid.c_str() : imap_ctx->options.fetch_number.c_str(), imap_ctx->options.modsequence);
+                setDebugState(state, "Fetching message " + getFetchString() + " body...");
+                rd_print_to(buf, 200, " %sFETCH %d BODYSTRUCTURE (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.modsequence);
             }
             else if (mode == imap_fetch_body_part)
             {
@@ -216,7 +221,7 @@ namespace ReadyMailIMAP
                     name = cPart().name;
                 }
                 uint32_t sz;
-                sscanf(res->parser.getField(cPart(), non_multipart_field_size).c_str(), "%ul", &sz);
+                sscanf(res->parser.getField(cPart(), non_multipart_field_size).c_str(), "%lu", &sz);
                 bool sizeLimit = sz > imap_ctx->options.part_size_limit;
                 String section = cPart().section.c_str();
                 setDebugState(state, "Fetching message body[" + cPart().section + "]...");
@@ -230,7 +235,7 @@ namespace ReadyMailIMAP
                 }
 
                 if (!sizeLimit && cPartIndex() < (int)cMsg().parts.size())
-                    rd_print_to(buf, 200, " %sFETCH %s BODY%s[%s] (CHANGEDSINCE %d)", imap_ctx->options.fetch_uid.length() ? "UID " : "", imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid.c_str() : imap_ctx->options.fetch_number.c_str(), imap_ctx->options.read_only_mode ? ".PEEK" : "", section.c_str(), imap_ctx->options.modsequence);
+                    rd_print_to(buf, 200, " %sFETCH %d BODY%s[%s] (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.read_only_mode ? ".PEEK" : "", section.c_str(), imap_ctx->options.modsequence);
             }
 
             if (buf.length() && !tcpSend(true, 2, imap_ctx->tag.c_str(), buf.c_str()))
@@ -418,25 +423,17 @@ namespace ReadyMailIMAP
 
 #endif
 
-        bool fetch(uint32_t number, bool fetch_uid, uint32_t bodySizeLimit)
+        bool fetch(uint32_t number, bool uid_fetch, uint32_t bodySizeLimit)
         {
-            if (number == 0 || (fetch_uid && number > res->mailbox_info.nextUID) || (!fetch_uid && number > res->mailbox_info.msgCount))
+            if (number == 0 || (uid_fetch && number > res->mailbox_info.nextUID) || (!uid_fetch && number > res->mailbox_info.msgCount))
                 return setError(imap_ctx, __func__, IMAP_ERROR_MESSAGE_NOT_EXISTS);
 
             imap_ctx->options.part_size_limit = bodySizeLimit;
             messagesVec().clear();
             cMsgIndex() = 0;
-            setFechNumber(number, fetch_uid);
+            imap_ctx->options.fetch_number = number;
+            imap_ctx->options.uid_fetch = uid_fetch;
             return sendFetch(imap_fetch_envelope);
-        }
-
-        void setFechNumber(int number, bool fetch_uid)
-        {
-            imap_ctx->options.fetch_uid.remove(0, imap_ctx->options.fetch_uid.length());
-            if (fetch_uid)
-                imap_ctx->options.fetch_uid = number;
-            else
-                imap_ctx->options.fetch_number = number;
         }
 
         void clearMailboxInfo()

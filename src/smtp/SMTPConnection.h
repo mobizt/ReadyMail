@@ -5,7 +5,7 @@
 #include "Common.h"
 #include "SMTPResponse.h"
 
-using namespace ReadyMailNS;
+using namespace ReadyMailCallbackNS;
 
 namespace ReadyMailSMTP
 {
@@ -126,7 +126,7 @@ namespace ReadyMailSMTP
             return connectImpl();
         }
 
-        bool isConnected() { return smtp_ctx->server_status->server_greeting_ack; }
+        bool isConnected() { return smtp_ctx->client && smtp_ctx->client->connected() && smtp_ctx->server_status->server_greeting_ack; }
 
         smtp_function_return_code loop()
         {

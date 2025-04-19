@@ -35,7 +35,7 @@ void imapCb(IMAPStatus status)
 
 void cmdCb(const char *cmd, const char *response)
 {
-    ReadyMail.printf("ReadyMail[imap][%d][%s] %s\n", imap.currentState(), cmd, response);
+    ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.currentState(), cmd, response);
 }
 
 void setup()

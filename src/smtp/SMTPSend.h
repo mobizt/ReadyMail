@@ -586,7 +586,7 @@ namespace ReadyMailSMTP
             int count = 0;
             String qms;
             int size = split(content, "\r\n", nullptr, 0);
-            String buf[size];
+            String *buf = new String[size];
             size = split(content, "\r\n", buf, size);
             clear(content);
             for (int i = 0; i < size; i++)
@@ -594,7 +594,7 @@ namespace ReadyMailSMTP
                 if (buf[i].length() > 0)
                 {
                     int j = 0;
-                    qms.clear();
+                    qms.remove(0, qms.length());
                     while (buf[i][j] == '>')
                     {
                         qms += '>';
@@ -609,13 +609,15 @@ namespace ReadyMailSMTP
                     content += "\r\n";
                 count++;
             }
+            delete[] buf;
+            buf = nullptr;
         }
 
         void softBreak(String &content, const char *quoteMarks)
         {
             size_t len = 0;
             int size = split(content, " ", nullptr, 0);
-            String buf[size];
+            String *buf = new String[size];
             size = split(content, " ", buf, size);
             clear(content);
             for (int i = 0; i < size; i++)
@@ -645,6 +647,8 @@ namespace ReadyMailSMTP
                     }
                 }
             }
+            delete[] buf;
+            buf = nullptr;
         }
 
         void setContentTypeHeader(String &buf, const String &boundary, const String &mime, const String &ct_prop, const String &transfer_encoding, const String &dispos_type, const String &filename, int size, const String &location, const String &cid)
@@ -809,7 +813,7 @@ namespace ReadyMailSMTP
                 int toSend = available > chunkSize ? chunkSize : available;
                 if (toSend)
                 {
-                    uint8_t readBuf[toSend + 1];
+                    uint8_t *readBuf = (uint8_t *)malloc(toSend + 1);
                     memset(readBuf, 0, toSend + 1);
 #if defined(ENABLE_FS)
                     int read = cAttach(msg).attach_file.callback ? msg.file.read(readBuf, toSend) : readBlob(msg, readBuf, toSend);
@@ -827,12 +831,13 @@ namespace ReadyMailSMTP
                         if (enc)
                         {
                             buf = enc;
-                            rd_release(enc);
+                            rd_release((void *)enc);
                         }
                     }
                     else
                         buf = (const char *)readBuf;
 
+                    rd_release((void *)readBuf);
                     buf += "\r\n";
 
                     if (!sendBuffer(buf))
@@ -1131,7 +1136,7 @@ namespace ReadyMailSMTP
             {
                 char *enc = rd_base64_encode((const unsigned char *)src, len);
                 rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
-                rd_release(enc);
+                rd_release((void *)enc);
             }
             else
                 buf = src;

@@ -8,7 +8,7 @@
 #include "SMTPSend.h"
 
 using namespace ReadyMailSMTP;
-using namespace ReadyMailNS;
+using namespace ReadyMailCallbackNS;
 
 namespace ReadyMailSMTP
 {

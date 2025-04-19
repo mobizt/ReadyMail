@@ -4,9 +4,15 @@ The fast and lightweight async Email client library for Arduino.
 
 This Email client library supports sending the Email and reading, searching and appending the mailbox messages.
 
-All 32-bit MCU Arduino devices are supported including ESP32, ESP8266, Raspberry Pi Pico, Arduino MKRs etc.
+This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices. 
+
+The 8-bit `Atmel's AVR` MCUs are not supported.
+
+This library requires 52k program space (without network library) for only `SMTP` or `IMAP` feature and 82k for using both `SMTP` and `IMAP` features.
 
 # Examples #
+
+## Email Sending
 
 To send an Email message, user needs to defined the `SMTPClient` and `SMTPMessage` class objects.
 
@@ -50,7 +56,9 @@ ssl_client.setInsecure();
 // ...
 // ...
 
-smtp.connect("smtp host here", 465, "127.0.0.1", [](SMTPStatus status){ Serial.println(status.text);});
+auto statusCallback = [](SMTPStatus status){ Serial.println(status.text);}
+
+smtp.connect("smtp host here", 465, "127.0.0.1", statusCallback);
 if (smtp.isConnected())
 {
     smtp.authenticate("sender email here", "sender email password here", readymail_auth_password);
@@ -68,6 +76,7 @@ if (smtp.isConnected())
     }
 }
 ```
+## Email Reading
 
 To receive or fetch the Email, only `IMAPClient` calss object is required. The received message will not store in device memory but redirects to the callback function (`IMAPCallbackData`) for user processing.
 
@@ -101,6 +110,7 @@ ssl_client.setInsecure();
 // ...
 // ...
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 auto dataCallback = [](IMAPCallbackData data)
 {
     if (data.isEnvelope) // For showing message headers.
@@ -110,7 +120,7 @@ auto dataCallback = [](IMAPCallbackData data)
     }
 };
 
-imap.connect("imap host here", 993, [](IMAPStatus status){ Serial.println(status.text);});
+imap.connect("imap host here", 993, statusCallback);
 if (smtp.isConnected())
 {
     smtp.authenticate("sender email here", "sender email password here", readymail_auth_password);
@@ -124,6 +134,168 @@ if (smtp.isConnected())
 ```
 
 The more features usages are available in [examples](/examples/) folder.
+
+<details>
+<summary>Click here for all devices usage.</summary>
+
+## Using WiFi Network
+
+If user's Arduino boards have buit-in WiFi module or already equiped with WiFi capable MCUs, the platform's core SDK WiFi and netwowk (WiFi) SSL client libraries are needed.
+
+### For ESP32
+
+```cpp
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+```
+
+### For ESP8266
+
+```cpp
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+```
+
+### For Reaspberry Pi Pico W and 2 W
+
+```cpp
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+```
+
+### For Arduino® MKRx and Arduino® Nano RP2040
+
+Arduino® MKR WiFi 1010, Arduino® Nano 33 IoT, Arduino® MKR Vidor 4000
+
+```cpp
+#include <WiFiNINA.h>
+WiFiSSLClient ssl_client;
+```
+
+### For Arduino® MKR 1000 WIFI
+
+```cpp
+#include <WiFi101.h>
+WiFiSSLClient ssl_client;
+```
+
+### For Arduino® UNO R4 WiFi (Renesas)
+
+```cpp
+#include <WiFiS3.h>
+#include <WiFiSSLClient.h>
+WiFiSSLClient ssl_client;
+```
+
+### For Other Arduino WiFis
+Arduino® GIGA R1 WiFi, Arduino® OPTA etc.
+
+```cpp
+#include <WiFi.h>
+#include <WiFiSSLClient.h>
+WiFiSSLClient ssl_client;
+```
+
+## Using Ethernet Network
+
+### For ESP32
+
+```cpp
+#include <ETH.h>
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+```
+
+To connect to the network, see [Ethernet examples](https://github.com/espressif/arduino-esp32/blob/master/libraries/Ethernet/examples)
+
+### For ESP8266
+
+```cpp
+#include <LwipEthernet.h>
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
+Wiznet5500lwIP eth(16 /* Chip select pin */);
+WiFiClient basic_client;
+ESP_SSLClient ssl_client;
+```
+To connect to the network, see [this example](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino)
+
+To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+
+### For Teensy Arduino
+
+```cpp
+#include <SPI.h>
+// https://github.com/PaulStoffregen/Ethernet
+#include <Ethernet.h>
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
+EthernetClient basic_client;
+ESP_SSLClient ssl_client;
+```
+To connect to the network, see [this example](https://github.com/PaulStoffregen/Ethernet/blob/master/examples/WebClient/WebClient.ino)
+
+To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+
+### For STM32 Arduino
+
+```cpp
+#include <Ethernet.h>
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
+EthernetClient basic_client;
+ESP_SSLClient ssl_client;
+```
+
+To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+
+## Using GSM Network
+
+```cpp
+// https://github.com/vshymanskyy/TinyGSM
+#include <TinyGsmClient.h>
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
+
+TinyGsm modem(SerialAT);
+TinyGsmClient basic_client;
+ESP_SSLClient ssl_client;
+```
+To connect to the network, see [this example](https://github.com/vshymanskyy/TinyGSM/blob/master/examples/WebClient/WebClient.ino)
+
+To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+
+## Using PPP Network (ESP32)
+
+```cpp
+#include <PPP.h>
+#include <WiFiClientSecure.h>
+WiFiClientSecure ssl_client;
+```
+To connect to the network, see [this example](https://github.com/espressif/arduino-esp32/blob/master/libraries/PPP/examples/PPP_Basic/PPP_Basic.ino)
+
+
+## Set Up ESP_SSLClient
+
+If ESP_SSLClient library was used in some device that uses external network module e.g. `STM32` and `Teensy` or when STARTTLS protocol is needed, the network client e.g. basic Arduino client sould be assigned.
+
+Some options e.g. insecure connection (server SSL certificate skipping) and protocol upgrades are available.
+
+To start using with no SSL certificate, `ESP_SSLClient::setInsecure()` should be set.
+
+```cpp
+ssl_client.setClient(&basic_client);
+ssl_client.setInsecure();
+```
+
+The `ESP_SSLClient` library requires 85k program space.
+
+For using both `SMTP` and `IMAP` features with `ESP_SSLClient` will take approx. 170k program space.
+
+</details>
 
 
 # License #

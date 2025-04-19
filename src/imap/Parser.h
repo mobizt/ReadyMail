@@ -4,12 +4,15 @@
 #include <Arduino.h>
 #include "Common.h"
 #include "./core/QBDecoder.h"
+#include "./core/NumString.h"
 
 namespace ReadyMailIMAP
 {
     class IMAPParser
     {
     private:
+        NumString numString;
+
     public:
         IMAPParser() {}
         ~IMAPParser() {}
@@ -64,7 +67,7 @@ namespace ReadyMailIMAP
                     max_depth = parts[i].depth;
             }
 
-            String section[max_depth + 1];
+            String *section = new String[max_depth + 1];
             for (int i = 0; i < (int)parts.size(); i++)
             {
                 if (i > 0 && parts[i - 1].name == "message")
@@ -75,7 +78,7 @@ namespace ReadyMailIMAP
 
                 if (parts[i].depth == 1)
                 {
-                    parts[i].section = parts[i].num_specifier;
+                    parts[i].section = numString.get(parts[i].num_specifier);
                     section[parts[i].depth] = parts[i].section;
                 }
                 else if (parts[i].depth > 0)
@@ -84,13 +87,15 @@ namespace ReadyMailIMAP
                         section[parts[i].depth] = parts[i - 1].section;
 
                     if (section[parts[i].depth].length() == 0)
-                        section[parts[i].depth] = parts[i].num_specifier;
+                        section[parts[i].depth] = numString.get(parts[i].num_specifier);
 
                     parts[i].section = section[parts[i].depth];
                     parts[i].section += ".";
                     parts[i].section += parts[i].num_specifier;
                 }
             }
+            delete[] section;
+            section = nullptr;
         }
 
         String getNextToken(const String &line, int &i, int beginIndex, int lastIndex)
@@ -208,7 +213,7 @@ namespace ReadyMailIMAP
                     int len = (decoded_len + 1) * 2;
                     unsigned char *buf = (unsigned char *)allocate(len);
                     rd_decode_latin1_utf8(buf, &len, (unsigned char *)decoded, &decoded_len);
-                    rd_release(decoded);
+                    rd_release((void *)decoded);
                     decoded_len = len;
                     decoded = (uint8_t *)buf;
                 }
@@ -217,7 +222,7 @@ namespace ReadyMailIMAP
                     char *buf = (char *)allocate((decoded_len + 1) * 3);
                     rd_decode_tis620_utf8(buf, (const char *)decoded, decoded_len);
                     decoded_len = strlen(buf);
-                    rd_release(decoded);
+                    rd_release((void *)decoded);
                     decoded = (uint8_t *)buf;
                 }
             }
@@ -286,7 +291,7 @@ namespace ReadyMailIMAP
 
             if (cpart.transfer_encoding == imap_transfer_encoding_base64 || cpart.transfer_encoding == imap_transfer_encoding_binary)
             {
-                sscanf(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str(), "%ul", &cpart.decoded_size);
+                sscanf(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str(), "%lu", &cpart.decoded_size);
                 if (cpart.decoded_size == 0)
                     cpart.decoded_size = cpart.octet_count * 3 / 4;
             }
@@ -297,7 +302,7 @@ namespace ReadyMailIMAP
             uint32_t len = 0;
             int pos1 = line.lastIndexOf("{"), pos2 = line.lastIndexOf("}");
             if (pos1 < pos2 && pos1 > -1 && pos2 > -1)
-                sscanf(line.substring(pos1 + 1, pos2).c_str(), "%ul", &len);
+                sscanf(line.substring(pos1 + 1, pos2).c_str(), "%lu", &len);
             return len;
         }
 
@@ -454,7 +459,7 @@ namespace ReadyMailIMAP
                 int olen = (len + 1) * 2;
                 unsigned char *out = (unsigned char *)allocate(olen);
                 rd_decode_latin1_utf8(out, &olen, (unsigned char *)buf, &len);
-                rd_release(buf);
+                rd_release((void *)buf);
                 buf = (char *)out;
             }
             else if (scheme == imap_char_encoding_scheme_tis_620 || scheme == imap_char_encoding_scheme_iso8859_11 || scheme == imap_char_encoding_scheme_windows_874)
@@ -462,11 +467,11 @@ namespace ReadyMailIMAP
                 size_t len2 = strlen(buf);
                 char *out = (char *)allocate((len2 + 1) * 3);
                 rd_decode_tis620_utf8(out, buf, len2);
-                rd_release(buf);
+                rd_release((void *)buf);
                 buf = out;
             }
             str = buf;
-            rd_release(buf);
+            rd_release((void *)buf);
         }
 
         String getToken(const String &line, int pos, const String &beginToken, const String &lastToken)
@@ -526,7 +531,7 @@ namespace ReadyMailIMAP
                     {
                         part_count++;
                         part_ctx part;
-                        part.parent_id = rnd;
+                        part.parent_id = numString.get(rnd);
                         parseBodyStructure(token, "(", ")", depth + 1, part_count, field_index, parts, &part);
                         field_index++;
                     }
@@ -554,7 +559,7 @@ namespace ReadyMailIMAP
                             cpart->num_specifier = index;
                             cpart->part_count = part_count;
                             cpart->depth = depth;
-                            cpart->id = rnd;
+                            cpart->id = numString.get(rnd);
                             cpart->section = multipart ? "" : String(index);
                             bool inserted = false;
                             if (multipart)
@@ -657,19 +662,19 @@ namespace ReadyMailIMAP
                 if (line.indexOf("EXPUNGE") > -1)
                 {
                     imap_ctx->idle_status = "[-] " + getToken(line, 0, "* ", "EXPUNGE");
-                    sscanf(getToken(line, 0, "* ", "EXPUNGE").c_str(), "%ul", &imap_ctx->current_message);
+                    sscanf(getToken(line, 0, "* ", "EXPUNGE").c_str(), "%lu", &imap_ctx->current_message);
                     mailbox_info.msgCount = imap_ctx->current_message;
                 }
                 else if (line.indexOf("EXISTS") > -1)
                 {
                     imap_ctx->idle_status = "[+] " + getToken(line, 0, "* ", "EXISTS");
-                    sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%ul", &imap_ctx->current_message);
+                    sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%lu", &imap_ctx->current_message);
                     mailbox_info.msgCount = imap_ctx->current_message;
                 }
                 else if (line.indexOf("FETCH") > -1)
                 {
                     imap_ctx->idle_status = "[=][";
-                    sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%ul", &imap_ctx->current_message);
+                    sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%lu", &imap_ctx->current_message);
                     int beginIndex = 0, lastIndex = 0;
                     getBoundary(line, "FLAGS (", ")", beginIndex, lastIndex);
                     int i = beginIndex, count = 0;
@@ -702,7 +707,7 @@ namespace ReadyMailIMAP
                     break;
 
                 imap_ctx->cb_data.searchCount++;
-                sscanf(token.c_str(), "%ul", &msg_num);
+                sscanf(token.c_str(), "%lu", &msg_num);
                 if (imap_ctx->options.recent_sort)
                 {
                     imap_msg_num.push_back(msg_num);
@@ -733,19 +738,19 @@ namespace ReadyMailIMAP
         void parseExamine(const String &line, MailboxInfo &mailbox_info, imap_context *imap_ctx)
         {
             if (line.indexOf("EXISTS") > -1)
-                sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%ul", &mailbox_info.msgCount);
+                sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%lu", &mailbox_info.msgCount);
             else if (line.indexOf("RECENT") > -1)
-                sscanf(getToken(line, 0, "* ", "RECENT").c_str(), "%ul", &mailbox_info.RecentCount);
+                sscanf(getToken(line, 0, "* ", "RECENT").c_str(), "%lu", &mailbox_info.RecentCount);
             else if (line.indexOf("FLAGS") > -1 || line.indexOf("PERMANENTFLAGS") > -1)
                 parseFlags(line, mailbox_info);
             else if (line.indexOf("[UIDVALIDITY") > -1)
-                sscanf(getToken(line, 0, "[UIDVALIDITY", "]").c_str(), "%ul", &mailbox_info.UIDValidity);
+                sscanf(getToken(line, 0, "[UIDVALIDITY", "]").c_str(), "%lu", &mailbox_info.UIDValidity);
             else if (line.indexOf("[UIDNEXT") > -1)
-                sscanf(getToken(line, 0, "[UIDNEXT", "]").c_str(), "%ul", &mailbox_info.nextUID);
+                sscanf(getToken(line, 0, "[UIDNEXT", "]").c_str(), "%lu", &mailbox_info.nextUID);
             else if (line.indexOf("[UNSEEN") > -1)
-                sscanf(getToken(line, 0, "[UNSEEN", "]").c_str(), "%ul", &mailbox_info.UnseenIndex);
+                sscanf(getToken(line, 0, "[UNSEEN", "]").c_str(), "%lu", &mailbox_info.UnseenIndex);
             else if (imap_ctx->feature_caps[imap_read_cap_condstore] && line.indexOf("[HIGHESTMODSEQ") > -1)
-                sscanf(getToken(line, 0, "[HIGHESTMODSEQ", "]").c_str(), "%ul", &mailbox_info.highestModseq);
+                sscanf(getToken(line, 0, "[HIGHESTMODSEQ", "]").c_str(), "%lu", &mailbox_info.highestModseq);
             else if (line.indexOf("NOMODSEQ") > -1)
                 mailbox_info.noModseq = true;
         }
@@ -815,7 +820,7 @@ namespace ReadyMailIMAP
                 }
             }
             if (depth == 0)
-                header[imap_envelpe_attachments] = getAttachCount(line, "BODY (", ")");
+                header[imap_envelpe_attachments] = numString.get(getAttachCount(line, "BODY (", ")"));
         }
 
         void parseFetch(String &line, imap_context *imap_ctx, imap_msg_ctx &cmsg, imap_state &cstate, part_ctx &cpart)
@@ -827,7 +832,7 @@ namespace ReadyMailIMAP
                 if (cstate == imap_state_fetch_envelope)
                 {
                     if (line[0] == '*')
-                        sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%ul", &imap_ctx->current_message);
+                        sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%lu", &imap_ctx->current_message);
 
                     if (line[line.length() - 3] == ')' && line[line.length() - 2] == '\r' && line[line.length() - 1] == '\n')
                         imap_ctx->options.multiline = false;
@@ -898,7 +903,7 @@ namespace ReadyMailIMAP
                                 updateDownloadStatus(decoded_len, cpart);
                                 storeDecodedData(decoded, decoded_len, false, cpart, imap_ctx);
                             }
-                            rd_release(decoded);
+                            rd_release((void *)decoded);
                         }
                     }
                 }

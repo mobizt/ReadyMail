@@ -7,6 +7,8 @@
 #include "IMAPResponse.h"
 #include "IMAPSend.h"
 
+using namespace ReadyMailCallbackNS;
+
 namespace ReadyMailIMAP
 {
 
@@ -181,7 +183,7 @@ namespace ReadyMailIMAP
             return imap_ctx->server_status->ret;
         }
 
-        bool isConnected() { return imap_ctx->server_status->server_greeting_ack; }
+        bool isConnected() { return imap_ctx->client && imap_ctx->client->connected() && imap_ctx->server_status->server_greeting_ack; }
 
         bool checkCap()
         {

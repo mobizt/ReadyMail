@@ -3,8 +3,6 @@
 #if defined(ENABLE_SMTP)
 #include <Arduino.h>
 #include "Common.h"
-#include "./core/ReadyTimer.h"
-#include "./core/ReadyCodec.h"
 
 namespace ReadyMailSMTP
 {
@@ -183,9 +181,9 @@ namespace ReadyMailSMTP
         void printf(const char *format, ...)
         {
 #if defined(MAIL_CLIENT_PRINTF_BUFFER)
-            int size = MAIL_CLIENT_PRINTF_BUFFER;
+            const int size = MAIL_CLIENT_PRINTF_BUFFER;
 #else
-            int size = 1024;
+            const int size = 1024;
 #endif
             char s[size];
             va_list va;
