@@ -8,7 +8,7 @@ This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`
 
 The 8-bit `Atmel's AVR` MCUs are not supported.
 
-This library requires 52k program space (without network library) for only `SMTP` or `IMAP` feature and 82k for using both `SMTP` and `IMAP` features.
+This library requires 52k program space (network library excluded) for only `SMTP` or `IMAP` feature and 82k for using both `SMTP` and `IMAP` features.
 
 # Examples #
 
