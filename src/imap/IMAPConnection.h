@@ -26,7 +26,7 @@ namespace ReadyMailIMAP
         {
             this->host = host;
             this->port = port;
-            if (imap_ctx->client)
+            if (imap_ctx->client && imap_ctx->client->connected())
                 imap_ctx->client->stop();
             return connectImpl();
         }

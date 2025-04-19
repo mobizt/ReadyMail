@@ -149,7 +149,7 @@ namespace ReadyMailIMAP
 
         void stopImpl()
         {
-            if (imap_ctx->client)
+            if (imap_ctx->client && imap_ctx->client->connected())
                 imap_ctx->client->stop();
             imap_ctx->server_status->connected = false;
             imap_ctx->server_status->secured = false;

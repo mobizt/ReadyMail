@@ -29,8 +29,8 @@ void rd_print_to(String &buff, int size, const char *format, ...)
     va_start(va, format);
     vsnprintf(s, size, format, va);
     va_end(va);
-    rd_release((void *)s);
     buff += (const char *)s;
+    rd_release((void *)s);
 }
 
 static unsigned char rd_base64_lookup(char c)

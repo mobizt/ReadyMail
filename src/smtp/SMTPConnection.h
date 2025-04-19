@@ -117,7 +117,7 @@ namespace ReadyMailSMTP
             this->port = port;
             smtp_ctx->ssl_mode = ssl;
 
-            if (smtp_ctx->client)
+            if (smtp_ctx->client && smtp_ctx->client->connected())
                 smtp_ctx->client->stop();
 
             if (domain.length())

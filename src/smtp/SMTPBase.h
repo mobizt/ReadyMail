@@ -152,7 +152,7 @@ namespace ReadyMailSMTP
 
         void stopImpl()
         {
-            if (smtp_ctx->client && serverStatus())
+            if (smtp_ctx->client && smtp_ctx->client->connected())
                 smtp_ctx->client->stop();
             serverStatus() = false;
             smtp_ctx->server_status->secured = false;
