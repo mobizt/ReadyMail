@@ -223,7 +223,7 @@ ESP_SSLClient ssl_client;
 ```
 To connect to the network, see [this example](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino)
 
-To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
 ### For Teensy Arduino
 
@@ -238,7 +238,7 @@ ESP_SSLClient ssl_client;
 ```
 To connect to the network, see [this example](https://github.com/PaulStoffregen/Ethernet/blob/master/examples/WebClient/WebClient.ino)
 
-To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
 ### For STM32 Arduino
 
@@ -250,7 +250,7 @@ EthernetClient basic_client;
 ESP_SSLClient ssl_client;
 ```
 
-To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
 ## Using GSM Network
 
@@ -266,7 +266,7 @@ ESP_SSLClient ssl_client;
 ```
 To connect to the network, see [this example](https://github.com/vshymanskyy/TinyGSM/blob/master/examples/WebClient/WebClient.ino)
 
-To set up SSL client, see [To Set Up ESP_SSLClient](#to-set-up-esp_sslclient).
+To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
 ## Using PPP Network (ESP32)
 
