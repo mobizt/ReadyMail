@@ -36,6 +36,10 @@ namespace ReadyMailIMAP
         void getBoundary(const String &line, const String &beginToken, const String &lastToken, int &beginIndex, int &lastIndex)
         {
             beginIndex = beginToken.length() && line.indexOf(beginToken) > -1 ? line.indexOf(beginToken) + beginToken.length() : 0;
+
+            while (line[beginIndex] == ' ') // skip sp
+                beginIndex++;
+
             if (beginToken[beginToken.length() - 1] == '(')
             {
                 lastIndex = beginIndex - 1;

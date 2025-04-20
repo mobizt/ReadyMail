@@ -87,6 +87,7 @@ namespace ReadyMailIMAP
                     print(imap_ctx);
                 }
             }
+            imap_ctx->cb.command_response.remove(0, imap_ctx->cb.command_response.length());
             resetProcessFlag();
             releaseSMTP();
             return false;

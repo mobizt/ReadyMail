@@ -349,7 +349,7 @@ namespace ReadyMailIMAP
         IMAPResponseCallback resp = NULL;
         DataCallback data = NULL;
         IMAPCustomComandCallback cmd = NULL;
-        String download_path;
+        String download_path, command_response;
 #if defined(ENABLE_FS)
         FileCallback file = NULL;
 #endif

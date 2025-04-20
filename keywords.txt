@@ -40,6 +40,7 @@ sendCommand KEYWORD2
 addAttachment   KEYWORD2
 addInlineImage  KEYWORD2
 isComplete  KEYWORD2
+getCmdResponse  KEYWORD2
 
 #######################################
 # Struct and Enum (KEYWORD3)
@@ -47,3 +48,6 @@ isComplete  KEYWORD2
 
 imap_state  KEYWORD3
 smtp_state  KEYWORD3
+SMTPStatus  KEYWORD3
+IMAPStatus  KEYWORD3
+readymail_file_operating_mode   KEYWORD3

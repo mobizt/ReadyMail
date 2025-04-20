@@ -148,8 +148,12 @@ namespace ReadyMailIMAP
                     break;
 
                 case imap_state_custom_command:
-                    if (imap_ctx->cb.cmd && cCode() != function_return_failure && cCode() != function_return_success)
-                        imap_ctx->cb.cmd(imap_ctx->cmd.c_str(), line.c_str());
+                    if (cCode() != function_return_failure && cCode() != function_return_success)
+                    {
+                        imap_ctx->cb.command_response = line;
+                        if (imap_ctx->cb.cmd)
+                            imap_ctx->cb.cmd(imap_ctx->cmd.c_str(), line.c_str());
+                    }
                     break;
 
                 default:

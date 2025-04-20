@@ -257,6 +257,8 @@ namespace ReadyMailIMAP
 
         std::vector<uint32_t> &searchResult() { return sender.msgNumVec(); }
 
+        String getCmdResponse() { return imap_ctx.cb.command_response; }
+
     private:
         IMAPConnection conn;
         IMAPResponse res;
