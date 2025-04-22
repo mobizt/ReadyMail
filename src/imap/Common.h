@@ -19,6 +19,8 @@
 
 #define DEFAULT_IDLE_TIMEOUT 8 * 60 * 1000
 
+using namespace ReadyMailCallbackNS;
+
 namespace ReadyMailIMAP
 {
     enum imap_function_return_code
