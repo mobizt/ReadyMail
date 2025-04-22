@@ -694,7 +694,7 @@ namespace ReadyMailSMTP
                             msg.file.close();
 
                         // open file read
-                        cAttach(msg).attach_file.callback(msg.file, cAttach(msg).attach_file.path.c_str(), xmailer_file_mode_open_read);
+                        cAttach(msg).attach_file.callback(msg.file, cAttach(msg).attach_file.path.c_str(), readymail_file_mode_open_read);
                         if (msg.file)
                         {
                             cAttach(msg).data_size = msg.file.size();

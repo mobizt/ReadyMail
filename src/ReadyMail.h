@@ -11,7 +11,7 @@
 #include "./core/ReadyCodec.h"
 #include "./core/NumString.h"
 
-#define READYMAIL_VERSION "0.0.5"
+#define READYMAIL_VERSION "0.0.6"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -75,9 +75,6 @@
 #if defined(ENABLE_FS)
 
 #if (defined(ESP8266) || defined(CORE_ARDUINO_PICO)) || (defined(ESP32) && __has_include(<SPIFFS.h>))
-#ifndef FLASH_SUPPORTS
-#define FLASH_SUPPORTS
-#endif
 
 #if !defined(FILE_OPEN_MODE_READ)
 #define FILE_OPEN_MODE_READ "r"

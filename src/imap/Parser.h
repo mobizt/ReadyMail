@@ -965,13 +965,13 @@ namespace ReadyMailIMAP
                 rd_print_to(name, 100, "%s.%s", part.c_str(), getField(cpart, non_multipart_field_type) == "message" ? "eml" : (getField(cpart, non_multipart_field_subtype) == "plain" ? "txt" : "html"));
             }
 
-            rd_print_to(cpart.filepath, 200, "/%s/%s", imap_ctx->options.fetch_uid.length() ? imap_ctx->options.fetch_uid.c_str() : imap_ctx->options.fetch_number.c_str(), name.c_str());
+            rd_print_to(cpart.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, name.c_str());
             if (imap_ctx->cb.file)
             {
                 String path = imap_ctx->cb.download_path.length() ? imap_ctx->cb.download_path + "/" : "";
                 path += cpart.filepath;
-                imap_ctx->cb.file(imap_ctx->file, path.c_str(), xmailer_file_mode_remove);
-                imap_ctx->cb.file(imap_ctx->file, path.c_str(), xmailer_file_mode_open_write);
+                imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_remove);
+                imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_open_write);
             }
 #endif
         }

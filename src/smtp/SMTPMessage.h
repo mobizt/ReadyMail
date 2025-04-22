@@ -185,7 +185,6 @@ namespace ReadyMailSMTP
     uint32_t timestamp = 0;
 
   private:
-    friend class MailClient;
     friend class SMTPSend;
     friend class SMTPBase;
 

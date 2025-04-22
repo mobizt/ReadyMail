@@ -11,6 +11,8 @@
 #define SMTP_ERROR_SEND_DATA -107
 #define SMTP_ERROR_PROCESSING -108
 
+using namespace ReadyMailCallbackNS;
+
 namespace ReadyMailSMTP
 {
 
