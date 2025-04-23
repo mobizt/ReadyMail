@@ -2,7 +2,7 @@
 
 The fast and lightweight async Email client library for Arduino.
 
-This Email client library supports sending the Email and reading, searching and appending the mailbox messages.
+This Email client library supports Email sending, reading, searching and appending.
 
 This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices. 
 
@@ -26,7 +26,7 @@ Starting the SMTP server connection first via `SMTPClient::connect` and providin
 
 Note that, the following code uses the lambda expression as the SMTPResponseCallback callback in `SMTPClient::connect`.
 
-The SSL connection mode and await options are set true by default which can be change via its parameters.
+The SSL connection mode and await options are set true by default which can be changed via its parameters.
 
 Then authenticate using `SMTPClient::authenticate` by providing the auth credentials and the type of authentication enum e.g. `readymail_auth_password`, `readymail_auth_access_token` and `readymail_auth_disabled`
 
