@@ -21,7 +21,7 @@
 #define WIFI_PASSWORD "_______"
 
 #define SSL_MODE true
-#define AUTHENTCATION true
+#define AUTHENTICATION true
 
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -71,7 +71,7 @@ void setup()
     if (!smtp.isConnected())
         return;
 
-    if (AUTHENTCATION)
+    if (AUTHENTICATION)
     {
         smtp.authenticate(AUTHOR_EMAIL, AUTHOR_PASSWORD, readymail_auth_password);
         if (!smtp.isAuthenticated())
