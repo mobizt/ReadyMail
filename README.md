@@ -71,11 +71,24 @@ if (smtp.isConnected())
         msg.addRecipient("User", "recipient email here");
         msg.text.content = "Hello";
         msg.html.content = "<html><body>Hello</body></html>";
-        msg.date = "Fri, 18 Apr 2025 11:42:30 +0300";
+        // Set the message date, select one
+        msg.timestamp = 1744951350; // The UNIX timestamp (seconds since Midnight Jan 1, 1970)
+        // msg.date = "Fri, 18 Apr 2025 11:42:30 +0300"; //  
+        // msg.addHeader("Date: Fri, 18 Apr 2025 11:42:30 +0300");
         smtp.send(msg);
     }
 }
 ```
+
+This library does not set the date header to SMTP message automatically unless system time was set in ESP8266 and ESP32 devices. 
+
+User needs to set the message date by one of the following methods before sending the SMTP message.
+
+Providing the RFC 2822 `Date` haeader using `SMTPMessage::addHeader("Date: ?????")` or using `SMTPMessage::date` with RFC 2822 date string or using `SMTPMessage::timestamp` with the UNIX timestamp. 
+
+For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
+
+
 ## Email Reading
 
 To receive or fetch the Email, only `IMAPClient` calss object is required. The received message will not store in device memory but redirects to the callback function (`IMAPCallbackData`) for user processing.
