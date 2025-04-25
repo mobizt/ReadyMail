@@ -109,7 +109,7 @@ typedef struct smtp_response_status_t
     String text;
 } SMTPStatus;
 ```
-The [negative value](/src/smtp/Common.h#L6-L12) of `errorCode` var represents the error of process otherwise no error. 
+The [negative value](/src/smtp/Common.h#L6-L12) of `errorCode` value represents the error of process otherwise no error. 
 
 The `statusCode` value represents the SMTP server response's status codes.
 
@@ -119,7 +119,9 @@ The `complete` value represents the sending process is completed or finished.
 
 When the sending process is finished, the `SMTPClient::isComplete()` will return true.
 
-The `SMTPClient::send` will return the status of sending process. When it retuns `true` when using in await mode, means the sending process is success while using in async mode, it represents the success of current `smtp_state` otherwise it fails at some `smtp_state`.
+The `SMTPClient::send` will return the status of sending process. When it returns `true` when using in await mode, which means the sending process is success.
+
+While using in async mode, it represents the success of current `smtp_state` otherwise it fails at some `smtp_state`.
 
 The `progressUpdated` value will use to show the uploading progress debug when the `SMTPResponseCallback` was called. 
 
@@ -156,8 +158,8 @@ void smtpStatusCallback(SMTPStatus status)
     }
     else
     {
-         // Sending complete handling here
-         ReadyMail.printf("Server Status: %d\n", status.statusCode);
+        // Sending complete handling here
+        ReadyMail.printf("Server Status: %d\n", status.statusCode);
     }
 
 }
@@ -176,7 +178,7 @@ When the `FileCallback` function was assigned to the `IMAPClient::fetch` or `IMA
 
 The user can limit the size of parts (text, message, application, audio and video) content to be ignored from download and redirect to `IMAPCallbackData`.
 
-The processes for server connection and authentication or `IMAPClient` are the same as `SMTPClient` except for no doman or IP requires in the `IMAPClient::connect` method.
+The processes for server connection and authentication for `IMAPClient` are the same as `SMTPClient` except for no domain or IP requires in the `IMAPClient::connect` method.
 
 The mailbox must be selected before fetching or working with its messages.
 
@@ -214,9 +216,9 @@ if (smtp.isConnected())
     smtp.authenticate("sender email here", "sender email password here", readymail_auth_password);
     if (smtp.isAuthenticated())
     {
-         imap.list(); // Optional. List all mailboxes.
-         imap.select("INBOX"); // Select the mailbox to fetch its message.
-         imap.fetch(imap.getMailbox().msgCount, dataCallback, NULL /* FileCallback */);
+        imap.list(); // Optional. List all mailboxes.
+        imap.select("INBOX"); // Select the mailbox to fetch its message.
+        imap.fetch(imap.getMailbox().msgCount, dataCallback, NULL /* FileCallback */);
     }
 }
 ```
@@ -233,11 +235,11 @@ typedef struct imap_response_status_t
     String text;
 } IMAPStatus;
 ```
-The [negative value](/src/imap/Common.h#L9-L18) of `errorCode` var represents the error of process otherwise no error. 
+The [negative value](/src/imap/Common.h#L9-L18) of `errorCode` value represents the error of process otherwise no error. 
 
-The `state` var represents the `imap_state` enum to show the current state of sending process.
+The `state` value represents the `imap_state` enum to show the current state of sending process.
 
-The `text` var shows the status information details which included the result of process and `errorCode` and its detail in case of error.
+The `text` value shows the status information details which included the result of process and `errorCode` and its detail in case of error.
 
 The code below shows how to get the information from the `IMAPStatus` data in the `IMAPResponseCallback` function.
 
@@ -272,7 +274,7 @@ The `filename`, `mime`, `blob`, `dataLength`, `size` and `dataIndex` are present
 
 Due to sometimes, the IMAP server returns incorrect octet size of non-base64 decoded text and html body part, then the `size` of `text/plain` and `text/html` content type `mime` will be zero for unknown.
 
-The `dataIndex` var represents the current index position of completed data.
+The `dataIndex` value represents the current index position of completed data.
 
 The size of data and information may not fit the available memory for storing in the device. It is suitable for data preview or data stream processing.
 
@@ -280,13 +282,13 @@ As this library does not provide the OTA update functionality as in the old libr
 
 For content and file downloads, please set the `FileCallback` to the fetching function.
 
-The `progressUpdated` var will use for the body part content fetching or downloading progress report.
+The `progressUpdated` value will use for the body part content fetching or downloading progress report.
 
 This `progressUpdated` is the member of `IMAPCallbackData` struct instead of `IMAPStatus` struct because it is optional and was used when data fetching or downloading is needed. 
 
 It represents the status when the progress percentage (`progress`) has changed  by 4 or 5 percents.
 
-The `searchCount` var shows the total messages that found from search.
+The `searchCount` value shows the total messages that found from search.
 
 The `msgList` is the search result that stores the array of message numbers or UIDs (if the keyword UID is provided in search criterial).
 
@@ -294,15 +296,15 @@ The `IMAPClient::searchResult()` will return the array of message numbers or UID
 
 The maximum number of messages that can be stored in `msgList` and the soring order was set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()`.
 
-The `currentMsgIndex` var shows the current index of message in the `msgList` that is currently fetching the envelope (headers).
+The `currentMsgIndex` value shows the current index of message in the `msgList` that is currently fetching the envelope (headers).
 
 The `header` object contains the list of message headers's name and its value.
 
-The `isComplete` var shows the complete status of fetching or searching process.
+The `isComplete` value shows the complete status of fetching or searching process.
 
-The `isEnvelope` var is used for checking whether the available data at this state is envelope (headers) information or body part content.
+The `isEnvelope` value is used for checking whether the available data at this state is envelope (headers) information or body part content.
 
-The `isSearch` var shows that the search result is available.
+The `isSearch` value shows that the search result is available.
 
 The code below shows how to get the data and information from the `IMAPCallbackData` data in the `DataCallback` function.
 
