@@ -283,16 +283,109 @@ Note that `FILE_OPEN_MODE_READ`, `FILE_OPEN_MODE_WRITE` and `FILE_OPEN_MODE_APPE
 User may need to assign his own file operations code (read, write, append and remove) in the `FileCallback` function.
 
 
-The more features usages are available in [examples](/examples/) folder.
+## Plain Text Connection
+
+To use library with plain connection (non-secure), the network besic client (Arduino Client derived class) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false`.
+
+```cpp
+#include <Ethernet.h>
+
+EthernetClient basic_client;
+SMTPClient smtp(basic_client);
+
+smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure */);
+
+```
+```cpp
+#include <Ethernet.h>
+
+EthernetClient basic_client;
+IMAPClient imap(basic_client);
+
+imap.connect("imap host", 143, statusCallback, false /* non-secure */);
+
+```
+
+
+## TLS Connection with STARTTLS
+
+The SSL client that supports protocol upgrades (from plain text to encrypted) e.g. `WiFiClientSecure` in ESP32 v3.x and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
+
+The `TLSHandshakeCallback` function and `startTLS` boolean option should be set to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
+
+The `success` param of the `TLSHandshakeCallback` function should be set to true inside the `TLSHandshakeCallback` when connection upgrades is finished before exiting the function otherwise the TLS handshake error will show.
+
+In case [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. WiFiClient will be assigned to the `ESP_SSLClient::setClient()`. The second parameter of `ESP_SSLClient::setClient()` should set to `false` to let the [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) starts connection to server in plain text mode.
+
+The library issues the STARTTLS command to upgrade and calling the `TLSHandshakeCallback` function that is provided to perform the TLS handshake and get the referenced handshake status.
+
+The port 587 is for SMTP and 143 is for IMAP connections with STARTTLS.
+
+```cpp
+
+#include <ESP_SSLClient.h>
+WiFiClient basic_client;
+ESP_SSLClient ssl_client;
+
+void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
+
+SMTPClient smtp(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
+
+ssl_client.setClient(&basic_client, false /* start in plain connection */);
+ssl_client.setInsecure();
+
+smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
+
+```
+```cpp
+#include <ESP_SSLClient.h>
+WiFiClient basic_client;
+ESP_SSLClient ssl_client;
+
+void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
+
+IMAPClient imap(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
+
+ssl_client.setClient(&basic_client, false /* start in plain connection */);
+ssl_client.setInsecure();
+
+imap.connect("imap host", 143, statusCallback);
+
+```
+
+## SSL Connection
+
+The SSL client e.g. `WiFiClientSecure` and `WiFiSSLClient` can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
+
+The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` are set to `true` by default and can be disgarded.
+
+```cpp
+#include <WiFiClientSecure.h>
+
+WiFiClientSecure ssl_client;
+SMTPClient smtp(ssl_client);
+
+smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
+
+```
+```cpp
+#include <WiFiClientSecure.h>
+
+WiFiClientSecure ssl_client;
+IMAPClient imap(ssl_client);
+
+imap.connect("imap host", 993, statusCallback);
+
+```
 
 <details>
-<summary>Click here for all devices usage.</summary>
+<summary>Click here for using SSL client in all devices.</summary>
 
-## Using WiFi Network
+### Using WiFi Network
 
 If user's Arduino boards have buit-in WiFi module or already equiped with WiFi capable MCUs, the platform's core SDK WiFi and netwowk (WiFi) SSL client libraries are needed.
 
-### For ESP32
+**For ESP32**
 
 ```cpp
 #include <WiFi.h>
@@ -300,7 +393,7 @@ If user's Arduino boards have buit-in WiFi module or already equiped with WiFi c
 WiFiClientSecure ssl_client;
 ```
 
-### For ESP8266
+**For ESP8266**
 
 ```cpp
 #include <ESP8266WiFi.h>
@@ -308,7 +401,7 @@ WiFiClientSecure ssl_client;
 WiFiClientSecure ssl_client;
 ```
 
-### For Reaspberry Pi Pico W and 2 W
+**For Reaspberry Pi Pico W and 2 W**
 
 ```cpp
 #include <WiFi.h>
@@ -316,7 +409,7 @@ WiFiClientSecure ssl_client;
 WiFiClientSecure ssl_client;
 ```
 
-### For Arduino® MKRx and Arduino® Nano RP2040
+**For Arduino® MKRx and Arduino® Nano RP2040**
 
 Arduino® MKR WiFi 1010, Arduino® Nano 33 IoT, Arduino® MKR Vidor 4000
 
@@ -325,14 +418,14 @@ Arduino® MKR WiFi 1010, Arduino® Nano 33 IoT, Arduino® MKR Vidor 4000
 WiFiSSLClient ssl_client;
 ```
 
-### For Arduino® MKR 1000 WIFI
+**For Arduino® MKR 1000 WIFI**
 
 ```cpp
 #include <WiFi101.h>
 WiFiSSLClient ssl_client;
 ```
 
-### For Arduino® UNO R4 WiFi (Renesas)
+**For Arduino® UNO R4 WiFi (Renesas)**
 
 ```cpp
 #include <WiFiS3.h>
@@ -340,7 +433,8 @@ WiFiSSLClient ssl_client;
 WiFiSSLClient ssl_client;
 ```
 
-### For Other Arduino WiFis
+**For Other Arduino WiFis**
+
 Arduino® GIGA R1 WiFi, Arduino® OPTA etc.
 
 ```cpp
@@ -349,9 +443,9 @@ Arduino® GIGA R1 WiFi, Arduino® OPTA etc.
 WiFiSSLClient ssl_client;
 ```
 
-## Using Ethernet Network
+### Using Ethernet Network
 
-### For ESP32
+**For ESP32**
 
 ```cpp
 #include <ETH.h>
@@ -359,9 +453,9 @@ WiFiSSLClient ssl_client;
 WiFiClientSecure ssl_client;
 ```
 
-To connect to the network, see [Ethernet examples](https://github.com/espressif/arduino-esp32/blob/master/libraries/Ethernet/examples)
+To connect to the network, see [Ethernet examples](https://github.com/espressif/arduino-esp32/blob/master/libraries/Ethernet/examples).
 
-### For ESP8266
+**For ESP8266**
 
 ```cpp
 #include <LwipEthernet.h>
@@ -371,11 +465,11 @@ Wiznet5500lwIP eth(16 /* Chip select pin */);
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 ```
-To connect to the network, see [this example](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino)
+To connect to the network, see [this example](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino).
 
 To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
-### For Teensy Arduino
+**For Teensy Arduino**
 
 ```cpp
 #include <SPI.h>
@@ -386,11 +480,11 @@ To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 EthernetClient basic_client;
 ESP_SSLClient ssl_client;
 ```
-To connect to the network, see [this example](https://github.com/PaulStoffregen/Ethernet/blob/master/examples/WebClient/WebClient.ino)
+To connect to the network, see [this example](https://github.com/PaulStoffregen/Ethernet/blob/master/examples/WebClient/WebClient.ino).
 
 To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
-### For STM32 Arduino
+**For STM32 Arduino**
 
 ```cpp
 #include <Ethernet.h>
@@ -402,7 +496,7 @@ ESP_SSLClient ssl_client;
 
 To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
-## Using GSM Network
+### Using GSM Network
 
 ```cpp
 // https://github.com/vshymanskyy/TinyGSM
@@ -414,21 +508,21 @@ TinyGsm modem(SerialAT);
 TinyGsmClient basic_client;
 ESP_SSLClient ssl_client;
 ```
-To connect to the network, see [this example](https://github.com/vshymanskyy/TinyGSM/blob/master/examples/WebClient/WebClient.ino)
+To connect to the network, see [this example](https://github.com/vshymanskyy/TinyGSM/blob/master/examples/WebClient/WebClient.ino).
 
 To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
 
-## Using PPP Network (ESP32)
+### Using PPP Network (ESP32)
 
 ```cpp
 #include <PPP.h>
 #include <WiFiClientSecure.h>
 WiFiClientSecure ssl_client;
 ```
-To connect to the network, see [this example](https://github.com/espressif/arduino-esp32/blob/master/libraries/PPP/examples/PPP_Basic/PPP_Basic.ino)
+To connect to the network, see [this example](https://github.com/espressif/arduino-esp32/blob/master/libraries/PPP/examples/PPP_Basic/PPP_Basic.ino).
 
 
-## Set Up ESP_SSLClient
+### Set Up ESP_SSLClient
 
 If ESP_SSLClient library was used in some device that uses external network module e.g. `STM32` and `Teensy` or when STARTTLS protocol is needed, the network client e.g. basic Arduino client sould be assigned.
 

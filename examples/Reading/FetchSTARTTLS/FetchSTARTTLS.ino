@@ -12,7 +12,7 @@
 #include "ReadyMail.h"
 
 #define IMAP_HOST "_______"
-#define IMAP_PORT 993
+#define IMAP_PORT 143
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 
