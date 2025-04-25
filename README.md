@@ -111,26 +111,58 @@ typedef struct smtp_response_status_t
 ```
 The [negative value](/src/smtp/Common.h#L6-L12) of `errorCode` var represents the error of process otherwise no error. 
 
-The `statusCode` var represents the SMTP server response's status codes.
+The `statusCode` value represents the SMTP server response's status codes.
 
-The `state` var represents the `smtp_state` enum to show the current state of sending process.
+The `state` value represents the `smtp_state` enum to show the current state of sending process.
 
-The `complete` var represents the sending process is completed or finished.
+The `complete` value represents the sending process is completed or finished.
 
 When the sending process is finished, the `SMTPClient::isComplete()` will return true.
 
 The `SMTPClient::send` will return the status of sending process. When it retuns `true` when using in await mode, means the sending process is success while using in async mode, it represents the success of current `smtp_state` otherwise it fails at some `smtp_state`.
 
-The `progressUpdated` var will use to show the uploading progress debug when the `SMTPResponseCallback` was called. 
+The `progressUpdated` value will use to show the uploading progress debug when the `SMTPResponseCallback` was called. 
 
 It represents the status when upload progress percentage (`progress`) has changed  by 4 or 5 percents.
 
-The `progress` var shows the percentage of current uploading progress.
+The `progress` value shows the percentage of current uploading progress.
 
-The `filename` var shows the current uploading file name.
+The `filename` value shows the current uploading file name.
 
-The `text` var shows the status information details which included the result of process and `errorCode` and its detail in case of error.
+The `text` value shows the status information details which included the result of process and `errorCode` and its detail in case of error.
 
+The code below shows how to get the information from the `SMTPStatus` data in the `SMTPResponseCallback` function. 
+
+```cpp
+void smtpStatusCallback(SMTPStatus status)
+{
+    // For debugging.
+
+    // If progressUpdated value is true, the callback was called due to the 
+    // attachment uploading progress is available.
+    // Showing the name of file that is uploading and the progress percentage.
+    if (status.progressUpdated) 
+        ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+     // otherwise, normal debugging status is available
+    else
+        ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
+
+    // For checking the sending result.
+
+    if (status.errorCode < 0)
+    {
+        // Sending error handling here
+        ReadyMail.printf("Process Error: %d\n", status.errorCode);
+    }
+    else
+    {
+         // Sending complete handling here
+         ReadyMail.printf("Server Status: %d\n", status.statusCode);
+    }
+
+}
+        
+```
 
 ## Email Reading
 
@@ -207,6 +239,16 @@ The `state` var represents the `imap_state` enum to show the current state of se
 
 The `text` var shows the status information details which included the result of process and `errorCode` and its detail in case of error.
 
+The code below shows how to get the information from the `IMAPStatus` data in the `IMAPResponseCallback` function.
+
+```cpp
+void imapStatusCallback(IMAPStatus status)
+{
+    // For debugging
+    ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
+}
+```
+
 ### IMAP Data Callback and Callback Data
 
 The `IMAPCallbackData` struct param of `DataCallback` function, provides the result data and information of IMAP functions.
@@ -261,6 +303,38 @@ The `isComplete` var shows the complete status of fetching or searching process.
 The `isEnvelope` var is used for checking whether the available data at this state is envelope (headers) information or body part content.
 
 The `isSearch` var shows that the search result is available.
+
+The code below shows how to get the data and information from the `IMAPCallbackData` data in the `DataCallback` function.
+
+```cpp
+void dataCallback(IMAPCallbackData data)
+{
+    // If headers info is available.
+    // Showing the message headers.
+    if (data.isEnvelope)
+    {
+        if (data.isSearch)
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
+
+        for (int i = 0; i < data.header.size(); i++)
+            ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
+    }
+    // otherwise, processing the body part content.
+    else
+    {
+        // Showing some information of content
+
+        if (data.progressUpdated)
+            ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.filename, data.mime, data.progress);
+
+        ReadyMail.printf("Data Index: %d, Length: %d, Size: %d\n", data.dataIndex, data.dataLength, data.size);
+
+        // Process the content (data.blob) here
+        
+    }
+}
+```
+
 
 ### IMAP Custom Comand Callback
 
