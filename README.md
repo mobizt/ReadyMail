@@ -1,5 +1,9 @@
 # ReadyMail #
 
+[![Github Stars](https://img.shields.io/github/stars/mobizt/ReadyMail?logo=github)](https://github.com/mobizt/ESP-Mail-Client/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/ReadyMail?logo=github)
+
+![arduino-library-badge](https://www.ardu-badge.com/badge/ReadyMail.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/ReadyMail.svg)
+
 The fast and lightweight async Email client library for Arduino.
 
 This Email client library supports Email sending, reading, searching and appending.
