@@ -281,7 +281,7 @@ namespace ReadyMailIMAP
     {
         int errorCode = 0;
         imap_state state = imap_state_prompt;
-        String text, tag;
+        String text;
     } IMAPStatus;
 
     struct imap_server_status_t

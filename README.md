@@ -88,6 +88,45 @@ Providing the RFC 2822 `Date` haeader using `SMTPMessage::addHeader("Date: ?????
 
 For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
 
+### SMTP Response Callback and Status Data
+
+The `SMTPStatus` struct param of `SMTPResponseCallback` function, provides the statuses of sending process for debugging purposes.
+
+```cpp
+typedef struct smtp_response_status_t
+{
+    int errorCode = 0;
+    int statusCode = 0;
+    smtp_state state = smtp_state_prompt;
+    bool complete = false;
+    bool progressUpdated = false;
+    int progress = 0;
+    String filename;
+    String text;
+} SMTPStatus;
+```
+The [negative value](/src/smtp/Common.h#L6-L12) of `errorCode` var represents the error of process otherwise no error. 
+
+The `statusCode` var represents the SMTP server response's status codes.
+
+The `state` var represents the `smtp_state` enum to show the current state of sending process.
+
+The `complete` var represents the sending process is completed or finished.
+
+When the sending process is finished, the `SMTPClient::isComplete()` will return true.
+
+The `SMTPClient::send` will return the status of sending process. When it retuns `true` when using in await mode, means the sending process is success while using in async mode, it represents the success of current `smtp_state` otherwise it fails at some `smtp_state`.
+
+The `progressUpdated` var will use to show the uploading progress debug when the `SMTPResponseCallback` was called. 
+
+It represents the status when upload progress percentage (`progress`) has changed  by 4 or 5 percents.
+
+The `progress` var shows the percentage of current uploading progress.
+
+The `filename` var shows the current uploading file name.
+
+The `text` var shows the status information details which included the result of process and `errorCode` and its detail in case of error.
+
 
 ## Email Reading
 
@@ -145,6 +184,100 @@ if (smtp.isConnected())
     }
 }
 ```
+
+### IMAP Response Callback and Status Data
+
+The `IMAPStatus` struct param of `IMAPResponseCallback` function, provides the statuses of IMAP functions's process for debugging purposes.
+
+```cpp
+typedef struct imap_response_status_t
+{
+    int errorCode = 0;
+    imap_state state = imap_state_prompt;
+    String text;
+} IMAPStatus;
+```
+The [negative value](/src/imap/Common.h#L9-L18) of `errorCode` var represents the error of process otherwise no error. 
+
+The `state` var represents the `imap_state` enum to show the current state of sending process.
+
+The `text` var shows the status information details which included the result of process and `errorCode` and its detail in case of error.
+
+### IMAP Data Callback and Callback Data
+
+The `IMAPCallbackData` struct param of `DataCallback` function, provides the result data and information of IMAP functions.
+
+```cpp
+typedef struct imap_callback_data
+{
+    const char *filename = "";
+    const char *mime = "";
+    const uint8_t *blob = nullptr;
+    uint32_t dataLength = 0, size = 0;
+    int progress = 0, dataIndex = 0, currentMsgIndex = 0;
+    uint32_t searchCount = 0;
+    std::vector<uint32_t> msgList;
+    std::vector<std::pair<String, String>> header;
+    bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
+} IMAPCallbackData;
+```
+
+The `filename`, `mime`, `blob`, `dataLength`, `size` and `dataIndex` are presented the file name, mime type, chunked data buffer, length of chunked data buffer, size of completed data, and index of chunked data of currently fetching body part content respectively.
+
+Due to sometimes, the IMAP server returns incorrect octet size of non-base64 decoded text and html body part, then the `size` of `text/plain` and `text/html` content type `mime` will be zero for unknown.
+
+The `dataIndex` var represents the current index position of completed data.
+
+The size of data and information may not fit the available memory for storing in the device. It is suitable for data preview or data stream processing.
+
+As this library does not provide the OTA update functionality as in the old library, the chunked binary content of firmware that is fetching can be used for the OTA update process.
+
+For content and file downloads, please set the `FileCallback` to the fetching function.
+
+The `progressUpdated` var will use for the body part content fetching or downloading progress report.
+
+This `progressUpdated` is the member of `IMAPCallbackData` struct instead of `IMAPStatus` struct because it is optional and was used when data fetching or downloading is needed. 
+
+It represents the status when the progress percentage (`progress`) has changed  by 4 or 5 percents.
+
+The `searchCount` var shows the total messages that found from search.
+
+The `msgList` is the search result that stores the array of message numbers or UIDs (if the keyword UID is provided in search criterial).
+
+The `IMAPClient::searchResult()` will return the array of message numbers or UID as in `msgList`.
+
+The maximum number of messages that can be stored in `msgList` and the soring order was set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()`.
+
+The `currentMsgIndex` var shows the current index of message in the `msgList` that is currently fetching the envelope (headers).
+
+The `header` object contains the list of message headers's name and its value.
+
+The `isComplete` var shows the complete status of fetching or searching process.
+
+The `isEnvelope` var is used for checking whether the available data at this state is envelope (headers) information or body part content.
+
+The `isSearch` var shows that the search result is available.
+
+### IMAP Custom Comand Callback
+
+The `IMAPCustomComandCallback` function which used with `IMAPClient::sendCommand()`, provides two parameters e.g. `cmd` that shows the current command and `response` that shows the untagged response of command except for the tagged responses that contains `OK`, `NO` and `BAD`.
+
+## File Upload and Download
+
+The `FileCallback` function that used with SMTP attachment (`Attachment::smtp_attach_file_config`), `IMAPClient::fetch()` and `IMAPClient::fetchUID()` for file operations.
+
+The parametes `file`, `filename`, and `mode` are provided. The `file` is the reference to the uninitialized `File` class object that defined internally in the `SMTPClient` and `IMAPClient` classes.
+
+User needs to assign his static or global defined `File` class object to this `file` reference.
+
+The `filename` provides the path and name of file to be processed.
+
+The `mode` is the `readymail_file_operating_mode` enum i.e. `readymail_file_mode_open_read`, `readymail_file_mode_open_write`, `readymail_file_mode_open_append` and `readymail_file_mode_remove`.
+
+Note that `FILE_OPEN_MODE_READ`, `FILE_OPEN_MODE_WRITE` and `FILE_OPEN_MODE_APPEND` are macros that are defined in this library for demonstation purpose.
+
+User may need to assign his own file operations code (read, write, append and remove) in the `FileCallback` function.
+
 
 The more features usages are available in [examples](/examples/) folder.
 

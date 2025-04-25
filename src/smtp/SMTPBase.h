@@ -64,17 +64,6 @@ namespace ReadyMailSMTP
                 return smtp_ctx->client ? smtp_ctx->client->write(data, len) : 0;
         }
 
-        void setStatus1(bool multiline = true)
-        {
-            if (smtp_ctx->status)
-            {
-                smtp_ctx->status->errorCode = 0;
-                if (smtp_ctx->status->text.indexOf("\r\n") > -1)
-                    smtp_ctx->status->text = smtp_ctx->status->text.substring(0, multiline ? smtp_ctx->status->text.lastIndexOf("\r\n") : smtp_ctx->status->text.indexOf("\r\n"));
-                print();
-            }
-        }
-
         void setDebugState(smtp_state state, const String &msg)
         {
             tState() = state;
