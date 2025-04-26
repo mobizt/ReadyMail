@@ -280,7 +280,7 @@ For OTA firmware update implementation, the chunked data and its information can
 
 When the `IMAPCallbackData::progressUpdated` value is `true`, the information that set to callback contains the progress of content fetching. Because of `IMAPCallbackData::size` will be zero for `text/plain` and `text/html` types content, the progress of this type of content fetching will not available.
 
-This progress (percentage) information of content fetching is optional and will be available only when user fetchs the message.
+This progress (percentage) information of content fetching is optional and will be available only when user fetched the message.
 
 
 The code below shows how to get the data and information from the `IMAPCallbackData` data in the `DataCallback` function.
@@ -319,7 +319,7 @@ void dataCallback(IMAPCallbackData data)
 The `IMAPCustomComandCallback` function which used with `IMAPClient::sendCommand()`, provides two parameters e.g. `cmd` that shows the current command and `response` that shows the untagged response of command except for the tagged responses that contains `OK`, `NO` and `BAD`.
 
 
-# Ports and Clients Selection #
+## Ports and Clients Selection
 
 When selecting some ports e.g. 587 for SMTP and 143 for IMAP, the proper network/SSL client should be used. The following sections showed how to select proper ports and Clients based on protocols.
 
