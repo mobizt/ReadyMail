@@ -44,7 +44,7 @@ namespace ReadyMailSMTP
 
             sys_yield();
             int readLen = readLine(line);
-            if (readTimeout() || !(smtp_ctx->client && smtp_ctx->client->connected()) )
+            if (readTimeout() || !(smtp_ctx->client && smtp_ctx->client->connected()))
             {
                 cCode() = function_return_failure;
                 goto exit;
@@ -174,7 +174,7 @@ namespace ReadyMailSMTP
 
                     // We will collect the status text starting from status code 334 and 4xx
                     // The status text of 334 will be used for debugging display of the base64 server challenge
-                    if (code == smtp_server_status_code_334 || code >= smtp_server_status_code_421)
+                    if (code < smtp_server_status_code_500 && (code == smtp_server_status_code_334 || code >= smtp_server_status_code_421))
                     {
                         // find the next sp
                         while (i < (int)resp.length() && resp[i] != ' ')

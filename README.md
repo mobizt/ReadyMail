@@ -51,6 +51,7 @@ The `ENABLE_SMTP` macro is required for using `SMTPClient` and `SMTPMessage` cla
 #define ENABLE_DEBUG
 #include "ReadyMail.h"
 
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
@@ -92,95 +93,73 @@ Providing the RFC 2822 `Date` haeader using `SMTPMessage::addHeader("Date: ?????
 
 For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
 
-### SMTP Response Callback and Status Data
+### SMTP Processing Information
 
-The `SMTPStatus` struct param of `SMTPResponseCallback` function, provides the statuses of sending process for debugging purposes.
+The `SMTPStatus` is the struct of processing information which can be obtained from the `SMTPClient::status()` function.
 
-```cpp
-typedef struct smtp_response_status_t
-{
-    int errorCode = 0;
-    int statusCode = 0;
-    smtp_state state = smtp_state_prompt;
-    bool complete = false;
-    bool progressUpdated = false;
-    int progress = 0;
-    String filename;
-    String text;
-} SMTPStatus;
-```
-The [negative value](/src/smtp/Common.h#L6-L12) of `errorCode` value represents the error of process otherwise no error. 
+This `SMTPStatus` is also available from the `SMTPResponseCallback` function that is assigned to the `SMTPClient::connect()` function.
 
-The `statusCode` value represents the SMTP server response's status codes.
+The `SMTPResponseCallback` function provides the instant processing information.
 
-The `state` value represents the `smtp_state` enum to show the current state of sending process.
+The `SMTPResponseCallback` callback function will be called when:
+1. The sending process infornation is available.
+2. The file upload information is available.
 
-The `complete` value represents the sending process is completed or finished.
+When the `SMTPStatus::progressUpdated` value is `true`, the information is from file upload process,  otherwise the information is from other sending process.
 
-When the sending process is finished, the `SMTPClient::isComplete()` will return true.
+When the sending process is finished, the `SMTPStatus::isComplete` value will be `true`.
 
-The `SMTPClient::send` will return the status of sending process. When it returns `true` when using in await mode, which means the sending process is success.
+When `SMTPStatus::isComplete` value is `true`, user can check the `SMTPStatus::errorCode` value for the error. The [negative](/src/smtp/Common.h#L6-L12) value means the error is occurred otherwise the sending process is fishished without error.
 
-While using in async mode, it represents the success of current `smtp_state` otherwise it fails at some `smtp_state`.
+The `SMTPStatus::statusCode` value provides the SMTP server returning status code.
 
-The `progressUpdated` value will use to show the uploading progress debug when the `SMTPResponseCallback` was called. 
+The `SMTPStatus::text` value provieds the status details which includes the result of each process state.
 
-It represents the status when upload progress percentage (`progress`) has changed  by 4 or 5 percents.
-
-The `progress` value shows the percentage of current uploading progress.
-
-The `filename` value shows the current uploading file name.
-
-The `text` value shows the status information details which included the result of process and `errorCode` and its detail in case of error.
-
-The code below shows how to get the information from the `SMTPStatus` data in the `SMTPResponseCallback` function. 
+The code example below shows how the `SMTPStatus` information are used. 
 
 ```cpp
 void smtpStatusCallback(SMTPStatus status)
 {
     // For debugging.
 
-    // If progressUpdated value is true, the callback was called due to the 
-    // attachment uploading progress is available.
-    // Showing the name of file that is uploading and the progress percentage.
+    // Showing the uploading info.
     if (status.progressUpdated) 
         ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
-     // otherwise, normal debugging status is available
+     // otherwise, showing the process state info.
     else
         ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
 
-    // For checking the sending result.
+    // To check the sending result when sending is completed.
 
-    if (status.errorCode < 0)
+    if(status.complete)
     {
-        // Sending error handling here
-        ReadyMail.printf("Process Error: %d\n", status.errorCode);
-    }
-    else
-    {
+        if (status.errorCode < 0)
+        {
+            // Sending error handling here
+            ReadyMail.printf("Process Error: %d\n", status.errorCode);
+        }
+        else
+        {
         // Sending complete handling here
         ReadyMail.printf("Server Status: %d\n", status.statusCode);
+        }
     }
-
 }
-        
 ```
 
 ## Email Reading
 
-To receive or fetch the Email, only `IMAPClient` calss object is required. The received message will not store in device memory but redirects to the callback function (`IMAPCallbackData`) for user processing.
+To receive or fetch the Email, only `IMAPClient` calss object is required.
 
-This requires less memory than storing the message. The little memory is required for the chunked buffer that sent to the user callback function. 
+The `IMAPDataCallback` and `FileCallback` functions can be assigned to the `IMAPClient::fetch` and `IMAPClient::fetchUID` functions.
 
-User can compile or store the message by himself.
+The `IMAPDataCallback` function provides the envelope (headers) and content stream of fetching message while the `FileCallback` function provides the file downloading.
 
-When the `FileCallback` function was assigned to the `IMAPClient::fetch` or `IMAPClient::fetchUID` function, the content will be downloaded as files automatically.
-
-The user can limit the size of parts (text, message, application, audio and video) content to be ignored from download and redirect to `IMAPCallbackData`.
+The size of content that allows for downloading or content streaming can be set.
 
 The processes for server connection and authentication for `IMAPClient` are the same as `SMTPClient` except for no domain or IP requires in the `IMAPClient::connect` method.
 
-The mailbox must be selected before fetching or working with its messages.
+The mailbox must be selected before fetching or working with the messages.
 
 ```cpp
 #include <Arduino.h>
@@ -191,6 +170,7 @@ The mailbox must be selected before fetching or working with its messages.
 #define ENABLE_DEBUG
 #include "ReadyMail.h"
 
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
@@ -223,141 +203,125 @@ if (smtp.isConnected())
 }
 ```
 
-### IMAP Response Callback and Status Data
+### IMAP Processing Information
 
-The `IMAPStatus` struct param of `IMAPResponseCallback` function, provides the statuses of IMAP functions's process for debugging purposes.
+The `IMAPStatus` is the struct of processing information which can be obtained from the `IMAPClient::status()` function.
 
-```cpp
-typedef struct imap_response_status_t
-{
-    int errorCode = 0;
-    imap_state state = imap_state_prompt;
-    String text;
-} IMAPStatus;
-```
-The [negative value](/src/imap/Common.h#L9-L18) of `errorCode` value represents the error of process otherwise no error. 
+This `IMAPStatus` is also available from the `IMAPResponseCallback` function that is assigned to the `IMAPClient::connect()` function.
 
-The `state` value represents the `imap_state` enum to show the current state of sending process.
+The `IMAPResponseCallback` function provides the instant processing information.
 
-The `text` value shows the status information details which included the result of process and `errorCode` and its detail in case of error.
+When the IMAP function process is finished, the `IMAPStatus::isComplete` value will be `true`.
 
-The code below shows how to get the information from the `IMAPStatus` data in the `IMAPResponseCallback` function.
+When `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatus::errorCode` value for the error. The [negative](/src/imap/Common.h#L9-L18) value means the error is occurred otherwise the sending process is fishished without error.
+
+The `IMAPStatus::text` value provieds the status details which includes the result of each process state.
+
+The code example below shows how the `IMAPStatus` information are used. 
 
 ```cpp
 void imapStatusCallback(IMAPStatus status)
 {
-    // For debugging
     ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
 }
 ```
 
-### IMAP Data Callback and Callback Data
+### IMAP Envelope Data and Content Stream
 
-The `IMAPCallbackData` struct param of `DataCallback` function, provides the result data and information of IMAP functions.
+The `IMAPDataCallback` function provides the stream of content that is currently fetching.
 
-```cpp
-typedef struct imap_callback_data
-{
-    const char *filename = "";
-    const char *mime = "";
-    const uint8_t *blob = nullptr;
-    uint32_t dataLength = 0, size = 0;
-    int progress = 0, dataIndex = 0, currentMsgIndex = 0;
-    uint32_t searchCount = 0;
-    std::vector<uint32_t> msgList;
-    std::vector<std::pair<String, String>> header;
-    bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
-} IMAPCallbackData;
-```
+The data sent to the `IMAPDataCallback` consists of envelope data and content stream.
 
-The `filename`, `mime`, `blob`, `dataLength`, `size` and `dataIndex` are presented the file name, mime type, chunked data buffer, length of chunked data buffer, size of completed data, and index of chunked data of currently fetching body part content respectively.
+Those data and information are available from `IMAPCallbackData` struct.
 
-Due to sometimes, the IMAP server returns incorrect octet size of non-base64 decoded text and html body part, then the `size` of `text/plain` and `text/html` content type `mime` will be zero for unknown.
+**Envelope Data**
 
-The `dataIndex` value represents the current index position of completed data.
+The envelope or headers information is available when the `IMAPDataCallback` function is assigned to the search and fetch functions.
 
-The size of data and information may not fit the available memory for storing in the device. It is suitable for data preview or data stream processing.
+The following envelope information is avaliable when `IMAPCallbackData::isEnvelope` value is `true`.
 
-As this library does not provide the OTA update functionality as in the old library, the chunked binary content of firmware that is fetching can be used for the OTA update process.
+The `header` object provides the list of message headers (name and value) at `currentMsgIndex` of the message numbers/UIDs list.
 
-For content and file downloads, please set the `FileCallback` to the fetching function.
+The additional information below is available when `IMAPCallbackData::isSearch` value is `true`.
 
-The `progressUpdated` value will use for the body part content fetching or downloading progress report.
+The `IMAPCallbackData::searchCount` value provides the total messages found (available when `IMAPCallbackData::isSearch` value is `true`).
 
-This `progressUpdated` is the member of `IMAPCallbackData` struct instead of `IMAPStatus` struct because it is optional and was used when data fetching or downloading is needed. 
+The `IMAPCallbackData::msgList` provides the array or list of message numbers/UIDs.
 
-It represents the status when the progress percentage (`progress`) has changed  by 4 or 5 percents.
+The list of message in case of search, can also be obtained from `IMAPClient::searchResult()` function.
 
-The `searchCount` value shows the total messages that found from search.
+The maximum numbers of messages that can be stored in the list and the soring order can be set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()` function.
 
-The `msgList` is the search result that stores the array of message numbers or UIDs (if the keyword UID is provided in search criterial).
+The `currentMsgIndex` value provides the index of message in the list.
 
-The `IMAPClient::searchResult()` will return the array of message numbers or UID as in `msgList`.
+**Content Stream**
 
-The maximum number of messages that can be stored in `msgList` and the soring order was set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()`.
+The following chunked data and its information are avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
 
-The `currentMsgIndex` value shows the current index of message in the `msgList` that is currently fetching the envelope (headers).
+The `IMAPCallbackData::blob`provides the chunked data.
 
-The `header` object contains the list of message headers's name and its value.
+The `IMAPCallbackData::dataIndex`provides the position of chunked data in `IMAPCallbackData::size`. 
 
-The `isComplete` value shows the complete status of fetching or searching process.
+The `IMAPCallbackData::dataLength` provides the length in byte of chunked data. 
 
-The `isEnvelope` value is used for checking whether the available data at this state is envelope (headers) information or body part content.
+The `IMAPCallbackData::size` provides the number of bytes of complete data. This size will be zero in case of `text/plain` and `text/html` content type due to the issue of incorrect non-multipart octets/transfer-size field of text part reports by some IMAP server.
 
-The `isSearch` value shows that the search result is available.
+If the content stream with `text/plain` and `text/html` types are need be stored in memory, the memory allocation should be re-allocate for incoming chunked data.
+
+The `IMAPCallbackData::mime` provides the content MIME type. 
+
+The `IMAPCallbackData::filename` provies the content name or file name.
+
+Both `IMAPCallbackData::mime` and `IMAPCallbackData::filename` can be used for file identifier.
+
+There is no total numbers of chunks information provided. Then zero from `IMAPCallbackData::dataIndex` value means the chunked data that sent to the callback is the first chunk while the last chunk is delivered when `IMAPCallbackData::isComplete` value is `true`. 
+
+For OTA firmware update implementation, the chunked data and its information can be used.
+
+When the `IMAPCallbackData::progressUpdated` value is `true`, the information that set to callback contains the progress of content fetching. Because of `IMAPCallbackData::size` will be zero for `text/plain` and `text/html` types content, the progress of this type of content fetching will not available.
+
+This progress (percentage) information of content fetching is optional and will be available only when user fetchs the message.
+
 
 The code below shows how to get the data and information from the `IMAPCallbackData` data in the `DataCallback` function.
 
 ```cpp
 void dataCallback(IMAPCallbackData data)
 {
-    // If headers info is available.
-    // Showing the message headers.
+    // Showing envelope data.
     if (data.isEnvelope)
     {
+        // Additional search info
         if (data.isSearch)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
-
+       
+        // Headers data
         for (int i = 0; i < data.header.size(); i++)
             ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
     }
-    // otherwise, processing the body part content.
+    // Processing content stream.
     else
     {
-        // Showing some information of content
-
+        // Showing the progress of content fetching 
         if (data.progressUpdated)
             ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.filename, data.mime, data.progress);
 
         ReadyMail.printf("Data Index: %d, Length: %d, Size: %d\n", data.dataIndex, data.dataLength, data.size);
 
-        // Process the content (data.blob) here
+        // The stream can be processed here.
         
     }
 }
 ```
 
-
-### IMAP Custom Comand Callback
+### IMAP Custom Comand Processing Information
 
 The `IMAPCustomComandCallback` function which used with `IMAPClient::sendCommand()`, provides two parameters e.g. `cmd` that shows the current command and `response` that shows the untagged response of command except for the tagged responses that contains `OK`, `NO` and `BAD`.
 
-## File Upload and Download
 
-The `FileCallback` function that used with SMTP attachment (`Attachment::smtp_attach_file_config`), `IMAPClient::fetch()` and `IMAPClient::fetchUID()` for file operations.
+# Ports and Clients Selection #
 
-The parametes `file`, `filename`, and `mode` are provided. The `file` is the reference to the uninitialized `File` class object that defined internally in the `SMTPClient` and `IMAPClient` classes.
-
-User needs to assign his static or global defined `File` class object to this `file` reference.
-
-The `filename` provides the path and name of file to be processed.
-
-The `mode` is the `readymail_file_operating_mode` enum i.e. `readymail_file_mode_open_read`, `readymail_file_mode_open_write`, `readymail_file_mode_open_append` and `readymail_file_mode_remove`.
-
-Note that `FILE_OPEN_MODE_READ`, `FILE_OPEN_MODE_WRITE` and `FILE_OPEN_MODE_APPEND` are macros that are defined in this library for demonstation purpose.
-
-User may need to assign his own file operations code (read, write, append and remove) in the `FileCallback` function.
-
+When selecting some ports e.g. 587 for SMTP and 143 for IMAP, the proper network/SSL client should be used. The following sections showed how to select proper ports and Clients based on protocols.
 
 ## Plain Text Connection
 
@@ -453,170 +417,6 @@ IMAPClient imap(ssl_client);
 imap.connect("imap host", 993, statusCallback);
 
 ```
-
-<details>
-<summary>Click here for using SSL client in all devices.</summary>
-
-### Using WiFi Network
-
-If user's Arduino boards have buit-in WiFi module or already equiped with WiFi capable MCUs, the platform's core SDK WiFi and netwowk (WiFi) SSL client libraries are needed.
-
-**For ESP32**
-
-```cpp
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
-WiFiClientSecure ssl_client;
-```
-
-**For ESP8266**
-
-```cpp
-#include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
-WiFiClientSecure ssl_client;
-```
-
-**For Reaspberry Pi Pico W and 2 W**
-
-```cpp
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
-WiFiClientSecure ssl_client;
-```
-
-**For Arduino® MKRx and Arduino® Nano RP2040**
-
-Arduino® MKR WiFi 1010, Arduino® Nano 33 IoT, Arduino® MKR Vidor 4000
-
-```cpp
-#include <WiFiNINA.h>
-WiFiSSLClient ssl_client;
-```
-
-**For Arduino® MKR 1000 WIFI**
-
-```cpp
-#include <WiFi101.h>
-WiFiSSLClient ssl_client;
-```
-
-**For Arduino® UNO R4 WiFi (Renesas)**
-
-```cpp
-#include <WiFiS3.h>
-#include <WiFiSSLClient.h>
-WiFiSSLClient ssl_client;
-```
-
-**For Other Arduino WiFis**
-
-Arduino® GIGA R1 WiFi, Arduino® OPTA etc.
-
-```cpp
-#include <WiFi.h>
-#include <WiFiSSLClient.h>
-WiFiSSLClient ssl_client;
-```
-
-### Using Ethernet Network
-
-**For ESP32**
-
-```cpp
-#include <ETH.h>
-#include <WiFiClientSecure.h>
-WiFiClientSecure ssl_client;
-```
-
-To connect to the network, see [Ethernet examples](https://github.com/espressif/arduino-esp32/blob/master/libraries/Ethernet/examples).
-
-**For ESP8266**
-
-```cpp
-#include <LwipEthernet.h>
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-Wiznet5500lwIP eth(16 /* Chip select pin */);
-WiFiClient basic_client;
-ESP_SSLClient ssl_client;
-```
-To connect to the network, see [this example](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino).
-
-To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
-
-**For Teensy Arduino**
-
-```cpp
-#include <SPI.h>
-// https://github.com/PaulStoffregen/Ethernet
-#include <Ethernet.h>
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-EthernetClient basic_client;
-ESP_SSLClient ssl_client;
-```
-To connect to the network, see [this example](https://github.com/PaulStoffregen/Ethernet/blob/master/examples/WebClient/WebClient.ino).
-
-To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
-
-**For STM32 Arduino**
-
-```cpp
-#include <Ethernet.h>
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-EthernetClient basic_client;
-ESP_SSLClient ssl_client;
-```
-
-To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
-
-### Using GSM Network
-
-```cpp
-// https://github.com/vshymanskyy/TinyGSM
-#include <TinyGsmClient.h>
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-
-TinyGsm modem(SerialAT);
-TinyGsmClient basic_client;
-ESP_SSLClient ssl_client;
-```
-To connect to the network, see [this example](https://github.com/vshymanskyy/TinyGSM/blob/master/examples/WebClient/WebClient.ino).
-
-To set up SSL client, see [Set Up ESP_SSLClient](#set-up-esp_sslclient).
-
-### Using PPP Network (ESP32)
-
-```cpp
-#include <PPP.h>
-#include <WiFiClientSecure.h>
-WiFiClientSecure ssl_client;
-```
-To connect to the network, see [this example](https://github.com/espressif/arduino-esp32/blob/master/libraries/PPP/examples/PPP_Basic/PPP_Basic.ino).
-
-
-### Set Up ESP_SSLClient
-
-If ESP_SSLClient library was used in some device that uses external network module e.g. `STM32` and `Teensy` or when STARTTLS protocol is needed, the network client e.g. basic Arduino client sould be assigned.
-
-Some options e.g. insecure connection (server SSL certificate skipping) and protocol upgrades are available.
-
-To start using with no SSL certificate, `ESP_SSLClient::setInsecure()` should be set.
-
-```cpp
-ssl_client.setClient(&basic_client);
-ssl_client.setInsecure();
-```
-
-The `ESP_SSLClient` library requires 85k program space.
-
-For using both `SMTP` and `IMAP` features with `ESP_SSLClient` will take approx. 170k program space.
-
-</details>
-
 
 # License #
 

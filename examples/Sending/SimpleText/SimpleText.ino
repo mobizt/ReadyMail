@@ -5,8 +5,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_SMTP  // Allow SMTP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_SMTP  // Allows SMTP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #include "ReadyMail.h"
 
@@ -23,16 +23,18 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
+// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
         ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the smtp_state enum defined in src/smtp/Common.h
 }
 
 void setMessageTime(SMTPMessage &msg, const String &date, uint32_t timestamp = 0)

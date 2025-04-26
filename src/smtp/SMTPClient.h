@@ -21,7 +21,7 @@ namespace ReadyMailSMTP
         SMTPResponse res;
         SMTPSend sender;
         smtp_server_status_t server_status;
-        smtp_response_status_t status;
+        smtp_response_status_t resp_status;
         smtp_context smtp_ctx;
         SMTPMessage amsg;
 
@@ -70,10 +70,11 @@ namespace ReadyMailSMTP
             server_status.start_tls = startTLS;
             smtp_ctx.client = &client;
             smtp_ctx.server_status = &server_status;
-            smtp_ctx.status = &status;
+            smtp_ctx.status = &resp_status;
             conn.begin(&smtp_ctx, tlsCallback, &res);
             sender.begin(&smtp_ctx, &res, &conn);
         }
+
         bool connect(const String &host, uint16_t port, const String &domain, SMTPResponseCallback responseCallback = NULL, bool ssl = true, bool await = true)
         {
             smtp_ctx.resp_cb = responseCallback;
@@ -82,9 +83,13 @@ namespace ReadyMailSMTP
                 return awaitLoop();
             return ret;
         }
+
         bool isAuthenticated() { return conn.isAuthenticated(); }
+
         bool authenticate(const String &email, const String &param, readymail_auth_type auth, bool await = true) { return authImpl(email, param, auth, await); }
+        
         bool isConnected() { return conn.isConnected(); }
+        
         bool send(SMTPMessage &message, bool await = true)
         {
             amsg.clear();
@@ -95,17 +100,20 @@ namespace ReadyMailSMTP
                 return awaitLoop();
             return ret;
         }
+
         void loop()
         {
             conn.loop();
             sender.loop();
         }
+
         void stop()
         {
             if (isConnected() && isAuthenticated())
                 logout(true);
             conn.stop();
         }
+
         bool logout(bool await = true)
         {
             bool ret = sender.sendQuit();
@@ -114,9 +122,7 @@ namespace ReadyMailSMTP
             return ret;
         }
 
-        bool isComplete() { return smtp_ctx.status->complete; }
-
-        smtp_state currentState() { return sender.cState(); }
+        SMTPStatus status(){ return *smtp_ctx.status;}
 
         uint32_t contextAddr() { return reinterpret_cast<uint32_t>(&smtp_ctx); }
     };

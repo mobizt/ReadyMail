@@ -5,9 +5,9 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_SMTP  // Allow SMTP class and data
-#define ENABLE_IMAP  // Allow IMAP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_SMTP  // Allows SMTP class and data
+#define ENABLE_IMAP  // Allows IMAP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #include "ReadyMail.h"
 
@@ -23,14 +23,15 @@
 #define AWAIT_MODE true
 #define FLAGS ""
 
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-// The processing status will show here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the imap_state enum defined in src/imap/Common.h
 }
 
 void setup()

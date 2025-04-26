@@ -392,12 +392,9 @@ namespace ReadyMailSMTP
 
     typedef struct smtp_response_status_t
     {
-        int errorCode = 0;
-        int statusCode = 0;
+        int errorCode = 0, statusCode = 0, progress = 0;
         smtp_state state = smtp_state_prompt;
-        bool complete = false;
-        bool progressUpdated = false;
-        int progress = 0;
+        bool isComplete = false, progressUpdated = false;
         String filename;
         String text;
     } SMTPStatus;

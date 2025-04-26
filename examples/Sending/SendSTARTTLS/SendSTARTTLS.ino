@@ -5,8 +5,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_SMTP  // Allow SMTP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_SMTP  // Allows SMTP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #include "ReadyMail.h"
 
@@ -24,25 +24,23 @@
 #include "WiFiClientImpl.h"
 WiFiClientImpl basic_client;
 
-// The SSL Client that support connection upgrades.
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 // https://github.com/mobizt/ESP_SSLClient
 #include <ESP_SSLClient.h>
 ESP_SSLClient ssl_client;
-
-// WiFiClientSecure in ESP32 v3.x is now supported STARTTLS,
-// to use it, please check its examples.
 
 void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
 
 SMTPClient smtp(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
 
+// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
         ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% complete\n", status.state, status.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the smtp_state enum defined in src/smtp/Common.h
 }
 
 void setup()

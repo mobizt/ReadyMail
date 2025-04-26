@@ -11,7 +11,7 @@
 #include "./core/ReadyCodec.h"
 #include "./core/NumString.h"
 
-#define READYMAIL_VERSION "0.0.7"
+#define READYMAIL_VERSION "0.0.8"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -144,7 +144,7 @@ typedef struct imap_callback_data
     std::vector<std::pair<String, String>> header;
     bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
 } IMAPCallbackData;
-typedef void (*DataCallback)(IMAPCallbackData data);
+typedef void (*IMAPDataCallback)(IMAPCallbackData data);
 
 #include "imap/MailboxInfo.h"
 #include "imap/IMAPClient.h"

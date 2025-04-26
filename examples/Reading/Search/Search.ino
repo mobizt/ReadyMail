@@ -5,8 +5,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_IMAP  // Allow IMAP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_IMAP  // Allows IMAP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #include "ReadyMail.h"
 
@@ -23,24 +23,28 @@
 #define MAX_SEARCH_RESULT 10
 #define RECENT_SORT true
 
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-// The processing status will show here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the imap_state enum defined in src/imap/Common.h
 }
 
-// The searching result message envelope goes here.
-void searchCb(IMAPCallbackData data)
+// For more information, see https://github.com/mobizt/ReadyMail#imap-enveloping-data-and-content-stream
+void dataCb(IMAPCallbackData data)
 {
-    if (data.isEnvelope) // For showing message headers.
+    // Showing envelope data.
+    if (data.isEnvelope)
     {
+        // Additional search info
         if (data.isSearch)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
 
+        // Headers data
         for (int i = 0; i < data.header.size(); i++)
             ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
     }
@@ -82,9 +86,7 @@ void setup()
     // Select INBOX mailbox.
     imap.select("INBOX", READ_ONLY_MODE);
 
-    // The search result will go to searchCb and imap.searchResult()
-    // The imap.searchResult() is the list of message UIDs or numbers and no other information e.g. headers stored.
-    imap.search("SEARCH ALL" /* criteria */, MAX_SEARCH_RESULT, RECENT_SORT, searchCb, AWAIT_MODE);
+    imap.search("SEARCH ALL" /* criteria */, MAX_SEARCH_RESULT, RECENT_SORT, dataCb, AWAIT_MODE);
 
     // If UID is provided in the search criteria,
     // the imap.searchResult() will contains the list of message UIDs otherwise the message numbers.

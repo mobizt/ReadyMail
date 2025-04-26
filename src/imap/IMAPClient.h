@@ -22,7 +22,7 @@ namespace ReadyMailIMAP
             server_status.start_tls = startTLS;
             imap_ctx.client = &client;
             imap_ctx.server_status = &server_status;
-            imap_ctx.status = &status;
+            imap_ctx.status = &resp_status;
             imap_ctx.mailboxes = &mailboxes;
             imap_ctx.auth_mode = true;
             conn.begin(&imap_ctx, cb, &res);
@@ -119,8 +119,8 @@ namespace ReadyMailIMAP
         }
 
         int available() { return imap_ctx.idle_available; }
-
-        imap_state currentState() { return sender.cState(); }
+        
+        IMAPStatus status(){ return *imap_ctx.status;}
 
         String idleStatus() { return imap_ctx.idle_status; }
 
@@ -201,7 +201,7 @@ namespace ReadyMailIMAP
         }
 #endif
 
-        bool search(const String &criteria, uint32_t searchLimit, bool recentSort, DataCallback dataCallback, bool await = true)
+        bool search(const String &criteria, uint32_t searchLimit, bool recentSort, IMAPDataCallback dataCallback, bool await = true)
         {
             if (imap_ctx.current_mailbox.length() > 0)
                 sender.setDebugState(imap_state_search, "Searching \"" + imap_ctx.current_mailbox + "\"...");
@@ -233,7 +233,7 @@ namespace ReadyMailIMAP
             return ret;
         }
 
-        bool fetchUID(uint32_t uid, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
+        bool fetchUID(uint32_t uid, IMAPDataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
         {
             validateMailboxesChange();
 #if defined(ENABLE_FS)
@@ -244,7 +244,7 @@ namespace ReadyMailIMAP
             return fetchImpl(uid, true, await, bodySizeLimit);
         }
 
-        bool fetch(uint32_t number, DataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
+        bool fetch(uint32_t number, IMAPDataCallback dataCallback, FileCallback fileCallback = NULL, bool await = true, uint32_t bodySizeLimit = 5 * 1024 * 1024, const String &downloadFolder = "")
         {
             validateMailboxesChange();
 #if defined(ENABLE_FS)
@@ -264,7 +264,7 @@ namespace ReadyMailIMAP
         IMAPResponse res;
         IMAPSend sender;
         imap_server_status_t server_status;
-        imap_response_status_t status;
+        imap_response_status_t resp_status;
         imap_context imap_ctx;
 
         bool awaitLoop()

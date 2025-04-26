@@ -349,7 +349,7 @@ namespace ReadyMailIMAP
     struct imap_callback
     {
         IMAPResponseCallback resp = NULL;
-        DataCallback data = NULL;
+        IMAPDataCallback data = NULL;
         IMAPCustomComandCallback cmd = NULL;
         String download_path, command_response;
 #if defined(ENABLE_FS)

@@ -5,8 +5,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_IMAP  // Allow IMAP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_IMAP  // Allows IMAP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #define ENABLE_FS // Allow filesystem integration
 #include "ReadyMail.h"
@@ -24,42 +24,46 @@
 #define MAX_CONTENT_SIZE 1024 * 1024 // Maximum size in bytes of the body parts (text and attachment) to be downloaded.
 #define BASE_DOWNLOAD_FOLDER "readymail"
 
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-// The processing status will show here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the imap_state enum defined in src/imap/Common.h
 }
 
-// The fetching (or searching result) message data goes here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-enveloping-data-and-content-stream
 void dataCb(IMAPCallbackData data)
 {
-    if (data.isEnvelope) // For showing message headers.
+    // Showing envelope data.
+    if (data.isEnvelope)
     {
+        // Additional search info
         if (data.isSearch)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
 
+        // Headers data
         for (int i = 0; i < data.header.size(); i++)
             ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
     }
-    else // For message body parts
+    // Processing content stream.
+    else
     {
-        // For showing text and html contents.
+        // Showing the text content
         if (strcmp(data.mime, "text/html") == 0 || strcmp(data.mime, "text/plain") == 0)
         {
-            if (data.dataIndex == 0)
+            if (data.dataIndex == 0) // Fist chunk
                 Serial.println("------------------");
             Serial.print((char *)data.blob);
-            if (data.isComplete)
+            if (data.isComplete) // Last chunk
                 Serial.println("------------------");
         }
         else
         {
-            // Other types contents can be processed here.
-
+            // Showing the progress of content fetching
             if (data.dataIndex == 0)
                 Serial.print("Downloading");
             if (data.progressUpdated)

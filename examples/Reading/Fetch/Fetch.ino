@@ -6,8 +6,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
-#define ENABLE_IMAP  // Allow IMAP class and data
-#define ENABLE_DEBUG // Allow debugging
+#define ENABLE_IMAP  // Allows IMAP class and data
+#define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #include "ReadyMail.h"
 
@@ -23,16 +23,15 @@
 #define AWAIT_MODE true
 #define MAX_CONTENT_SIZE 1024 * 1024 // Maximum size in bytes of the body parts (text and attachment) to be downloaded.
 
+// Important!
+// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-uint8_t *content = nullptr;
-
-// The processing status will show here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
-    // The status.state is the imap_state enum defined in src/imap/Common.h
 }
 
 void showMailboxInfo(MailboxInfo info)
@@ -58,68 +57,41 @@ void showMailboxInfo(MailboxInfo info)
     ReadyMail.printf("\n");
 }
 
-// This is how you can allocate the memory for storing all chunked data.
-void storeChunkedData(const char *filename, const char *mime, const uint8_t *data, int data_index, size_t data_len, size_t total_len, bool complete)
-{
-    if (!complete)
-    {
-        // Allocate memory for storing the whole content.
-        if (!content)
-            content = (uint8_t *)malloc(total_len);
-
-        if (content)
-            memcpy(content + data_index, data, data_len);
-    }
-    else
-    {
-        // Data is finished.
-        // Proocess your data here.
-        // The filename and mime type can be used.
-
-        // Free the data
-        if (content)
-            free(content);
-        content = nullptr;
-    }
-}
-
-// The fetching (or searching result) message data goes here.
+// For more information, see https://github.com/mobizt/ReadyMail#imap-enveloping-data-and-content-stream
 void dataCb(IMAPCallbackData data)
 {
-    if (data.isEnvelope) // For showing message headers.
+    // Showing envelope data.
+    if (data.isEnvelope)
     {
+        // Additional search info
         if (data.isSearch)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
 
+        // Headers data
         for (int i = 0; i < data.header.size(); i++)
             ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
     }
-    else // For message body parts
+    // Processing content stream.
+    else
     {
-        // For showing text and html contents.
+        // Showing the text content
         if (strcmp(data.mime, "text/html") == 0 || strcmp(data.mime, "text/plain") == 0)
         {
-            if (data.dataIndex == 0)
+            if (data.dataIndex == 0) // Fist chunk
                 Serial.println("------------------");
             Serial.print((char *)data.blob);
-            if (data.isComplete)
+            if (data.isComplete) // Last chunk
                 Serial.println("------------------");
         }
         else
         {
-            // Other types contents can be processed here.
-
-            // This is just showing the download progress
-            // To get the cercentage of data download, use data.progress
+            // Showing the progress of content fetching
             if (data.dataIndex == 0)
                 Serial.print("Downloading");
             if (data.progressUpdated)
                 Serial.print(".");
             if (data.isComplete)
                 Serial.println(" complete");
-
-            // storeChunkedData(data.filename, data.mime, data.blob, data.dataIndex, data.dataLength, data.size, data.isComplete);
-            // Note that, data.size will be zero for text and html content
         }
     }
 }
