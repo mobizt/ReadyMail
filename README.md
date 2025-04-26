@@ -226,7 +226,7 @@ void imapStatusCallback(IMAPStatus status)
 }
 ```
 
-### IMAP Envelope Data and Content Stream
+### IMAP Enveloping Data and Content Stream
 
 The `IMAPDataCallback` function provides the stream of content that is currently fetching.
 
