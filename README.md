@@ -323,7 +323,7 @@ The `IMAPCustomComandCallback` function which used with `IMAPClient::sendCommand
 
 When selecting some ports e.g. 587 for SMTP and 143 for IMAP, the proper network/SSL client should be used. The following sections showed how to select proper ports and Clients based on protocols.
 
-## Plain Text Connection
+### Plain Text Connection
 
 To use library with plain connection (non-secure), the network besic client (Arduino Client derived class) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false`.
 
@@ -347,7 +347,7 @@ imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 ```
 
 
-## TLS Connection with STARTTLS
+### TLS Connection with STARTTLS
 
 The SSL client that supports protocol upgrades (from plain text to encrypted) e.g. `WiFiClientSecure` in ESP32 v3.x and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
 
@@ -393,7 +393,7 @@ imap.connect("imap host", 143, statusCallback);
 
 ```
 
-## SSL Connection
+### SSL Connection
 
 The SSL client e.g. `WiFiClientSecure` and `WiFiSSLClient` can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
 
