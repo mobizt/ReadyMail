@@ -109,7 +109,7 @@ When the `SMTPStatus::progressUpdated` value is `true`, the information is from 
 
 When the sending process is finished, the `SMTPStatus::isComplete` value will be `true`.
 
-When `SMTPStatus::isComplete` value is `true`, user can check the `SMTPStatus::errorCode` value for the error. The [negative](/src/smtp/Common.h#L6-L12) value means the error is occurred otherwise the sending process is fishished without error.
+When the `SMTPStatus::isComplete` value is `true`, user can check the `SMTPStatus::errorCode` value for the error. The [negative](/src/smtp/Common.h#L6-L12) value means the error is occurred otherwise the sending process is finished without error.
 
 The `SMTPStatus::statusCode` value provides the SMTP server returning status code.
 
@@ -213,7 +213,7 @@ The `IMAPResponseCallback` function provides the instant processing information.
 
 When the IMAP function process is finished, the `IMAPStatus::isComplete` value will be `true`.
 
-When `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatus::errorCode` value for the error. The [negative](/src/imap/Common.h#L9-L18) value means the error is occurred otherwise the sending process is fishished without error.
+When the `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatus::errorCode` value for the error. The [negative](/src/imap/Common.h#L9-L18) value means the error is occurred otherwise the sending process is finished without error.
 
 The `IMAPStatus::text` value provieds the status details which includes the result of each process state.
 
