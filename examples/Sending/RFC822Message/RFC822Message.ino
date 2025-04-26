@@ -23,7 +23,7 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -136,7 +136,6 @@ void setup()
     addBlobAttachment(blueMsg, "blue.png", "image/png", "blue.png", (const uint8_t *)blueImg, strlen(blueImg), "base64");
     addBlobAttachment(blueMsg, "blue.txt", "text/plain", "blue.txt", blueText, sizeof(blueText));
     blueMsg.addMessage(pinkMsg, "pink", "pink.eml");
-
     smtp.send(blueMsg);
 }
 

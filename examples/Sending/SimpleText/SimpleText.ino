@@ -23,7 +23,7 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -97,7 +97,6 @@ void setup()
 
     // To prevent mail server spam or junk mail consideration.
     setMessageTime(msg, "Fri, 14 Mar 2025 09:13:23 +0300");
-
     smtp.send(msg);
 }
 

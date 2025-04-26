@@ -24,7 +24,7 @@
 #include "WiFiClientImpl.h"
 WiFiClientImpl basic_client;
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 // https://github.com/mobizt/ESP_SSLClient
 #include <ESP_SSLClient.h>
@@ -80,7 +80,6 @@ void setup()
     String bodyText = "Hello everyone.\n";
     msg.text.content = bodyText;
     msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
-
     smtp.send(msg);
 }
 

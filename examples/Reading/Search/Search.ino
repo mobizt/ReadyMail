@@ -23,7 +23,7 @@
 #define MAX_SEARCH_RESULT 10
 #define RECENT_SORT true
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);

@@ -43,7 +43,7 @@
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -150,7 +150,6 @@ void setup()
 
     camera_fb_t *fb = esp_camera_fb_get();
     addBlobAttachment(msg, "camera.jpg", "image/jpg", "camera.jpg", fb->buf, fb->len, "", "camera_image");
-
     smtp.send(msg);
 }
 

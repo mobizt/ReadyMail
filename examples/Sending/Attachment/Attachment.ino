@@ -21,7 +21,7 @@
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -144,7 +144,6 @@ void setup()
 
     addFileAttachment(msg, "orange.png", "image/png", "orange.png", fileCb, "/orange.png", "base64");
     addFileAttachment(msg, "blue.png", "image/png", "blue.png", fileCb, "/blue.png", "base64");
-
     smtp.send(msg);
 }
 

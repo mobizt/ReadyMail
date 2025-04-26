@@ -23,7 +23,7 @@
 #define AWAIT_MODE true
 #define FLAGS ""
 
-// Important!
+// Importance!
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
@@ -76,7 +76,7 @@ void setup()
     // The attachment can be included in the message as normal.
 
     // Append new message
-    imap.append(smtp_msg, FLAGS, "Thu, 16 Jun 2022 12:30:25 -0800 (PST)" /* date */, AWAIT_MODE);
+    imap.append(smtp_msg, FLAGS, "Thu, 16 Jun 2022 12:30:25 -0800 (PST)" /* rfc 2822 date */, AWAIT_MODE);
 }
 
 void loop()
