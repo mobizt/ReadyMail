@@ -30,9 +30,7 @@ WiFiClientImpl basic_client;
 #include <ESP_SSLClient.h>
 ESP_SSLClient ssl_client;
 
-void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
-
-SMTPClient smtp(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
+SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
 
 // For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
 void smtpCb(SMTPStatus status)

@@ -362,16 +362,14 @@ The library issues the STARTTLS command to upgrade and calling the `TLSHandshake
 The port 587 is for SMTP and 143 is for IMAP connections with STARTTLS.
 
 ```cpp
-
 #include <ESP_SSLClient.h>
+
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
+SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
 
-SMTPClient smtp(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
-
-ssl_client.setClient(&basic_client, false /* start in plain connection */);
+ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
@@ -379,14 +377,13 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 ```
 ```cpp
 #include <ESP_SSLClient.h>
+
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
+IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
 
-IMAPClient imap(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
-
-ssl_client.setClient(&basic_client, false /* start in plain connection */);
+ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
 imap.connect("imap host", 143, statusCallback);

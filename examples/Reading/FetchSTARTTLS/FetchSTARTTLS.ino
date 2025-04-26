@@ -33,9 +33,7 @@ WiFiClientImpl basic_client;
 #include <ESP_SSLClient.h>
 ESP_SSLClient ssl_client;
 
-void tlsHandshakeCb(bool &success) { success = ssl_client.connectSSL(); }
-
-IMAPClient imap(ssl_client, tlsHandshakeCb, true /* STARTTLS */);
+IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
 
 // For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
 void imapCb(IMAPStatus status)
