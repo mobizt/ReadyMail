@@ -73,7 +73,7 @@ namespace ReadyMailSMTP
             msg.cc_index = 0;
             msg.bcc_index = 0;
             msg.send_recipient_complete = false;
-            smtp_ctx->status->complete = false;
+            smtp_ctx->status->isComplete = false;
             clear(msg.buf);
             clear(msg.header);
             setXEnc(msg);
@@ -928,7 +928,7 @@ namespace ReadyMailSMTP
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
                         smtp_ctx->processing = false;
-                        smtp_ctx->status->complete = true;
+                        smtp_ctx->status->isComplete = true;
                         setDebug("The E-mail is sent successfully\n");
                         break;
 

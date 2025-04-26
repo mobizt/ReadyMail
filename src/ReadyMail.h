@@ -5,13 +5,13 @@
 #include <array>
 #include <vector>
 #include <algorithm>
-#include <time.h> 
+#include <time.h>
 #include <Client.h>
 #include "./core/ReadyTimer.h"
 #include "./core/ReadyCodec.h"
 #include "./core/NumString.h"
 
-#define READYMAIL_VERSION "0.0.8"
+#define READYMAIL_VERSION "0.0.9"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -167,7 +167,7 @@ public:
 #if defined(READYMAIL_PRINTF_BUFFER)
         const int size = READYMAIL_PRINTF_BUFFER;
 #else
-       const int size = 1024;
+        const int size = 1024;
 #endif
         char s[size];
         va_list va;
@@ -175,6 +175,13 @@ public:
         vsnprintf(s, size, format, va);
         va_end(va);
         READYMAIL_DEFAULT_DEBUG_PORT.print(s);
+    }
+
+    String getDateTimeString(time_t ts, const char *format)
+    {
+        char tbuf[100];
+        strftime(tbuf, 100, format, localtime(&ts));
+        return tbuf;
     }
 
 private:

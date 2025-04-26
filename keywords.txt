@@ -41,6 +41,7 @@ addAttachment   KEYWORD2
 addInlineImage  KEYWORD2
 isComplete  KEYWORD2
 getCmdResponse  KEYWORD2
+getDateTimeString   KEYWORD2
 
 #######################################
 # Struct and Enum (KEYWORD3)
