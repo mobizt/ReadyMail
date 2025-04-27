@@ -17,7 +17,7 @@ namespace ReadyMailIMAP
         IMAPParser() {}
         ~IMAPParser() {}
 
-        bool isNext(const String &line, char terminator, int &index, int &lastIndex)
+        bool next(const String &line, char terminator, int &index, int &lastIndex)
         {
             // Skip any escape sequence
             if (line[index] == '\\')
@@ -27,9 +27,9 @@ namespace ReadyMailIMAP
             return ret && index < lastIndex;
         }
 
-        void getEndToken(const String &line, char terminator, int &index, int &lastIndex)
+        void skip(const String &line, char terminator, int &index, int &lastIndex)
         {
-            while (isNext(line, terminator, index, lastIndex))
+            while (next(line, terminator, index, lastIndex))
                 index++;
         }
 
@@ -43,13 +43,13 @@ namespace ReadyMailIMAP
             if (beginToken[beginToken.length() - 1] == '(')
             {
                 lastIndex = beginIndex - 1;
-                getEndList(line, lastIndex, line.length() - 1);
+                skipL(line, lastIndex, line.length() - 1);
             }
             else
                 lastIndex = line.lastIndexOf(lastToken) > -1 ? line.lastIndexOf(lastToken) : line.length();
         }
 
-        void getEndList(const String &line, int &index, int lastIndex)
+        void skipL(const String &line, int &index, int lastIndex)
         {
             int list_count = 1;
             while (list_count > 0 && index < lastIndex)
@@ -102,7 +102,7 @@ namespace ReadyMailIMAP
             section = nullptr;
         }
 
-        String getNextToken(const String &line, int &i, int beginIndex, int lastIndex)
+        String nextToken(const String &line, int &i, int beginIndex, int lastIndex)
         {
             int pos1 = -1, pos2 = -1;
             while (i <= lastIndex)
@@ -120,20 +120,20 @@ namespace ReadyMailIMAP
                         pos2 = (line[i - 1] == ')') ? i - 1 : i;
                     else if (line[i] == '(')
                     {
-                        getEndList(line, i, lastIndex);
+                        skipL(line, i, lastIndex);
                         if (line[i + 1] == '(')
                             pos2 = i + 1;
                         else
                         {
-                            getEndToken(line, ' ', i, lastIndex);
+                            skip(line, ' ', i, lastIndex);
                             pos2 = i;
                         }
                     }
                     else if (line[i] == '"')
                     {
                         i++;
-                        getEndToken(line, '"', i, lastIndex);
-                        getEndToken(line, ' ', i, lastIndex);
+                        skip(line, '"', i, lastIndex);
+                        skip(line, ' ', i, lastIndex);
                         pos2 = line[i] == ')' ? i - 1 : i;
                     }
                 }
@@ -486,7 +486,7 @@ namespace ReadyMailIMAP
             int i = beginIndex;
             while (i <= lastIndex)
             {
-                token = getNextToken(line, i, beginIndex, lastIndex);
+                token = nextToken(line, i, beginIndex, lastIndex);
                 if (pos == count)
                     break;
                 count++;
@@ -528,7 +528,7 @@ namespace ReadyMailIMAP
 
             while (i <= lastIndex)
             {
-                String token = getNextToken(line, i, beginIndex, lastIndex);
+                String token = nextToken(line, i, beginIndex, lastIndex);
                 if (token.length())
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
@@ -636,7 +636,7 @@ namespace ReadyMailIMAP
                 int i = beginIndex;
                 while (i <= lastIndex)
                 {
-                    token = getNextToken(line, i, beginIndex, lastIndex);
+                    token = nextToken(line, i, beginIndex, lastIndex);
                     for (int i = imap_auth_cap_plain; i < imap_auth_cap_max_type; i++)
                     {
                         if (strcmp(token.c_str(), imap_auth_cap_token[i].text) == 0)
@@ -683,7 +683,7 @@ namespace ReadyMailIMAP
                     getBoundary(line, "FLAGS (", ")", beginIndex, lastIndex);
                     int i = beginIndex, count = 0;
                     while (i <= lastIndex)
-                        imap_ctx->idle_status += (count++ > 0 ? ", " : "") + getNextToken(line, i, beginIndex, lastIndex);
+                        imap_ctx->idle_status += (count++ > 0 ? ", " : "") + nextToken(line, i, beginIndex, lastIndex);
                     imap_ctx->idle_status += "] " + getToken(line, 0, "* ", "FETCH");
                 }
             }
@@ -705,7 +705,7 @@ namespace ReadyMailIMAP
             uint32_t msg_num = 0;
             while (i <= lastIndex)
             {
-                token = getNextToken(line, i, beginIndex, lastIndex);
+                token = nextToken(line, i, beginIndex, lastIndex);
 
                 if (token.length() == 0)
                     break;
@@ -730,7 +730,7 @@ namespace ReadyMailIMAP
             int i = beginIndex;
             while (i <= lastIndex)
             {
-                buf[count] = getNextToken(line, i, beginIndex, lastIndex);
+                buf[count] = nextToken(line, i, beginIndex, lastIndex);
                 if (buf[count][0] == '(' && buf[count][buf[count].length() - 1] == ')')
                     buf[count] = buf[count].substring(1, buf[count].length() - 1);
                 count++;
@@ -768,9 +768,9 @@ namespace ReadyMailIMAP
             while (i <= lastIndex)
             {
                 if (permanent)
-                    mailbox_info.permanentFlags.push_back(getNextToken(line, i, beginIndex, lastIndex));
+                    mailbox_info.permanentFlags.push_back(nextToken(line, i, beginIndex, lastIndex));
                 else
-                    mailbox_info.flags.push_back(getNextToken(line, i, beginIndex, lastIndex));
+                    mailbox_info.flags.push_back(nextToken(line, i, beginIndex, lastIndex));
             }
         }
 
@@ -783,7 +783,7 @@ namespace ReadyMailIMAP
             String addr_struct[4];
             while (i <= lastIndex)
             {
-                String token = getNextToken(line, i, beginIndex, lastIndex);
+                String token = nextToken(line, i, beginIndex, lastIndex);
                 if (token.length())
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
@@ -929,7 +929,7 @@ namespace ReadyMailIMAP
             int att_count = 0;
             while (i <= lastIndex)
             {
-                String token = getNextToken(line, i, beginIndex, lastIndex);
+                String token = nextToken(line, i, beginIndex, lastIndex);
                 if (token.length())
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
