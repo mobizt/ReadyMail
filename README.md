@@ -318,9 +318,9 @@ The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendComma
 
 As the library works with external network/SSL client, the client should work with protocols or ports that are used for server connection.
 
-The network client works only in plain text connection. Most SSL clients in Arduino framework supports SSL connection except for connection upgrades while some SSL client supports connecion upgrades. 
+The network client works only in plain text connection. Most SSL clients in Arduino framework support only SSL connection with no upgrades supported while some SSL client supports connecion upgrades. 
 
-The following sections showed how to select proper ports and Clients based on protocols.
+The following sections showed how to select proper ports and Clients based on the protocols.
 
 ### Plain Text Connection
 
