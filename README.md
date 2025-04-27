@@ -240,7 +240,7 @@ The envelope or headers information is available when the `IMAPDataCallback` fun
 
 The following envelope information is avaliable when `IMAPCallbackData::isEnvelope` value is `true`.
 
-The `header` object provides the list of message headers (name and value) at `currentMsgIndex` of the message numbers/UIDs list.
+The `IMAPCallbackData::header` object provides the list of message headers (name and value) at `IMAPCallbackData::currentMsgIndex` of the message numbers/UIDs list.
 
 The additional information below is available when `IMAPCallbackData::isSearch` value is `true`.
 
@@ -252,7 +252,7 @@ The list of message in case of search, can also be obtained from `IMAPClient::se
 
 The maximum numbers of messages that can be stored in the list and the soring order can be set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()` function.
 
-The `currentMsgIndex` value provides the index of message in the list.
+The `IMAPCallbackData::currentMsgIndex` value provides the index of message in the list.
 
 **Content Stream**
 
