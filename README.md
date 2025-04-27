@@ -26,9 +26,9 @@ Note that the SSL client or network client assigned to the `SMTPClient` class ob
 
 The `STARTTLS` options can be set in the advance usage.
 
-Starting the SMTP server connection first via `SMTPClient::connect` and providing the required parameters e.g. host, port, domain or IP and SMTPResponseCallback function.
+Starting the SMTP server connection first via `SMTPClient::connect` and providing the required parameters e.g. host, port, domain or IP and `SMTPResponseCallback` function.
 
-Note that, the following code uses the lambda expression as the SMTPResponseCallback callback in `SMTPClient::connect`.
+Note that, the following code uses the lambda expression as the `SMTPResponseCallback` callback in `SMTPClient::connect`.
 
 The SSL connection mode and await options are set true by default which can be changed via its parameters.
 
@@ -76,10 +76,7 @@ if (smtp.isConnected())
         msg.addRecipient("User", "recipient email here");
         msg.text.content = "Hello";
         msg.html.content = "<html><body>Hello</body></html>";
-        // Set the message date, select one
         msg.timestamp = 1744951350; // The UNIX timestamp (seconds since Midnight Jan 1, 1970)
-        // msg.date = "Fri, 18 Apr 2025 11:42:30 +0300"; //  
-        // msg.addHeader("Date: Fri, 18 Apr 2025 11:42:30 +0300");
         smtp.send(msg);
     }
 }
@@ -109,7 +106,7 @@ When the `SMTPStatus::progressUpdated` value is `true`, the information is from 
 
 When the sending process is finished, the `SMTPStatus::isComplete` value will be `true`.
 
-When the `SMTPStatus::isComplete` value is `true`, user can check the `SMTPStatus::errorCode` value for the error. The [negative](/src/smtp/Common.h#L6-L12) value means the error is occurred otherwise the sending process is finished without error.
+When the `SMTPStatus::isComplete` value is `true`, user can check the `SMTPStatus::errorCode` value for the error. The [negative value](/src/smtp/Common.h#L6-L12) means the error is occurred otherwise the sending process is finished without error.
 
 The `SMTPStatus::statusCode` value provides the SMTP server returning status code.
 
@@ -130,7 +127,6 @@ void smtpStatusCallback(SMTPStatus status)
         ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
 
     // To check the sending result when sending is completed.
-
     if(status.complete)
     {
         if (status.errorCode < 0)
@@ -140,8 +136,8 @@ void smtpStatusCallback(SMTPStatus status)
         }
         else
         {
-        // Sending complete handling here
-        ReadyMail.printf("Server Status: %d\n", status.statusCode);
+            // Sending complete handling here
+            ReadyMail.printf("Server Status: %d\n", status.statusCode);
         }
     }
 }
@@ -213,7 +209,7 @@ The `IMAPResponseCallback` function provides the instant processing information.
 
 When the IMAP function process is finished, the `IMAPStatus::isComplete` value will be `true`.
 
-When the `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatus::errorCode` value for the error. The [negative](/src/imap/Common.h#L9-L18) value means the error is occurred otherwise the sending process is finished without error.
+When the `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatus::errorCode` value for the error. The [negative value](/src/imap/Common.h#L9-L18) means the error is occurred otherwise the sending process is finished without error.
 
 The `IMAPStatus::text` value provieds the status details which includes the result of each process state.
 
@@ -282,8 +278,7 @@ When the `IMAPCallbackData::progressUpdated` value is `true`, the information th
 
 This progress (percentage) information of content fetching is optional and will be available only when user fetched the message.
 
-
-The code below shows how to get the data and information from the `IMAPCallbackData` data in the `DataCallback` function.
+The code below shows how to get the content stream and information from the `IMAPCallbackData` data in the `DataCallback` function.
 
 ```cpp
 void dataCallback(IMAPCallbackData data)
@@ -316,7 +311,7 @@ void dataCallback(IMAPCallbackData data)
 
 ### IMAP Custom Comand Processing Information
 
-The `IMAPCustomComandCallback` function which used with `IMAPClient::sendCommand()`, provides two parameters e.g. `cmd` that shows the current command and `response` that shows the untagged response of command except for the tagged responses that contains `OK`, `NO` and `BAD`.
+The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendCommand()` function, provides the untagged server response for the IMAP command.
 
 
 ## Ports and Clients Selection
@@ -346,20 +341,21 @@ imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 ```
 
-
 ### TLS Connection with STARTTLS
 
 The SSL client that supports protocol upgrades (from plain text to encrypted) e.g. `WiFiClientSecure` in ESP32 v3.x and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
 
-The `TLSHandshakeCallback` function and `startTLS` boolean option should be set to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
+The `TLSHandshakeCallback` function and `startTLS` boolean option should be assigned to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
 
 The `success` param of the `TLSHandshakeCallback` function should be set to true inside the `TLSHandshakeCallback` when connection upgrades is finished before exiting the function otherwise the TLS handshake error will show.
 
-In case [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. WiFiClient will be assigned to the `ESP_SSLClient::setClient()`. The second parameter of `ESP_SSLClient::setClient()` should set to `false` to let the [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) starts connection to server in plain text mode.
+When using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` will be assigned to the `ESP_SSLClient::setClient()`.
 
-The library issues the STARTTLS command to upgrade and calling the `TLSHandshakeCallback` function that is provided to perform the TLS handshake and get the referenced handshake status.
+The second parameter of `ESP_SSLClient::setClient()` should set with `false` to start the connection in plain text mode.
 
-The port 587 is for SMTP and 143 is for IMAP connections with STARTTLS.
+The library issues the `STARTTLS` command to request the connection upgrades and if server accepts this, the `TLSHandshakeCallback` function will be called to perform the TLS handshake.
+
+The connection upgrades is completed when the reference parameter, `success` that is obtained from `TLSHandshakeCallback` function is set with `true`.
 
 ```cpp
 #include <ESP_SSLClient.h>
