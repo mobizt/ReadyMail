@@ -318,13 +318,13 @@ The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendComma
 
 As the library works with external network/SSL client, the client that was selected, should work with protocols or ports that are used for the server connection.
 
-The network client works only in plain text connection. Most SSL clients in Arduino framework support only SSL connection with no upgrades supported while some SSL client supports connecion upgrades. 
+The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`). 
 
 The following sections showed how to select proper ports and Clients based on the protocols.
 
 ### Plain Text Connection
 
-In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for skipping the TLS handshake.
+In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for using in plain text mode.
 
 **SMTP Port 25**
 ```cpp
