@@ -316,12 +316,17 @@ The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendComma
 
 ## Ports and Clients Selection
 
-When selecting some ports e.g. 587 for SMTP and 143 for IMAP, the proper network/SSL client should be used. The following sections showed how to select proper ports and Clients based on protocols.
+As the library works with external network/SSL client, the client should work with protocols or ports that are used for server connection.
+
+The network client works only in plain text connection. Most SSL clients in Arduino framework supports SSL connection except for connection upgrades while some SSL client supports connecion upgrades. 
+
+The following sections showed how to select proper ports and Clients based on protocols.
 
 ### Plain Text Connection
 
-To use library with plain connection (non-secure), the network besic client (Arduino Client derived class) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false`.
+In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for skipping the TLS handshake.
 
+**SMTP Port 25**
 ```cpp
 #include <Ethernet.h>
 
@@ -331,6 +336,7 @@ SMTPClient smtp(basic_client);
 smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure */);
 
 ```
+**IMAP Port 143**
 ```cpp
 #include <Ethernet.h>
 
@@ -343,20 +349,17 @@ imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 ### TLS Connection with STARTTLS
 
-The SSL client that supports protocol upgrades (from plain text to encrypted) e.g. `WiFiClientSecure` in ESP32 v3.x and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
+The SSL client that supports the protocol upgrades (from plain text to encrypted) is required.
+
+There are two SSL clients that currently supports protocol upgrades i.e. ESP32 v3.x's `WiFiClientSecure` and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient).
 
 The `TLSHandshakeCallback` function and `startTLS` boolean option should be assigned to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
 
-The `success` param of the `TLSHandshakeCallback` function should be set to true inside the `TLSHandshakeCallback` when connection upgrades is finished before exiting the function otherwise the TLS handshake error will show.
+Note that, when using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` sould be assigned to `ESP_SSLClient::setClient()` and the second parameter should be  `false` to start the connection in plain text mode.
 
-When using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` will be assigned to the `ESP_SSLClient::setClient()`.
+When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should set `true`.
 
-The second parameter of `ESP_SSLClient::setClient()` should set with `false` to start the connection in plain text mode.
-
-The library issues the `STARTTLS` command to request the connection upgrades and if server accepts this, the `TLSHandshakeCallback` function will be called to perform the TLS handshake.
-
-The connection upgrades is completed when the reference parameter, `success` that is obtained from `TLSHandshakeCallback` function is set with `true`.
-
+**SMTP Port 587**
 ```cpp
 #include <ESP_SSLClient.h>
 
@@ -371,6 +374,7 @@ ssl_client.setInsecure();
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
+**IMAP Port 143**
 ```cpp
 #include <ESP_SSLClient.h>
 
@@ -388,10 +392,11 @@ imap.connect("imap host", 143, statusCallback);
 
 ### SSL Connection
 
-The SSL client e.g. `WiFiClientSecure` and `WiFiSSLClient` can be assigned to the `SMTPClient` and `IMAPClient` classes constructors.
+All SSL clients support this mode e.g. `WiFiClientSecure` and `WiFiSSLClient`.
 
 The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` are set to `true` by default and can be disgarded.
 
+**SMTP Port 465**
 ```cpp
 #include <WiFiClientSecure.h>
 
@@ -401,6 +406,7 @@ SMTPClient smtp(ssl_client);
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
+**IMAP Port 993**
 ```cpp
 #include <WiFiClientSecure.h>
 
