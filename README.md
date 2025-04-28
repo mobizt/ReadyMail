@@ -187,10 +187,10 @@ auto dataCallback = [](IMAPCallbackData data)
 };
 
 imap.connect("imap host here", 993, statusCallback);
-if (smtp.isConnected())
+if (imap.isConnected())
 {
-    smtp.authenticate("sender email here", "sender email password here", readymail_auth_password);
-    if (smtp.isAuthenticated())
+    imap.authenticate("sender email here", "sender email password here", readymail_auth_password);
+    if (imap.isAuthenticated())
     {
         imap.list(); // Optional. List all mailboxes.
         imap.select("INBOX"); // Select the mailbox to fetch its message.
