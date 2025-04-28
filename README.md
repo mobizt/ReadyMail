@@ -127,7 +127,7 @@ void smtpStatusCallback(SMTPStatus status)
         ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
 
     // To check the sending result when sending is completed.
-    if(status.complete)
+    if(status.isComplete)
     {
         if (status.errorCode < 0)
         {
