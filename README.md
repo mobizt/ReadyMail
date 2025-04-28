@@ -351,15 +351,15 @@ imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 The SSL client that supports the protocol upgrades (from plain text to encrypted) is required.
 
-There are two SSL clients that currently supports protocol upgrades i.e. ESP32 v3.x's `WiFiClientSecure` and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient).
+There are two SSL clients that currently support protocol upgrades i.e. ESP32 v3.x's `WiFiClientSecure` and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient).
 
 The `TLSHandshakeCallback` function and `startTLS` boolean option should be assigned to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
 
 Note that, when using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` sould be assigned to `ESP_SSLClient::setClient()` and the second parameter should be  `false` to start the connection in plain text mode.
 
-When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should set `true`.
+When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should be set (`true`).
 
-**SMTP Port 587**
+**SMTP Port 587 (ESP_SSLClient)**
 ```cpp
 #include <ESP_SSLClient.h>
 
@@ -374,7 +374,22 @@ ssl_client.setInsecure();
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
-**IMAP Port 143**
+**SMTP Port 587 (ESP32 v3 WiFiClientSecure)**
+```cpp
+#include <WiFiClientSecure.h>
+
+WiFiClientSecure ssl_client;
+
+SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true /* STARTTLS */);
+
+ssl_client.setInsecure();
+ssl_client.setPlainStart();
+
+smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
+
+```
+
+**IMAP Port 143 (ESP_SSLClient)**
 ```cpp
 #include <ESP_SSLClient.h>
 
@@ -385,6 +400,21 @@ IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL()
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
+
+imap.connect("imap host", 143, statusCallback);
+
+```
+
+**IMAP Port 143 (ESP32 v3 WiFiClientSecure)**
+```cpp
+#include <WiFiClientSecure.h>
+
+WiFiClientSecure ssl_client;
+
+IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true /* STARTTLS */);
+
+ssl_client.setInsecure();
+ssl_client.setPlainStart();
 
 imap.connect("imap host", 143, statusCallback);
 
