@@ -366,7 +366,7 @@ When the TLS handshake is done inside the `TLSHandshakeCallback` function, the r
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
+SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
@@ -380,7 +380,7 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 WiFiClientSecure ssl_client;
 
-SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true /* STARTTLS */);
+SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
@@ -396,7 +396,7 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true /* STARTTLS */);
+IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
@@ -411,7 +411,7 @@ imap.connect("imap host", 143, statusCallback);
 
 WiFiClientSecure ssl_client;
 
-IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true /* STARTTLS */);
+IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
