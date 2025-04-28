@@ -43,7 +43,7 @@
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
 
-// Importance!
+// [Importance!]
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);

@@ -23,7 +23,7 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
-// Importance!
+// [Importance!]
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);

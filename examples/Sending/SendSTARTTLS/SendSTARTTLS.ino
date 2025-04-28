@@ -24,7 +24,7 @@
 #include "WiFiClientImpl.h"
 WiFiClientImpl basic_client;
 
-// Importance!
+// [Importance!]
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 // https://github.com/mobizt/ESP_SSLClient
 #include <ESP_SSLClient.h>

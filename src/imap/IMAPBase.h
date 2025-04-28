@@ -148,9 +148,11 @@ namespace ReadyMailIMAP
 #endif
         }
 
+        bool serverConnected() { return imap_ctx->client && imap_ctx->client->connected(); }
+
         void stopImpl()
         {
-            if (imap_ctx->client && imap_ctx->client->connected())
+            if (serverConnected())
                 imap_ctx->client->stop();
             imap_ctx->server_status->connected = false;
             imap_ctx->server_status->secured = false;

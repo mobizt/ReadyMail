@@ -23,7 +23,7 @@
 #define AWAIT_MODE true
 #define MAX_CONTENT_SIZE 1024 * 1024 // Maximum size in bytes of the body parts (text and attachment) to be downloaded.
 
-// Importance!
+// [Importance!]
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);

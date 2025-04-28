@@ -117,7 +117,7 @@ namespace ReadyMailSMTP
             this->port = port;
             smtp_ctx->ssl_mode = ssl;
 
-            if (smtp_ctx->client && smtp_ctx->client->connected())
+            if (serverConnected())
                 smtp_ctx->client->stop();
 
             if (domain.length())
@@ -126,7 +126,7 @@ namespace ReadyMailSMTP
             return connectImpl();
         }
 
-        bool isConnected() { return smtp_ctx->client && smtp_ctx->client->connected() && smtp_ctx->server_status->server_greeting_ack; }
+        bool isConnected() { return serverConnected() && smtp_ctx->server_status->server_greeting_ack; }
 
         smtp_function_return_code loop()
         {

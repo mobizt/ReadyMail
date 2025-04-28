@@ -11,7 +11,7 @@
 #include "./core/ReadyCodec.h"
 #include "./core/NumString.h"
 
-#define READYMAIL_VERSION "0.0.9"
+#define READYMAIL_VERSION "0.0.10"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT

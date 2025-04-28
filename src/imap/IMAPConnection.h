@@ -26,7 +26,7 @@ namespace ReadyMailIMAP
         {
             this->host = host;
             this->port = port;
-            if (imap_ctx->client && imap_ctx->client->connected())
+            if (serverConnected())
                 imap_ctx->client->stop();
             return connectImpl();
         }
@@ -183,7 +183,7 @@ namespace ReadyMailIMAP
             return imap_ctx->server_status->ret;
         }
 
-        bool isConnected() { return imap_ctx->client && imap_ctx->client->connected() && imap_ctx->server_status->server_greeting_ack; }
+        bool isConnected() { return serverConnected() && imap_ctx->server_status->server_greeting_ack; }
 
         bool checkCap()
         {
@@ -317,7 +317,10 @@ namespace ReadyMailIMAP
                 setDebugState(imap_state_start_tls, "Performing TLS handshake...");
                 tls_cb(imap_ctx->server_status->secured);
                 if (imap_ctx->server_status->secured)
+                {
+                    setState(imap_state_start_tls_ack);
                     setDebugState(imap_state_start_tls_ack, "TLS handshake done");
+                }
                 else
                 {
                     stop();

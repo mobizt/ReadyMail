@@ -30,9 +30,11 @@ namespace ReadyMailIMAP
 
         imap_function_return_code handleResponse()
         {
-            if (imap_ctx->options.skipping && (cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_structure || cState() == imap_state_fetch_body_part))
+            sys_yield();
+            bool err = !serverConnected() || !imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout();
+            if (err || (imap_ctx->options.skipping && (cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_structure || cState() == imap_state_fetch_body_part)))
             {
-                cCode() = function_return_success;
+                cCode() = err ? function_return_failure : function_return_success;
                 return cCode();
             }
 
@@ -40,18 +42,9 @@ namespace ReadyMailIMAP
             if (!imap_ctx->options.multiline)
                 clear(line);
 
-            sys_yield();
-
             int readLen = readLine(line);
-            if (!(imap_ctx->client && imap_ctx->client->connected()) || (!imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout()))
-            {
-                cCode() = function_return_failure;
-                goto exit;
-            }
-
             if (readLen > 0)
             {
-
 #if defined(READYMAIL_CORE_DEBUG)
                 if (cState() != imap_state_search && cState() != imap_state_fetch_body_part && !imap_ctx->options.multiline)
                     setDebug(imap_ctx, line, true);
@@ -141,7 +134,7 @@ namespace ReadyMailIMAP
                     if (line[0] == '+')
                     {
                         cCode() = function_return_success;
-                        goto exit;
+                        return cCode();
                     }
                     else if (line[0] == '*' && cState() == imap_state_idle)
                         parser.parseIdle(line, mailbox_info, imap_ctx);
@@ -163,7 +156,7 @@ namespace ReadyMailIMAP
 
             if (cType() == imap_response_undefined && cState() == imap_state_initial_state)
                 cCode() = function_return_continue;
-        exit:
+
             return cCode();
         }
 

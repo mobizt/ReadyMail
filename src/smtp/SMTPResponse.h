@@ -30,26 +30,17 @@ namespace ReadyMailSMTP
 
         smtp_function_return_code handleResponse()
         {
-            cCode() = function_return_undefined;
-            bool ret = false;
-            String line;
-
-            if (smtp_ctx->accumulate || smtp_ctx->imap_mode)
+            sys_yield();
+            if (smtp_ctx->accumulate || smtp_ctx->imap_mode || readTimeout() || !serverConnected())
             {
-                cCode() = function_return_success;
+                cCode() = smtp_ctx->accumulate || smtp_ctx->imap_mode ? function_return_success : function_return_failure;
                 return cCode();
             }
 
-            smtp_ctx->canForward = false;
-
-            sys_yield();
+            cCode() = function_return_undefined;
+            bool ret = false;
+            String line;
             int readLen = readLine(line);
-            if (readTimeout() || !(smtp_ctx->client && smtp_ctx->client->connected()))
-            {
-                cCode() = function_return_failure;
-                goto exit;
-            }
-
             if (readLen > 0)
             {
                 response += line;
@@ -61,14 +52,14 @@ namespace ReadyMailSMTP
                 if (statusCode() == 0 && cState() == smtp_state_initial_state)
                 {
                     cCode() = function_return_continue;
-                    goto exit;
+                    return cCode();
                 }
 
                 // get the status code again for unexpected return code
                 if (cState() == smtp_state_start_tls || statusCode() == 0)
                     getResponseStatus(response, smtp_server_status_code_0, 0, *smtp_ctx->status);
 #if defined(READYMAIL_CORE_DEBUG)
-                if (statusCode() > 0 && statusCode() < 500)
+                if (statusCode() < 500)
                     setDebug(line, true);
 #endif
                 // positive completion
@@ -114,7 +105,6 @@ namespace ReadyMailSMTP
 
             cCode() = !complete ? function_return_continue : (ret ? function_return_success : function_return_failure);
 
-        exit:
             return cCode();
         }
 

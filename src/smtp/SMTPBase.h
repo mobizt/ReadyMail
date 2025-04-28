@@ -139,9 +139,11 @@ namespace ReadyMailSMTP
             return true;
         }
 
+        bool serverConnected() { return smtp_ctx->client && smtp_ctx->client->connected(); }
+
         void stopImpl()
         {
-            if (smtp_ctx->client && smtp_ctx->client->connected())
+            if (serverConnected())
                 smtp_ctx->client->stop();
             serverStatus() = false;
             smtp_ctx->server_status->secured = false;

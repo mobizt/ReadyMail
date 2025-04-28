@@ -189,8 +189,6 @@ namespace ReadyMailSMTP
                 }
                 msg.buf += "\r\n";
 
-                smtp_ctx->canForward = true;
-
                 if (!sendBuffer(msg.buf))
                     return false;
 

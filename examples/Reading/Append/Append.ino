@@ -23,7 +23,7 @@
 #define AWAIT_MODE true
 #define FLAGS ""
 
-// Importance!
+// [Importance!]
 // Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);

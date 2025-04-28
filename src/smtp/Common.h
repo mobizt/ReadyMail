@@ -446,15 +446,9 @@ namespace ReadyMailSMTP
         SMTPStatus *status = nullptr;
         smtp_server_status_t *server_status = nullptr;
         unsigned long con_timeout_ms = 1000 * 30, send_timeout_ms = 1000 * 30, read_timeout_ms = 1000 * 120;
-        bool canForward = false;
-        bool last_append = false;
-        bool ssl_mode = false;
-        bool processing = false;
+        bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false;
         uint32_t ts = 0;
-        int level = 0;
-        bool accumulate = false;
-        bool imap_mode = false;
-        int data_len = 0;
+        int level = 0, data_len = 0;
     };
 
 }
