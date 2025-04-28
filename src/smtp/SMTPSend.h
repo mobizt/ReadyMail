@@ -88,12 +88,12 @@ namespace ReadyMailSMTP
             // If author and transmitter (sender or agent) are not identical, send both 'From' and 'Sender' headers
             if (msg.sender.email.length() > 0 && msg.author.email.length() > 0 && strcmp(msg.sender.email.c_str(), msg.author.email.c_str()) != 0)
             {
-                rd_print_to(msg.header, 250, "%s:\"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.author.name.c_str()).c_str(), msg.author.email.c_str());
-                rd_print_to(msg.header, 250, "%s:\"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_sender].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
+                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.author.name.c_str()).c_str(), msg.author.email.c_str());
+                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_sender].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
             }
             // If author and transmitter (agent) are identical, send only 'From' header
             else if (msg.sender.email.length() > 0)
-                rd_print_to(msg.header, 250, "%s:\"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
+                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
 
             return startTransaction(msg);
         }
