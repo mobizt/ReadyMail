@@ -37,8 +37,9 @@ namespace ReadyMailSMTP
             serverStatus() = smtp_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
             {
-                if (conn_timer.remaining() == 0 && smtp_ctx->resp_cb)
-                    setError(__func__, TCP_CLIENT_ERROR_CONNECTION_TIMEOUT);
+                stop();
+                if (smtp_ctx->resp_cb)
+                    setError(__func__, conn_timer.remaining() == 0 ? TCP_CLIENT_ERROR_CONNECTION_TIMEOUT : TCP_CLIENT_ERROR_CONNECTION);
                 authenticating = false;
                 return false;
             }

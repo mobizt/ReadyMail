@@ -80,9 +80,9 @@ namespace ReadyMailSMTP
 
             if (msg.priority >= message_priority_high && msg.priority <= message_priority_low)
             {
-                rd_print_to(msg.header, 50, "%s:%d\r\n", "X-Priority", msg.priority);
-                rd_print_to(msg.header, 50, "%s:%s\r\n", "X-MSMail-Priority", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
-                rd_print_to(msg.header, 50, "%s:%s\r\n", "Importance", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
+                rd_print_to(msg.header, 50, "%s: %d\r\n", "X-Priority", msg.priority);
+                rd_print_to(msg.header, 50, "%s: %s\r\n", "X-MSMail-Priority", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
+                rd_print_to(msg.header, 50, "%s: %s\r\n", "Importance", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
             }
 
             // If author and transmitter (sender or agent) are not identical, send both 'From' and 'Sender' headers

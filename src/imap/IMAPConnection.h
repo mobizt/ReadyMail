@@ -49,8 +49,8 @@ namespace ReadyMailIMAP
             if (!serverStatus())
             {
                 stop();
-                if (conn_timer.remaining() == 0 && imap_ctx->cb.resp)
-                    setError(imap_ctx, __func__, TCP_CLIENT_ERROR_CONNECTION_TIMEOUT);
+                if (imap_ctx->cb.resp)
+                    setError(imap_ctx, __func__, conn_timer.remaining() == 0 ? TCP_CLIENT_ERROR_CONNECTION_TIMEOUT : TCP_CLIENT_ERROR_CONNECTION);
                 authenticating = false;
                 return false;
             }
