@@ -112,7 +112,7 @@ The `SMTPStatus::statusCode` value provides the SMTP server returning status cod
 
 The `SMTPStatus::text` value provieds the status details which includes the result of each process state.
 
-The code example below shows how the `SMTPStatus` information are used. 
+The code example below shows how the `SMTPStatus` information is used. 
 
 ```cpp
 void smtpStatusCallback(SMTPStatus status)
@@ -213,7 +213,7 @@ When the `IMAPStatus::isComplete` value is `true`, user can check the `IMAPStatu
 
 The `IMAPStatus::text` value provieds the status details which includes the result of each process state.
 
-The code example below shows how the `IMAPStatus` information are used. 
+The code example below shows how the `IMAPStatus` information is used. 
 
 ```cpp
 void imapStatusCallback(IMAPStatus status)
@@ -252,7 +252,7 @@ The `IMAPCallbackData::currentMsgIndex` value provides the index of message in t
 
 **Content Stream**
 
-The following chunked data and its information are avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
+The following chunked data and its information is avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
 
 The `IMAPCallbackData::blob`provides the chunked data.
 

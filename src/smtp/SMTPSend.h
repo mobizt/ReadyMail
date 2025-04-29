@@ -287,13 +287,9 @@ namespace ReadyMailSMTP
             case smtp_send_state_body_type_5P_4:
 
                 if (msg.rfc822.size() && msg.rfc822_idx < (int)msg.rfc822.size())
-                {
                     return sendRFC822Message(msg);
-                }
                 else if (msg.hasAttachment(attach_type_attachment))
-                {
                     return sendAttachment(msg, attach_type_attachment, 0 /* mixed */, false);
-                }
                 else
                 {
                     if (!sendEndBoundary(msg, 0))
@@ -375,7 +371,6 @@ namespace ReadyMailSMTP
         bool sendRFC822Message(SMTPMessage &msg)
         {
             msg_ptr = &msg.rfc822[msg.rfc822_idx];
-
             if (!sendRFC822Header(*msg_ptr))
                 return false;
 
