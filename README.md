@@ -351,7 +351,7 @@ imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 The SSL client that supports the protocol upgrades (from plain text to encrypted) is required.
 
-There are two SSL clients that currently support protocol upgrades i.e. ESP32 v3.x's `WiFiClientSecure` and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient).
+There are two SSL clients that currently support protocol upgrades i.e. ESP32 v3 `WiFiClientSecure` and [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient).
 
 The `TLSHandshakeCallback` function and `startTLS` boolean option should be assigned to the second and third parameters of `SMTPClient` and `IMAPClient` classes constructors.
 
