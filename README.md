@@ -359,7 +359,7 @@ The `TLSHandshakeCallback` function and `startTLS` boolean option should be assi
 
 Note that, when using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` sould be assigned to `ESP_SSLClient::setClient()` and the second parameter should be  `false` to start the connection in plain text mode.
 
-The benefits of using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) are it supports all 32-bit MCUs, PSRAM and adjustable IO buffer while the trade off is it requires upto 85k program space. 
+The benefits of using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) are it supports all 32-bit MCUs, PSRAM and adjustable IO buffer while the only trade off is it requires additional 85k program space. 
 
 When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should be set (`true`).
 
