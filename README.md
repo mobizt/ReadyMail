@@ -333,6 +333,7 @@ In plain connection (non-secure), the network besic client (Arduino Client deriv
 EthernetClient basic_client;
 SMTPClient smtp(basic_client);
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure */);
 
 ```
@@ -343,6 +344,7 @@ smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure *
 EthernetClient basic_client;
 IMAPClient imap(basic_client);
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 ```
@@ -357,6 +359,8 @@ The `TLSHandshakeCallback` function and `startTLS` boolean option should be assi
 
 Note that, when using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` sould be assigned to `ESP_SSLClient::setClient()` and the second parameter should be  `false` to start the connection in plain text mode.
 
+The benefits of using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) are it supports all 32-bit MCUs, PSRAM and adjustable IO buffer while the trade off is it requires upto 85k program space. 
+
 When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should be set (`true`).
 
 **SMTP Port 587 (ESP_SSLClient)**
@@ -367,11 +371,13 @@ When the TLS handshake is done inside the `TLSHandshakeCallback` function, the r
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true);
+auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); }
+SMTPClient smtp(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
@@ -382,11 +388,13 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 WiFiClientSecure ssl_client;
 
-SMTPClient smtp(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true);
+auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); }
+SMTPClient smtp(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
@@ -399,11 +407,13 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.connectSSL(); }, true);
+auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); }
+IMAPClient imap(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 imap.connect("imap host", 143, statusCallback);
 
 ```
@@ -414,11 +424,13 @@ imap.connect("imap host", 143, statusCallback);
 
 WiFiClientSecure ssl_client;
 
-IMAPClient imap(ssl_client, [](bool &success){ success = ssl_client.startTLS(); }, true);
+auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); }
+IMAPClient imap(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 imap.connect("imap host", 143, statusCallback);
 
 ```
@@ -443,6 +455,7 @@ SMTPClient smtp(ssl_client);
 ssl_client.setClient(&basic_client);
 ssl_client.setInsecure();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
@@ -456,6 +469,7 @@ WiFiClientSecure ssl_client;
 // WiFiSSLClient ssl_client;
 SMTPClient smtp(ssl_client);
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
@@ -473,6 +487,7 @@ IMAPClient imap(ssl_client);
 ssl_client.setClient(&basic_client);
 ssl_client.setInsecure();
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 imap.connect("imap host", 993, statusCallback);
 
 ```
@@ -487,6 +502,7 @@ WiFiClientSecure ssl_client;
 
 IMAPClient imap(ssl_client);
 
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
 imap.connect("imap host", 993, statusCallback);
 
 ```

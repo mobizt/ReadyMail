@@ -40,6 +40,7 @@ namespace ReadyMailSMTP
             cCode() = function_return_undefined;
             bool ret = false;
             String line;
+            line.reserve(1024);
             int readLen = readLine(line);
             if (readLen > 0)
             {

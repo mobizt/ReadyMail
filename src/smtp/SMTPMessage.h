@@ -12,8 +12,7 @@ namespace ReadyMailSMTP
     friend class SMTPSend;
 
   private:
-    String mime;
-    String boundary;
+    String mime, boundary;
 
     content_type_data(const String &mime)
     {
@@ -21,11 +20,12 @@ namespace ReadyMailSMTP
       if (mime == "alternative" || mime == "related" || mime == "mixed" || mime == "parallel")
         boundary = getMIMEBoundary(15);
     }
-    String getMIMEBoundary(size_t len)
+
+    String getMIMEBoundary(int len)
     {
       String tmp = boundary_map;
       char *buf = (char *)malloc(len + 1);
-      if (len)
+      if (len > 2)
       {
         --len;
         buf[0] = tmp[0];
