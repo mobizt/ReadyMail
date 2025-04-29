@@ -361,6 +361,7 @@ When the TLS handshake is done inside the `TLSHandshakeCallback` function, the r
 
 **SMTP Port 587 (ESP_SSLClient)**
 ```cpp
+#include <WiFiClient.h>
 #include <ESP_SSLClient.h>
 
 WiFiClient basic_client;
@@ -374,6 +375,7 @@ ssl_client.setInsecure();
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
+
 **SMTP Port 587 (ESP32 v3 WiFiClientSecure)**
 ```cpp
 #include <WiFiClientSecure.h>
@@ -391,6 +393,7 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 **IMAP Port 143 (ESP_SSLClient)**
 ```cpp
+#include <WiFiClient.h>
 #include <ESP_SSLClient.h>
 
 WiFiClient basic_client;
@@ -422,25 +425,66 @@ imap.connect("imap host", 143, statusCallback);
 
 ### SSL Connection
 
-All SSL clients support this mode e.g. `WiFiClientSecure` and `WiFiSSLClient`.
+All SSL clients support this mode e.g. `ESP_SSLClient`, `WiFiClientSecure` and `WiFiSSLClient`.
 
 The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` are set to `true` by default and can be disgarded.
 
-**SMTP Port 465**
+
+**SMTP Port 465 (ESP_SSLClient)**
+```cpp
+#include <WiFiClient.h> // Network client
+#include <ESP_SSLClient.h>
+
+WiFiClient basic_client;
+ESP_SSLClient ssl_client;
+
+SMTPClient smtp(ssl_client);
+
+ssl_client.setClient(&basic_client);
+ssl_client.setInsecure();
+
+smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
+
+```
+
+**SMTP Port 465 (WiFiClientSecure/WiFiSSLClient)**
 ```cpp
 #include <WiFiClientSecure.h>
+// #include <WiFiSSLClient.h>
 
 WiFiClientSecure ssl_client;
+// WiFiSSLClient ssl_client;
 SMTPClient smtp(ssl_client);
 
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
-**IMAP Port 993**
+
+**IMAP Port 993 (ESP_SSLClient)**
+```cpp
+#include <WiFiClient.h> // Network client
+#include <ESP_SSLClient.h>
+
+WiFiClient basic_client;
+ESP_SSLClient ssl_client;
+
+IMAPClient imap(ssl_client);
+
+ssl_client.setClient(&basic_client);
+ssl_client.setInsecure();
+
+imap.connect("imap host", 993, statusCallback);
+
+```
+
+**IMAP Port 993 (WiFiClientSecure/WiFiSSLClient)**
 ```cpp
 #include <WiFiClientSecure.h>
+// #include <WiFiSSLClient.h>
 
 WiFiClientSecure ssl_client;
+// WiFiSSLClient ssl_client;
+
 IMAPClient imap(ssl_client);
 
 imap.connect("imap host", 993, statusCallback);
