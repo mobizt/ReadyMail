@@ -149,7 +149,7 @@ To receive or fetch the Email, only `IMAPClient` calss object is required.
 
 The `IMAPDataCallback` and `FileCallback` functions can be assigned to the `IMAPClient::fetch` and `IMAPClient::fetchUID` functions.
 
-The `IMAPDataCallback` function provides the envelope (headers) and content stream of fetching message while the `FileCallback` function provides the file downloading.
+The `IMAPDataCallback` function provides the envelope (headers) and content stream of fetching message while the `FileCallback` function provides the file downloading capability.
 
 The size of content that allows for downloading or content streaming can be set.
 
