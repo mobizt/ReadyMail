@@ -15,7 +15,7 @@ static String rd_err(int code)
         msg = "Server was not yet connected";
         break;
     case TCP_CLIENT_ERROR_CONNECTION_TIMEOUT:
-        msg = "Connection timed out, for port and client selection, see http://bit.ly/437GkRA";
+        msg = "Connection timed out, see http://bit.ly/437GkRA";
         break;
     case TCP_CLIENT_ERROR_TLS_HANDSHAKE:
         msg = "TLS handshake failed";
