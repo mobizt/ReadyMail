@@ -2,9 +2,10 @@
 
 #ifndef QB_DECODER_H
 #define QB_DECODER_H
+
 #include <Arduino.h>
 
-#if defined(ENABLE_IMAP)
+#if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
 // Renesas devices
 #if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
