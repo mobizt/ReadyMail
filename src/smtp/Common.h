@@ -439,16 +439,26 @@ namespace ReadyMailSMTP
     typedef struct smtp_message_body_t HtmlMessage;
     typedef void (*SMTPResponseCallback)(SMTPStatus status);
 
+    struct smtp_timeout
+    {
+        unsigned long con = 1000 * 3, send = 1000 * 30, read = 1000 * 120;
+    };
+
+    struct smtp_options
+    {
+        smtp_timeout timeout;
+        bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false;
+        int level = 0, data_len = 0;
+    };
+
     struct smtp_context
     {
         Client *client = nullptr;
         SMTPResponseCallback resp_cb = NULL;
         SMTPStatus *status = nullptr;
         smtp_server_status_t *server_status = nullptr;
-        unsigned long con_timeout_ms = 1000 * 30, send_timeout_ms = 1000 * 30, read_timeout_ms = 1000 * 120;
-        bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false;
+        smtp_options options;
         uint32_t ts = 0;
-        int level = 0, data_len = 0;
     };
 
 }

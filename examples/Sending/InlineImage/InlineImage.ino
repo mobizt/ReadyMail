@@ -1,5 +1,6 @@
 /**
  * The example to send message with inline image.
+ * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -20,15 +21,13 @@
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
 
-// [Importance!]
-// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
 const char *orangeImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAEASURBVHhe7dEhAQAgEMBA2hCT6I+nABMnzsxuzdlDx3oDfxkSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0jMBYxyLEpP9PqyAAAAAElFTkSuQmCCjhSDb5FKG9Q4";
 const char *blueImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAEASURBVHhe7dEhAQAgAMAwmmEJTyfwFOBiYub2Y6596Bhv4C9DYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJuZ7+qGdQMlUbAAAAAElFTkSuQmCC";
 
-// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
+// For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
@@ -94,6 +93,9 @@ void setup()
     msg.text.transfer_encoding = "base64";
     msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "<br/><br/><img src=\"cid:orange_image\" alt=\"orange image\"> <img src=\"cid:blue_image\" alt=\"blue image\"></div></body></html>";
     msg.html.transfer_encoding = "base64";
+
+    // current timestamp
+    msg.timestamp = 1746013620;
 
     addBlobAttachment(msg, "orange.png", "image/png", "orange.png", (const uint8_t *)orangeImg, strlen(orangeImg), "base64", "orange_image");
     addBlobAttachment(msg, "blue.png", "image/png", "blue.png", (const uint8_t *)blueImg, strlen(blueImg), "base64", "blue_image");

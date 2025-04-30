@@ -28,6 +28,7 @@ namespace ReadyMailIMAP
             this->port = port;
             if (serverConnected())
                 imap_ctx->client->stop();
+            conn_timer.feed(imap_ctx->options.timeout.con / 1000);
             return connectImpl();
         }
 
@@ -37,18 +38,18 @@ namespace ReadyMailIMAP
                 return false;
 
             if (host.length() == 0)
-                stop();
+                stop(true);
 
             if (isConnected())
                 return true;
 
             authenticating = true;
             res->begin(imap_ctx);
-            setDebugState(imap_state_initial_state, "Connecting to " + host + "...");
+            setDebugState(imap_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
             serverStatus() = imap_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
             {
-                stop();
+                stop(conn_timer.remaining() == 0);
                 if (imap_ctx->cb.resp)
                     setError(imap_ctx, __func__, conn_timer.remaining() == 0 ? TCP_CLIENT_ERROR_CONNECTION_TIMEOUT : TCP_CLIENT_ERROR_CONNECTION);
                 authenticating = false;
@@ -93,7 +94,7 @@ namespace ReadyMailIMAP
         {
             if (!isConnected())
             {
-                stop();
+                stop(true);
                 return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_NOT_CONNECTED);
             }
 
@@ -194,22 +195,24 @@ namespace ReadyMailIMAP
 
         void authenticate(imap_function_return_code &ret)
         {
+            if (ret == function_return_failure && (cState() == imap_state_start_tls || cState() == imap_state_auth_login || cState() == imap_state_login_user || cState() == imap_state_login_psw || cState() == imap_state_auth_xoauth2 || cState() == imap_state_auth_plain || cState() == imap_state_id))
+            {
+                stop(true);
+                return;
+            }
+
             switch (cState())
             {
             case imap_state_initial_state:
                 if (ret == function_return_continue && !imap_ctx->server_status->start_tls)
                     tlsHandshake();
                 else if (ret == function_return_success)
-                {
                     checkCap();
-                }
                 break;
 
             case imap_state_greeting:
                 if (ret == function_return_failure)
-                {
                     exitState(ret, imap_ctx->options.processing);
-                }
                 else if (ret == function_return_success)
                 {
                     if (imap_ctx->ssl_mode && (imap_ctx->auth_caps[imap_auth_cap_starttls] || imap_ctx->server_status->start_tls) && tls_cb && !imap_ctx->server_status->secured)
@@ -228,8 +231,6 @@ namespace ReadyMailIMAP
             case imap_state_start_tls:
                 if (ret == function_return_success)
                     tlsHandshake();
-                else if (ret == function_return_failure)
-                    stop();
                 break;
 
             case imap_state_start_tls_ack:
@@ -237,17 +238,9 @@ namespace ReadyMailIMAP
                 break;
 
             case imap_state_auth_login:
-                if (ret == function_return_success)
-                    authLogin(true);
-                else if (ret == function_return_failure)
-                    stop();
-                break;
-
             case imap_state_login_user:
                 if (ret == function_return_success)
-                    authLogin(false);
-                else if (ret == function_return_failure)
-                    stop();
+                    authLogin(cState() == imap_state_auth_login);
                 break;
 
             case imap_state_auth_plain_next:
@@ -262,11 +255,7 @@ namespace ReadyMailIMAP
             case imap_state_auth_xoauth2:
             case imap_state_auth_plain:
                 if (ret == function_return_success)
-                {
                     sendId();
-                }
-                else if (ret == function_return_failure)
-                    stop();
                 break;
 
             case imap_state_id:
@@ -276,8 +265,6 @@ namespace ReadyMailIMAP
                     exitState(ret, imap_ctx->options.processing);
                     setDebugState(imap_state_auth_plain, "The client is authenticated successfully\n");
                 }
-                else if (ret == function_return_failure)
-                    stop();
                 break;
 
             default:
@@ -308,7 +295,7 @@ namespace ReadyMailIMAP
 
         bool isAuthenticated() { return imap_ctx->server_status->authenticated; }
 
-        void stop() { res->stop(); }
+        void stop(bool forceStop = false) { res->stop(forceStop); }
 
         void tlsHandshake()
         {
@@ -323,7 +310,7 @@ namespace ReadyMailIMAP
                 }
                 else
                 {
-                    stop();
+                    stop(true);
                     setError(imap_ctx, __func__, TCP_CLIENT_ERROR_TLS_HANDSHAKE);
                 }
             }

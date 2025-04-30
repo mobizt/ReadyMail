@@ -297,7 +297,7 @@ namespace ReadyMailIMAP
 
     struct imap_timeout
     {
-        unsigned long con = 1000 * 30, send = 1000 * 30, read = 1000 * 120;
+        unsigned long con = 1000 * 3, send = 1000 * 30, read = 1000 * 120;
         unsigned long mailbox_selected = 0, idle = DEFAULT_IDLE_TIMEOUT;
     };
 

@@ -220,9 +220,9 @@ namespace ReadyMailIMAP
 
         int tcpAvailable() { return imap_ctx->client ? imap_ctx->client->available() : 0; }
         int tcpRead() { return imap_ctx->client ? imap_ctx->client->read() : -1; }
-        void stop()
+        void stop(bool forceStop = false)
         {
-            stopImpl();
+            stopImpl(forceStop);
             clear(line);
         }
 

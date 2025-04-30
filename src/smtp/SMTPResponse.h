@@ -25,15 +25,15 @@ namespace ReadyMailSMTP
             beginBase(smtp_ctx);
             response.remove(0, response.length());
             complete = false;
-            resp_timer.feed(smtp_ctx->read_timeout_ms / 1000);
+            resp_timer.feed(smtp_ctx->options.timeout.read / 1000);
         }
 
         smtp_function_return_code handleResponse()
         {
             sys_yield();
-            if (smtp_ctx->accumulate || smtp_ctx->imap_mode || readTimeout() || !serverConnected())
+            if (smtp_ctx->options.accumulate || smtp_ctx->options.imap_mode || readTimeout() || !serverConnected())
             {
-                cCode() = smtp_ctx->accumulate || smtp_ctx->imap_mode ? function_return_success : function_return_failure;
+                cCode() = smtp_ctx->options.accumulate || smtp_ctx->options.imap_mode ? function_return_success : function_return_failure;
                 return cCode();
             }
 
@@ -98,7 +98,7 @@ namespace ReadyMailSMTP
                     statusCode() = 0;
                     setError(__func__, SMTP_ERROR_RESPONSE, smtp_ctx->status->text);
                 }
-                resp_timer.feed(smtp_ctx->read_timeout_ms / 1000);
+                resp_timer.feed(smtp_ctx->options.timeout.read / 1000);
             }
 
             if (readLen == 0 && cState() == smtp_state_send_body && statusCode() == smtp_server_status_code_0)
@@ -118,11 +118,11 @@ namespace ReadyMailSMTP
         bool readTimeout()
         {
             if (!resp_timer.isRunning())
-                resp_timer.feed(smtp_ctx->read_timeout_ms / 1000);
+                resp_timer.feed(smtp_ctx->options.timeout.read / 1000);
 
             if (resp_timer.remaining() == 0)
             {
-                resp_timer.feed(smtp_ctx->read_timeout_ms / 1000);
+                resp_timer.feed(smtp_ctx->options.timeout.read / 1000);
                 setError(__func__, TCP_CLIENT_ERROR_READ_DATA);
                 return true;
             }
@@ -209,9 +209,9 @@ namespace ReadyMailSMTP
             }
         }
 
-        void stop()
+        void stop(bool forceStop = false)
         {
-            stopImpl();
+            stopImpl(forceStop);
             clear(response);
         }
 

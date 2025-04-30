@@ -61,7 +61,7 @@ ssl_client.setInsecure();
 // ...
 // ...
 
-auto statusCallback = [](SMTPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](SMTPStatus status){ Serial.println(status.text); };
 
 smtp.connect("smtp host here", 465, "127.0.0.1", statusCallback);
 if (smtp.isConnected())
@@ -176,7 +176,7 @@ ssl_client.setInsecure();
 // ...
 // ...
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 auto dataCallback = [](IMAPCallbackData data)
 {
     if (data.isEnvelope) // For showing message headers.
@@ -252,7 +252,7 @@ The `IMAPCallbackData::currentMsgIndex` value provides the index of message in t
 
 **Content Stream**
 
-The following chunked data and its information is avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
+The following chunked data and its information are avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
 
 The `IMAPCallbackData::blob`provides the chunked data.
 
@@ -333,7 +333,7 @@ In plain connection (non-secure), the network besic client (Arduino Client deriv
 EthernetClient basic_client;
 SMTPClient smtp(basic_client);
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure */);
 
 ```
@@ -344,7 +344,7 @@ smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure *
 EthernetClient basic_client;
 IMAPClient imap(basic_client);
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 imap.connect("imap host", 143, statusCallback, false /* non-secure */);
 
 ```
@@ -371,13 +371,13 @@ When the TLS handshake is done inside the `TLSHandshakeCallback` function, the r
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); }
+auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); };
 SMTPClient smtp(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
@@ -388,13 +388,13 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 WiFiClientSecure ssl_client;
 
-auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); }
+auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); };
 SMTPClient smtp(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 
 ```
@@ -407,13 +407,13 @@ smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 
-auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); }
+auto startTLSCallback = [](bool &success){ success = ssl_client.connectSSL(); };
 IMAPClient imap(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setClient(&basic_client, false /* starts connection in plain text */);
 ssl_client.setInsecure();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 imap.connect("imap host", 143, statusCallback);
 
 ```
@@ -424,13 +424,13 @@ imap.connect("imap host", 143, statusCallback);
 
 WiFiClientSecure ssl_client;
 
-auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); }
+auto startTLSCallback = [](bool &success){ success = ssl_client.startTLS(); };
 IMAPClient imap(ssl_client, startTLSCallback, true /* start TLS */);
 
 ssl_client.setInsecure();
 ssl_client.setPlainStart();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 imap.connect("imap host", 143, statusCallback);
 
 ```
@@ -455,7 +455,7 @@ SMTPClient smtp(ssl_client);
 ssl_client.setClient(&basic_client);
 ssl_client.setInsecure();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
@@ -469,7 +469,7 @@ WiFiClientSecure ssl_client;
 // WiFiSSLClient ssl_client;
 SMTPClient smtp(ssl_client);
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
 smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
 
 ```
@@ -487,7 +487,7 @@ IMAPClient imap(ssl_client);
 ssl_client.setClient(&basic_client);
 ssl_client.setInsecure();
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
 imap.connect("imap host", 993, statusCallback);
 
 ```
@@ -502,7 +502,7 @@ WiFiClientSecure ssl_client;
 
 IMAPClient imap(ssl_client);
 
-auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);}
+auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
 imap.connect("imap host", 993, statusCallback);
 
 ```

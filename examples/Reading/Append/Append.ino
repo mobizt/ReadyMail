@@ -1,5 +1,6 @@
 /**
  * The example to add new message to the mailbox.
+ * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -23,12 +24,10 @@
 #define AWAIT_MODE true
 #define FLAGS ""
 
-// [Importance!]
-// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-// For more information, see https://github.com/mobizt/ReadyMail#imap-processing-information
+// For more information, see https://bit.ly/3RH9ock
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());

@@ -1,5 +1,6 @@
 /**
  * The example to send nested RFC822 messages that contain attachment.
+ * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -23,8 +24,6 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
-// [Importance!]
-// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
@@ -49,7 +48,7 @@ static const uint8_t greenText[] PROGMEM = {0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 
                                             0x20, 0x69, 0x6E, 0x20, 0x67, 0x72, 0x65, 0x65, 0x6E, 0x20, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67,
                                             0x65, 0x2E};
 
-// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
+// For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
@@ -66,6 +65,9 @@ void createMessage(SMTPMessage &msg, const String &name, const String &email, co
     msg.addRecipient(recipient, recipientEmail);
     msg.text.content = content;
     msg.html.content = "<html><body><div style=\"color:" + htmlColor + ";\">" + content + "</div></body></html>";
+
+    // current timestamp
+    msg.timestamp = 1746013620;
 }
 
 void addBlobAttachment(SMTPMessage &msg, const String &filename, const String &mime, const String &name, const uint8_t *blob, size_t size, const String &encoding = "", const String &cid = "")

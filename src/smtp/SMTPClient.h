@@ -47,7 +47,7 @@ namespace ReadyMailSMTP
                 return true;
             }
 
-            if (smtp_ctx.processing)
+            if (smtp_ctx.options.processing)
                 return true;
 
             conn.setDebugState(smtp_state_authentication, "Authenticating...");

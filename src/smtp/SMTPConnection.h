@@ -32,18 +32,18 @@ namespace ReadyMailSMTP
 
             authenticating = true;
             res->begin(smtp_ctx);
-            setDebugState(smtp_state_initial_state, "Connecting to " + host + "...");
-            smtp_ctx->processing = true;
+            setDebugState(smtp_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
+            smtp_ctx->options.processing = true;
             serverStatus() = smtp_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
             {
-                stop();
+                stop(conn_timer.remaining() == 0);
                 if (smtp_ctx->resp_cb)
                     setError(__func__, conn_timer.remaining() == 0 ? TCP_CLIENT_ERROR_CONNECTION_TIMEOUT : TCP_CLIENT_ERROR_CONNECTION);
                 authenticating = false;
                 return false;
             }
-            smtp_ctx->client->setTimeout(smtp_ctx->read_timeout_ms);
+            smtp_ctx->client->setTimeout(smtp_ctx->options.timeout.read);
             authenticating = false;
             setState(smtp_state_initial_state, smtp_server_status_code_220);
             return true;
@@ -54,7 +54,7 @@ namespace ReadyMailSMTP
             if (!isConnected())
                 return setError(__func__, TCP_CLIENT_ERROR_NOT_CONNECTED);
 
-            smtp_ctx->processing = true;
+            smtp_ctx->options.processing = true;
             bool user = email.length() > 0 && password.length() > 0;
             bool sasl_auth_oauth = access_token.length() > 0 && res->auth_caps[smtp_auth_cap_xoauth2];
             bool sasl_login = res->auth_caps[smtp_auth_cap_login] && user;
@@ -99,9 +99,9 @@ namespace ReadyMailSMTP
             setState(user ? smtp_state_login_user : smtp_state_login_psw, user ? smtp_server_status_code_334 : smtp_server_status_code_235);
         }
 
-        void stop()
+        void stop(bool forceStop = false)
         {
-            res->stop();
+            res->stop(forceStop);
             clearCreds();
         }
 
@@ -116,14 +116,14 @@ namespace ReadyMailSMTP
         {
             this->host = host;
             this->port = port;
-            smtp_ctx->ssl_mode = ssl;
+            smtp_ctx->options.ssl_mode = ssl;
 
             if (serverConnected())
                 smtp_ctx->client->stop();
 
-            if (domain.length())
-                this->domain = domain;
-            conn_timer.feed(smtp_ctx->read_timeout_ms / 1000);
+            IPChecker checker;
+            this->domain = checker.isValidHost(domain.c_str()) ? domain : READYMAIL_LOOPBACK_IPV4;
+            conn_timer.feed(smtp_ctx->options.timeout.con / 1000);
             return connectImpl();
         }
 
@@ -146,6 +146,12 @@ namespace ReadyMailSMTP
 
         void authenticate(smtp_function_return_code &ret)
         {
+            if (ret == function_return_failure && (cState() == smtp_state_start_tls || (cState() >= smtp_state_login_user && cState() <= smtp_state_login_psw)))
+            {
+                stop(true);
+                return;
+            }
+
             switch (cState())
             {
             case smtp_state_initial_state:
@@ -164,13 +170,13 @@ namespace ReadyMailSMTP
                     res->auth_caps[smtp_auth_cap_login] = true;
                     cState() = smtp_state_prompt;
                     // start TLS when needed, rfc3207
-                    if (smtp_ctx->ssl_mode && (res->auth_caps[smtp_auth_cap_starttls] || smtp_ctx->server_status->start_tls) && tls_cb && !smtp_ctx->server_status->secured)
+                    if (smtp_ctx->options.ssl_mode && (res->auth_caps[smtp_auth_cap_starttls] || smtp_ctx->server_status->start_tls) && tls_cb && !smtp_ctx->server_status->secured)
                         startTLS();
                     else
                     {
                         smtp_ctx->server_status->server_greeting_ack = true;
                         ret = function_return_exit;
-                        smtp_ctx->processing = false;
+                        smtp_ctx->options.processing = false;
                         setDebug("Service is ready\n");
                     }
                 }
@@ -179,8 +185,6 @@ namespace ReadyMailSMTP
             case smtp_state_start_tls:
                 if (ret == function_return_success)
                     tlsHandshake();
-                else if (ret == function_return_failure)
-                    stop();
                 break;
 
             case smtp_state_start_tls_ack:
@@ -193,22 +197,14 @@ namespace ReadyMailSMTP
                 else
                 {
                     ret = function_return_exit;
-                    smtp_ctx->processing = false;
+                    smtp_ctx->options.processing = false;
                 }
                 break;
 
             case smtp_state_auth_login:
-                if (ret == function_return_success)
-                    authLogin(true);
-                else if (ret == function_return_failure)
-                    stop();
-                break;
-
             case smtp_state_login_user:
                 if (ret == function_return_success)
-                    authLogin(false);
-                else if (ret == function_return_failure)
-                    stop();
+                    authLogin(cState() == smtp_state_auth_login);
                 break;
 
             case smtp_state_login_psw:
@@ -218,12 +214,10 @@ namespace ReadyMailSMTP
                 {
                     smtp_ctx->server_status->authenticated = true;
                     ret = function_return_exit;
-                    smtp_ctx->processing = false;
+                    smtp_ctx->options.processing = false;
                     clearCreds();
                     setDebug("The client is authenticated successfully\n");
                 }
-                else if (ret == function_return_failure)
-                    stop();
                 break;
 
             default:

@@ -48,7 +48,7 @@ namespace ReadyMailSMTP
 
         bool send(SMTPMessage &msg)
         {
-            if (!smtp_ctx->accumulate && !smtp_ctx->imap_mode)
+            if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 setDebugState(smtp_state_send_header_sender, "Sending E-mail...");
 
@@ -66,7 +66,7 @@ namespace ReadyMailSMTP
 
         bool sendImpl(SMTPMessage &msg)
         {
-            smtp_ctx->processing = true;
+            smtp_ctx->options.processing = true;
             msg_ptr = &msg;
             root_msg_addr = reinterpret_cast<uint32_t>(&msg);
             msg.recipient_index = 0;
@@ -100,7 +100,7 @@ namespace ReadyMailSMTP
 
         bool startTransaction(SMTPMessage &msg)
         {
-            if (!smtp_ctx->accumulate && !smtp_ctx->imap_mode)
+            if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 setDebugState(smtp_state_send_header_sender, "Sending envelope...");
                 rd_print_to(msg.buf, 250, "MAIL FROM:<%s>", msg.author.email.length() ? msg.author.email.c_str() : msg.sender.email.c_str());
@@ -151,7 +151,7 @@ namespace ReadyMailSMTP
                 is_cc_bcc = true;
             }
 
-            if (smtp_ctx->accumulate || smtp_ctx->imap_mode)
+            if (smtp_ctx->options.accumulate || smtp_ctx->options.imap_mode)
             {
                 if (msg_ptr)
                     startData(*msg_ptr);
@@ -381,7 +381,7 @@ namespace ReadyMailSMTP
 
         bool startData(SMTPMessage &msg)
         {
-            if (!smtp_ctx->accumulate && !smtp_ctx->imap_mode)
+            if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 if (!sendBuffer("DATA\r\n"))
                     return false;
@@ -407,41 +407,50 @@ namespace ReadyMailSMTP
 
         bool sendBuffer(const String &buf) { return tcpSend(false, 1, buf.c_str()); }
 
+        bool isDateSet(SMTPMessage &msg)
+        {
+            // Check Date header
+            bool valid = false;
+            smtp_ctx->ts = msg.timestamp;
+            for (uint8_t k = 0; k < msg.headers.size(); k++)
+            {
+                if (msg.headers[k].indexOf("Date") > -1)
+                {
+                    smtp_ctx->ts = getTimestamp(msg.headers[k].substring(msg.headers[k].indexOf(":") + 1), true);
+                    valid = smtp_ctx->ts > READYMAIL_TIMESTAMP;
+                    break;
+                }
+            }
+
+            // Set the timestamp
+            if (!valid)
+            {
+                if (smtp_ctx->ts < READYMAIL_TIMESTAMP && msg.date.length() > 0)
+                    smtp_ctx->ts = getTimestamp(msg.date, true);
+
+#if defined(ESP32) || defined(ESP8266)
+                if (smtp_ctx->ts < READYMAIL_TIMESTAMP)
+                    smtp_ctx->ts = time(nullptr);
+#endif
+                // Apply default value if the timestamp is not valid.
+                if (smtp_ctx->ts < READYMAIL_TIMESTAMP)
+                    smtp_ctx->ts = READYMAIL_TIMESTAMP;
+            }
+
+            return valid;
+        }
+
         bool sendHeader(SMTPMessage &msg)
         {
             String buf;
             buf.reserve(1024);
             rd_print_to(buf, 250, "Subject: %s\r\n", encodeWord(msg.subject.c_str()).c_str());
-            bool dateHdr = false;
-            smtp_ctx->ts = msg.timestamp;
 
-            // Check if valid 'Date' field assigned from custom headers.
-            if (msg.headers.size() > 0)
-            {
-                for (uint8_t k = 0; k < msg.headers.size(); k++)
-                {
-                    rd_print_to(buf, msg.headers[k].length(), "%s\r\n", msg.headers[k].c_str());
-                    if (msg.headers[k].indexOf("Date") > -1)
-                    {
-                        smtp_ctx->ts = getTimestamp(msg.headers[k].substring(msg.headers[k].indexOf(":") + 1), true);
-                        dateHdr = smtp_ctx->ts > READYMAIL_VALID_TS;
-                    }
-                }
-            }
+            for (uint8_t k = 0; k < msg.headers.size(); k++)
+                rd_print_to(buf, msg.headers[k].length(), "%s\r\n", msg.headers[k].c_str());
 
-            // Check if valid 'Date' field assigned from SMTPMessage's date property.
-            if (!dateHdr)
-            {
-                if (smtp_ctx->ts < READYMAIL_VALID_TS && msg.date.length() > 0)
-                    smtp_ctx->ts = getTimestamp(msg.date, true);
-
-#if defined(ESP32) || defined(ESP8266)
-                if (smtp_ctx->ts < READYMAIL_VALID_TS)
-                    smtp_ctx->ts = time(nullptr);
-#endif
-                if (smtp_ctx->ts > READYMAIL_VALID_TS)
-                    rd_print_to(buf, 250, "Date: %s\r\n", getDateTimeString(smtp_ctx->ts, "%a, %d %b %Y %H:%M:%S %z").c_str());
-            }
+            if (!isDateSet(msg)) // If Date header is not set, set it from timestamp
+                rd_print_to(buf, 250, "Date: %s\r\n", getDateTimeString(smtp_ctx->ts, "%a, %d %b %Y %H:%M:%S %z").c_str());
 
             if (msg.response.reply_to.length() > 0)
                 rd_print_to(buf, 250, "%s: <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_reply_to].text, msg.response.reply_to.c_str());
@@ -773,9 +782,9 @@ namespace ReadyMailSMTP
                 return true;
             }
 
-            if (!smtp_ctx->accumulate && !smtp_ctx->imap_mode && !sendBuffer("\r\n.\r\n"))
+            if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode && !sendBuffer("\r\n.\r\n"))
                 return false;
-            else if (smtp_ctx->imap_mode && smtp_ctx->last_append)
+            else if (smtp_ctx->options.imap_mode && smtp_ctx->options.last_append)
                 sendBuffer("\r\n");
 
             setState(smtp_state_data_termination, smtp_server_status_code_250);
@@ -920,7 +929,7 @@ namespace ReadyMailSMTP
                     case smtp_state_data_termination:
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
-                        smtp_ctx->processing = false;
+                        smtp_ctx->options.processing = false;
                         smtp_ctx->status->isComplete = true;
                         setDebug("The E-mail is sent successfully\n");
                         break;
@@ -928,7 +937,7 @@ namespace ReadyMailSMTP
                     case smtp_state_terminated:
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
-                        smtp_ctx->processing = false;
+                        smtp_ctx->options.processing = false;
                         break;
 
                     default:

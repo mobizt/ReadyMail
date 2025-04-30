@@ -150,9 +150,9 @@ namespace ReadyMailIMAP
 
         bool serverConnected() { return imap_ctx->client && imap_ctx->client->connected(); }
 
-        void stopImpl()
+        void stopImpl(bool forceStop = false)
         {
-            if (serverConnected())
+            if (forceStop || serverConnected())
                 imap_ctx->client->stop();
             imap_ctx->server_status->connected = false;
             imap_ctx->server_status->secured = false;
@@ -234,68 +234,45 @@ namespace ReadyMailIMAP
         {
             String msg;
 #if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
-            switch (code)
+            msg = rd_err(code);
+            if (msg.length() == 0)
             {
-            case TCP_CLIENT_ERROR_CONNECTION:
-                msg = "Server connection failed";
-                break;
-            case TCP_CLIENT_ERROR_NOT_CONNECTED:
-                msg = "Server was not connected";
-                break;
-            case TCP_CLIENT_ERROR_CONNECTION_TIMEOUT:
-                msg = "Server connection timed out";
-                break;
-            case TCP_CLIENT_ERROR_TLS_HANDSHAKE:
-                msg = "TLS handshake failed";
-                break;
-            case TCP_CLIENT_ERROR_SEND_DATA:
-                msg = "Send data failed";
-                break;
-            case TCP_CLIENT_ERROR_READ_DATA:
-                msg = "Read data failed";
-                break;
-            case AUTH_ERROR_UNAUTHENTICATE:
-                msg = "Unauthented";
-                break;
-            case AUTH_ERROR_AUTHENTICATION:
-                msg = "Authentication failed";
-                break;
-            case AUTH_ERROR_OAUTH2_NOT_SUPPORTED:
-                msg = "OAuth2.0 authentication does not support";
-                break;
-            case IMAP_ERROR_RESPONSE:
-                msg = "server returning error";
-                break;
-            case IMAP_ERROR_NO_MAILBOX:
-                msg = "No mailbox selected";
-                break;
-            case IMAP_ERROR_INVALID_SEARCH_CRITERIA:
-                msg = "Invalid search criteria";
-                break;
-            case IMAP_ERROR_MODSEQ_WAS_NOT_SUPPORTED:
-                msg = "Modsequences does not support";
-                break;
-            case IMAP_ERROR_IDLE_NOT_SUPPORTED:
-                msg = "Mailbox idling does not support";
-                break;
-            case IMAP_ERROR_MESSAGE_NOT_EXISTS:
-                msg = "Message does not exist";
-                break;
-            case IMAP_ERROR_PROCESSING:
-                msg = "The last process does not yet finished";
-                break;
-            case IMAP_ERROR_MAILBOX_NOT_EXISTS:
-                msg = "The selected mailbox does not exist";
-                break;
-            case IMAP_ERROR_NO_CALLBACK:
-                msg = "No FileCallback and DataCallback are assigned";
-                break;
-            case IMAP_ERROR_COMMAND_NOT_ALLOW:
-                msg = "This command is not allowed";
-                break;
-            default:
-                msg = "Unknown";
-                break;
+                switch (code)
+                {
+                case IMAP_ERROR_RESPONSE:
+                    msg = "server returning error";
+                    break;
+                case IMAP_ERROR_NO_MAILBOX:
+                    msg = "No mailbox selected";
+                    break;
+                case IMAP_ERROR_INVALID_SEARCH_CRITERIA:
+                    msg = "Invalid search criteria";
+                    break;
+                case IMAP_ERROR_MODSEQ_WAS_NOT_SUPPORTED:
+                    msg = "Modsequences does not support";
+                    break;
+                case IMAP_ERROR_IDLE_NOT_SUPPORTED:
+                    msg = "Mailbox idling does not support";
+                    break;
+                case IMAP_ERROR_MESSAGE_NOT_EXISTS:
+                    msg = "Message does not exist";
+                    break;
+                case IMAP_ERROR_PROCESSING:
+                    msg = "The last process does not yet finished";
+                    break;
+                case IMAP_ERROR_MAILBOX_NOT_EXISTS:
+                    msg = "The selected mailbox does not exist";
+                    break;
+                case IMAP_ERROR_NO_CALLBACK:
+                    msg = "No FileCallback and DataCallback are assigned";
+                    break;
+                case IMAP_ERROR_COMMAND_NOT_ALLOW:
+                    msg = "This command is not allowed";
+                    break;
+                default:
+                    msg = "Unknown";
+                    break;
+                }
             }
 #endif
             return msg;

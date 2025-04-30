@@ -1,5 +1,6 @@
 /**
  * The example to send message with attachment.
+ * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -21,8 +22,6 @@
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
 
-// [Importance!]
-// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
@@ -73,7 +72,7 @@ void createAttachment()
 }
 #endif
 
-// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
+// For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
@@ -141,6 +140,9 @@ void setup()
     msg.text.transfer_encoding = "base64";
     msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
     msg.html.transfer_encoding = "base64";
+
+    // current timestamp
+    msg.timestamp = 1746013620;
 
     addFileAttachment(msg, "orange.png", "image/png", "orange.png", fileCb, "/orange.png", "base64");
     addFileAttachment(msg, "blue.png", "image/png", "blue.png", fileCb, "/blue.png", "base64");

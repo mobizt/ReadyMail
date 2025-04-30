@@ -47,7 +47,7 @@ namespace ReadyMailSMTP
                 data += va_arg(args, const char *);
             va_end(args);
 #if defined(READYMAIL_CORE_DEBUG)
-            if (!smtp_ctx->accumulate)
+            if (!smtp_ctx->options.accumulate)
                 setDebug(data, true);
 #endif
             data += crlf ? "\r\n" : "";
@@ -55,9 +55,9 @@ namespace ReadyMailSMTP
         }
         size_t tcpSend(uint8_t *data, size_t len)
         {
-            if (smtp_ctx->accumulate)
+            if (smtp_ctx->options.accumulate)
             {
-                smtp_ctx->data_len += len;
+                smtp_ctx->options.data_len += len;
                 return len;
             }
             else
@@ -107,7 +107,7 @@ namespace ReadyMailSMTP
                 smtp_ctx->status->text = buf;
                 print();
             }
-            smtp_ctx->processing = false;
+            smtp_ctx->options.processing = false;
             if (close)
                 stopImpl();
             return false;
@@ -134,16 +134,16 @@ namespace ReadyMailSMTP
 
         bool isIdleState(const char *func)
         {
-            if (smtp_ctx->processing)
+            if (smtp_ctx->options.processing)
                 return setError(func, SMTP_ERROR_PROCESSING);
             return true;
         }
 
         bool serverConnected() { return smtp_ctx->client && smtp_ctx->client->connected(); }
 
-        void stopImpl()
+        void stopImpl(bool forceStop = false)
         {
-            if (serverConnected())
+            if (forceStop || serverConnected())
                 smtp_ctx->client->stop();
             serverStatus() = false;
             smtp_ctx->server_status->secured = false;
@@ -317,58 +317,35 @@ namespace ReadyMailSMTP
         {
             String msg;
 #if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
-            switch (code)
+            msg = rd_err(code);
+            if (msg.length() == 0)
             {
-            case TCP_CLIENT_ERROR_CONNECTION:
-                msg = "Server connection failed";
-                break;
-            case TCP_CLIENT_ERROR_NOT_CONNECTED:
-                msg = "Server was not connected";
-                break;
-            case TCP_CLIENT_ERROR_CONNECTION_TIMEOUT:
-                msg = "Server connection timed out";
-                break;
-            case TCP_CLIENT_ERROR_TLS_HANDSHAKE:
-                msg = "TLS handshake failed";
-                break;
-            case TCP_CLIENT_ERROR_SEND_DATA:
-                msg = "Send data failed";
-                break;
-            case TCP_CLIENT_ERROR_READ_DATA:
-                msg = "Read data failed";
-                break;
-            case AUTH_ERROR_UNAUTHENTICATE:
-                msg = "Unauthented";
-                break;
-            case AUTH_ERROR_AUTHENTICATION:
-                msg = "Authentication error";
-                break;
-            case AUTH_ERROR_OAUTH2_NOT_SUPPORTED:
-                msg = "OAuth2.0 authentication was not supported";
-                break;
+                switch (code)
+                {
 #if defined(ENABLE_SMTP)
-            case SMTP_ERROR_INVALID_SENDER_EMAIL:
-                msg = "Sender Email address is not valid";
-                break;
-            case SMTP_ERROR_INVALID_RECIPIENT_EMAIL:
-                msg = "Recipient Email address is not valid";
-                break;
-            case SMTP_ERROR_SEND_HEADER:
-                msg = "Send header failed";
-                break;
-            case SMTP_ERROR_SEND_BODY:
-                msg = "Send body failed";
-                break;
-            case SMTP_ERROR_SEND_DATA:
-                msg = "Send data failed";
-                break;
-            case SMTP_ERROR_PROCESSING:
-                msg = "The last process does not yet finished";
-                break;
+                case SMTP_ERROR_INVALID_SENDER_EMAIL:
+                    msg = "Sender Email address is not valid";
+                    break;
+                case SMTP_ERROR_INVALID_RECIPIENT_EMAIL:
+                    msg = "Recipient Email address is not valid";
+                    break;
+                case SMTP_ERROR_SEND_HEADER:
+                    msg = "Send header failed";
+                    break;
+                case SMTP_ERROR_SEND_BODY:
+                    msg = "Send body failed";
+                    break;
+                case SMTP_ERROR_SEND_DATA:
+                    msg = "Send data failed";
+                    break;
+                case SMTP_ERROR_PROCESSING:
+                    msg = "The last process does not yet finished";
+                    break;
 #endif
-            default:
-                msg = "Unknown";
-                break;
+                default:
+                    msg = "Unknown";
+                    break;
+                }
             }
 #endif
             return msg;

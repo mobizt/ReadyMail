@@ -1,5 +1,6 @@
 /**
  * The example to send simple text message.
+ * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -23,31 +24,16 @@
 #define SSL_MODE true
 #define AUTHENTICATION true
 
-// [Importance!]
-// Please see https://github.com/mobizt/ReadyMail#ports-and-clients-selection
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
-// For more information, see https://github.com/mobizt/ReadyMail#smtp-processing-information
+// For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
     if (status.progressUpdated)
         ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
-}
-
-void setMessageTime(SMTPMessage &msg, const String &date, uint32_t timestamp = 0)
-{
-    // Three methods to set the message date.
-    // Can be selected one of these methods.
-    if (date.length())
-    {
-        msg.addHeader("Date: " + date);
-        msg.date = date;
-    }
-    if (timestamp > 0) // The UNIX timestamp (seconds since Midnight Jan 1, 1970)
-        msg.timestamp = timestamp;
 }
 
 void setup()
@@ -95,8 +81,8 @@ void setup()
     msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
     msg.html.transfer_encoding = "base64";
 
-    // To prevent mail server spam or junk mail consideration.
-    setMessageTime(msg, "Fri, 14 Mar 2025 09:13:23 +0300");
+    // current timestamp
+    msg.timestamp = 1746013620;
     smtp.send(msg);
 }
 

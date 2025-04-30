@@ -149,7 +149,7 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_IMAP_APPEND)
             case imap_state_append_init:
 
-                imap_ctx->smtp_ctx->imap_mode = true;
+                imap_ctx->smtp_ctx->options.imap_mode = true;
                 imap_ctx->smtp->send(imap_ctx->msg, imap_ctx->options.await);
                 setState(imap_state_append_last);
                 break;
@@ -220,8 +220,7 @@ namespace ReadyMailIMAP
                         break;
                     name = cPart().name;
                 }
-                uint32_t sz;
-                sscanf(res->parser.getField(cPart(), non_multipart_field_size).c_str(), "%lu", &sz);
+                uint32_t sz = numString.toNum(res->parser.getField(cPart(), non_multipart_field_size).c_str());
                 bool sizeLimit = sz > imap_ctx->options.part_size_limit;
                 String section = cPart().section.c_str();
                 setDebugState(state, "Fetching message body[" + cPart().section + "]...");
@@ -399,10 +398,10 @@ namespace ReadyMailIMAP
             imap_ctx->smtp_ctx = reinterpret_cast<smtp_context *>(imap_ctx->smtp->contextAddr());
             imap_ctx->smtp_ctx->client = imap_ctx->client;
             imap_ctx->smtp_ctx->server_status->connected = true;
-            imap_ctx->smtp_ctx->accumulate = true;
+            imap_ctx->smtp_ctx->options.accumulate = true;
             imap_ctx->smtp->send(imap_ctx->msg);
-            imap_ctx->smtp_ctx->accumulate = false;
-            imap_ctx->smtp_ctx->last_append = !imap_ctx->feature_caps[imap_read_cap_multiappend] ? true : lastAppend;
+            imap_ctx->smtp_ctx->options.accumulate = false;
+            imap_ctx->smtp_ctx->options.last_append = !imap_ctx->feature_caps[imap_read_cap_multiappend] ? true : lastAppend;
 
             String fla, dt;
             if (flags.length())
@@ -410,7 +409,7 @@ namespace ReadyMailIMAP
             if (date.length())
                 rd_print_to(dt, 100, " \"%s\"", date.c_str());
 
-            rd_print_to(buf, 100, "APPEND %s%s%s {%d}", imap_ctx->current_mailbox.c_str(), fla.c_str(), dt.c_str(), imap_ctx->smtp_ctx->data_len);
+            rd_print_to(buf, 100, "APPEND %s%s%s {%d}", imap_ctx->current_mailbox.c_str(), fla.c_str(), dt.c_str(), imap_ctx->smtp_ctx->options.data_len);
 
             setProcessFlag(imap_ctx->options.processing);
 

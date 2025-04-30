@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include "Common.h"
 #include "./core/QBDecoder.h"
-#include "./core/NumString.h"
 
 namespace ReadyMailIMAP
 {
@@ -295,7 +294,7 @@ namespace ReadyMailIMAP
 
             if (cpart.transfer_encoding == imap_transfer_encoding_base64 || cpart.transfer_encoding == imap_transfer_encoding_binary)
             {
-                sscanf(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str(), "%lu", &cpart.decoded_size);
+                cpart.decoded_size = numString.toNum(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str());
                 if (cpart.decoded_size == 0)
                     cpart.decoded_size = cpart.octet_count * 3 / 4;
             }
@@ -306,7 +305,7 @@ namespace ReadyMailIMAP
             uint32_t len = 0;
             int pos1 = line.lastIndexOf("{"), pos2 = line.lastIndexOf("}");
             if (pos1 < pos2 && pos1 > -1 && pos2 > -1)
-                sscanf(line.substring(pos1 + 1, pos2).c_str(), "%lu", &len);
+                len = numString.toNum(line.substring(pos1 + 1, pos2).c_str());
             return len;
         }
 
@@ -666,19 +665,19 @@ namespace ReadyMailIMAP
                 if (line.indexOf("EXPUNGE") > -1)
                 {
                     imap_ctx->idle_status = "[-] " + getToken(line, 0, "* ", "EXPUNGE");
-                    sscanf(getToken(line, 0, "* ", "EXPUNGE").c_str(), "%lu", &imap_ctx->current_message);
+                    imap_ctx->current_message = numString.toNum(getToken(line, 0, "* ", "EXPUNGE").c_str());
                     mailbox_info.msgCount = imap_ctx->current_message;
                 }
                 else if (line.indexOf("EXISTS") > -1)
                 {
                     imap_ctx->idle_status = "[+] " + getToken(line, 0, "* ", "EXISTS");
-                    sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%lu", &imap_ctx->current_message);
+                    imap_ctx->current_message = numString.toNum(getToken(line, 0, "* ", "EXISTS").c_str());
                     mailbox_info.msgCount = imap_ctx->current_message;
                 }
                 else if (line.indexOf("FETCH") > -1)
                 {
                     imap_ctx->idle_status = "[=][";
-                    sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%lu", &imap_ctx->current_message);
+                    imap_ctx->current_message = numString.toNum(getToken(line, 0, "* ", "FETCH").c_str());
                     int beginIndex = 0, lastIndex = 0;
                     getBoundary(line, "FLAGS (", ")", beginIndex, lastIndex);
                     int i = beginIndex, count = 0;
@@ -711,7 +710,7 @@ namespace ReadyMailIMAP
                     break;
 
                 imap_ctx->cb_data.searchCount++;
-                sscanf(token.c_str(), "%lu", &msg_num);
+                msg_num = numString.toNum(token.c_str());
                 if (imap_ctx->options.recent_sort)
                 {
                     imap_msg_num.push_back(msg_num);
@@ -742,19 +741,19 @@ namespace ReadyMailIMAP
         void parseExamine(const String &line, MailboxInfo &mailbox_info, imap_context *imap_ctx)
         {
             if (line.indexOf("EXISTS") > -1)
-                sscanf(getToken(line, 0, "* ", "EXISTS").c_str(), "%lu", &mailbox_info.msgCount);
+                mailbox_info.msgCount = numString.toNum(getToken(line, 0, "* ", "EXISTS").c_str());
             else if (line.indexOf("RECENT") > -1)
-                sscanf(getToken(line, 0, "* ", "RECENT").c_str(), "%lu", &mailbox_info.RecentCount);
+                mailbox_info.RecentCount = numString.toNum(getToken(line, 0, "* ", "RECENT").c_str());
             else if (line.indexOf("FLAGS") > -1 || line.indexOf("PERMANENTFLAGS") > -1)
                 parseFlags(line, mailbox_info);
             else if (line.indexOf("[UIDVALIDITY") > -1)
-                sscanf(getToken(line, 0, "[UIDVALIDITY", "]").c_str(), "%lu", &mailbox_info.UIDValidity);
+                mailbox_info.UIDValidity = numString.toNum(getToken(line, 0, "[UIDVALIDITY", "]").c_str());
             else if (line.indexOf("[UIDNEXT") > -1)
-                sscanf(getToken(line, 0, "[UIDNEXT", "]").c_str(), "%lu", &mailbox_info.nextUID);
+                mailbox_info.nextUID = numString.toNum(getToken(line, 0, "[UIDNEXT", "]").c_str());
             else if (line.indexOf("[UNSEEN") > -1)
-                sscanf(getToken(line, 0, "[UNSEEN", "]").c_str(), "%lu", &mailbox_info.UnseenIndex);
+                mailbox_info.UnseenIndex = numString.toNum(getToken(line, 0, "[UNSEEN", "]").c_str());
             else if (imap_ctx->feature_caps[imap_read_cap_condstore] && line.indexOf("[HIGHESTMODSEQ") > -1)
-                sscanf(getToken(line, 0, "[HIGHESTMODSEQ", "]").c_str(), "%lu", &mailbox_info.highestModseq);
+                mailbox_info.highestModseq = numString.toNum(getToken(line, 0, "[HIGHESTMODSEQ", "]").c_str());
             else if (line.indexOf("NOMODSEQ") > -1)
                 mailbox_info.noModseq = true;
         }
@@ -836,7 +835,7 @@ namespace ReadyMailIMAP
                 if (cstate == imap_state_fetch_envelope)
                 {
                     if (line[0] == '*')
-                        sscanf(getToken(line, 0, "* ", "FETCH").c_str(), "%lu", &imap_ctx->current_message);
+                        imap_ctx->current_message = numString.toNum(getToken(line, 0, "* ", "FETCH").c_str());
 
                     if (line[line.length() - 3] == ')' && line[line.length() - 2] == '\r' && line[line.length() - 1] == '\n')
                         imap_ctx->options.multiline = false;

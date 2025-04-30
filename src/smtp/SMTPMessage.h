@@ -3,7 +3,6 @@
 #if defined(ENABLE_SMTP)
 #include <Arduino.h>
 #include "Common.h"
-#include "./core/NumString.h"
 
 namespace ReadyMailSMTP
 {

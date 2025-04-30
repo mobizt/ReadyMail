@@ -9,9 +9,11 @@
 #include <Client.h>
 #include "./core/ReadyTimer.h"
 #include "./core/ReadyCodec.h"
-#include "./core/NumString.h"
+#include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.0.11"
+#define READYMAIL_VERSION "0.0.12"
+#define READYMAIL_TIMESTAMP 1745976441
+#define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -46,7 +48,6 @@
 #define READYMAIL_STRSEP strsep
 #endif
 
-#define READYMAIL_VALID_TS 1577836800
 #define FLOWED_TEXT_LEN 78
 #define BASE64_CHUNKED_LEN 76
 
@@ -130,6 +131,8 @@ namespace ReadyMailCallbackNS
 #endif
     typedef void (*TLSHandshakeCallback)(bool &success);
 }
+
+#include "./core/ReadyError.h"
 
 #if defined(ENABLE_IMAP)
 typedef struct imap_callback_data
