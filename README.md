@@ -326,11 +326,13 @@ The following sections showed how to select proper ports and Clients based on th
 
 In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for using in plain text mode.
 
+*This may not support by many mail services and is blocked by many ISPs. Please use SSL or TLS instead*.
+
 **SMTP Port 25**
 ```cpp
-#include <Ethernet.h>
+#include <WiFiClient.h>
 
-EthernetClient basic_client;
+WiFiClient basic_client; // Network client
 SMTPClient smtp(basic_client);
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
@@ -339,9 +341,9 @@ smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure *
 ```
 **IMAP Port 143**
 ```cpp
-#include <Ethernet.h>
+#include <WiFiClient.h>
 
-EthernetClient basic_client;
+WiFiClient basic_client; // Network client
 IMAPClient imap(basic_client);
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
