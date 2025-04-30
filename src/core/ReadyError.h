@@ -1,7 +1,8 @@
-#ifndef READYMAIL_ERR_H
-#define READYMAIL_ERR_H
+#ifndef READY_ERROR_H
+#define READY_ERROR_H
 #include <Arduino.h>
 
+#if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 static String rd_err(int code)
 {
     String msg;
@@ -41,4 +42,5 @@ static String rd_err(int code)
 #endif
     return msg;
 }
+#endif
 #endif

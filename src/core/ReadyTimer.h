@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
+
 class ReadyTimer
 {
 private:
@@ -70,4 +72,5 @@ public:
         return ts >= end;
     }
 };
+#endif
 #endif

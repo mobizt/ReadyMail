@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include "QBDecoder.h"
 
+#if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
+
 static const unsigned char rd_base64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void __attribute__((used)) sys_yield()
@@ -418,4 +420,5 @@ static void rd_decode_tis620_utf8(char *out, const char *in, size_t len)
         }
     }
 }
+#endif
 #endif

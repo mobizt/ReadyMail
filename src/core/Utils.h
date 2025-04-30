@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <type_traits>
 
+#if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 class IPChecker
 {
 
@@ -147,4 +148,5 @@ public:
         return (uint32_t)strtoul(str, &endptr, 10);
     }
 };
+#endif
 #endif
