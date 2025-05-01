@@ -30,12 +30,32 @@ namespace ReadyMailSMTP
             char *s = strchr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
-        bool validEmail(const char *email)
+        bool isValidEmail(const char *email)
         {
-            int at = indexOf(email, '@');
-            int dot = indexOf(email + (at > -1 ? at : 0), '.');
-            return at > -1 && dot > -1;
+            int apos = -1, dpos = -1;
+            int len = strlen(email);
+
+            for (int i = 0; i < len; i++)
+            {
+                if (email[i] == '@')
+                {
+                    if (apos != -1)
+                        return false; // multiple @
+                    apos = i;
+                }
+                else if (email[i] == '.')
+                    dpos = i;
+                else if (!isalnum(email[i]) && email[i] != '_' && email[i] != '-')
+                    return false; // invalid character
+            }
+
+            // @ should appear before the last '.', and neither should be first or last
+            if (apos < 1 || dpos < apos + 2 || dpos >= len - 1)
+                return false;
+
+            return true;
         }
+
         void clear(String &s) { s.remove(0, s.length()); }
         bool tcpSend(bool crlf, uint8_t argLen, ...)
         {

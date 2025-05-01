@@ -65,6 +65,21 @@ namespace ReadyMailSMTP
         }
 
     public:
+        /** SMTPClient class constructor.
+         *
+         * @param client The Arduino client e.g. network client or SSL client.
+         * @param tlsCallback Optional. The TLSHandshakeCallback callback function for performing the SSL/TLS handshake.
+         * @param startTLS Optional. The boolean option to enable STARTTLS protocol upgrades.
+         *
+         * There are few usage scenarios.
+         * 1. tlsCallback ❎ startTLS ❎, when no connection upgrade is required. The client can be any network client or SSL client.
+         * 2. tlsCallback ✅ startTLS ✅, when connection upgrade is required (from non-encrypion to TLS using STARTTLS protocol).
+         * 3. tlsCallback ✅ startTLS ❎, when connection upgrade is done without issuing the STARTTLS.
+         * This scenario is special usage when you start using the SSL client in plain text mode for some network task that does not require SSL,
+         * and start using it in encryption mode in this library by calling SMTPClient::connect().
+         * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
+         * The SSL client using in scenario 2 and 3 should support protocol upgrades.
+         */
         SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
             server_status.start_tls = startTLS;
@@ -75,6 +90,22 @@ namespace ReadyMailSMTP
             sender.begin(&smtp_ctx, &res, &conn);
         }
 
+        /** SMTPClient class deconstructor.
+         */
+        ~SMTPClient() { stop(); };
+
+        /** SMTP server connection.
+         *
+         * @param host The SMTP server host name to connect.
+         * @param port The SMTP port to connect.
+         * @param domain The host/domain or IP for client identity.
+         * @param responseCallback Optional. The SMTPResponseCallback callback function that provides the instant status for the processing states for debugging.
+         * @param ssl Optional. The boolean option to enable SSL connection (using in secure mode).
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing states.
+         */
         bool connect(const String &host, uint16_t port, const String &domain, SMTPResponseCallback responseCallback = NULL, bool ssl = true, bool await = true)
         {
             smtp_ctx.resp_cb = responseCallback;
@@ -84,12 +115,39 @@ namespace ReadyMailSMTP
             return ret;
         }
 
+        /** Provides the SMTP server authentication status.
+         * @return boolean status of authentication.
+         */
         bool isAuthenticated() { return conn.isAuthenticated(); }
 
+        /** SMTP server authentication.
+         *
+         * @param email The user Email to authenticate.
+         * @param param The user password, app password or access token depending auth parameter.
+         * @param auth The readymail_auth_type enum for authentication type that provides in param parameter e.g.
+         * readymail_auth_password, readymail_auth_accesstoken and readymail_auth_disabled.
+         * By providing readymail_auth_disabled means, using in non-authentication mode.
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing state.
+         */
         bool authenticate(const String &email, const String &param, readymail_auth_type auth, bool await = true) { return authImpl(email, param, auth, await); }
-        
+
+        /** Provides server connection status.
+         * @return boolean status of server connection.
+         */
         bool isConnected() { return conn.isConnected(); }
-        
+
+        /** Send Email.
+         *
+         * @param message The SMTPMessage class object. If the await parameter is false, the message will be coppied
+         * for internal async mode processing.
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing state.
+         */
         bool send(SMTPMessage &message, bool await = true)
         {
             amsg.clear();
@@ -101,12 +159,18 @@ namespace ReadyMailSMTP
             return ret;
         }
 
+        /** Perform SMTPClient async processes.
+         * This is required when await parameter is set false in the SMTPClient::connect(),
+         * SMTPClient::authenticate(), SMTPClient::send() and SMTPClient::logout() functions.
+         */
         void loop()
         {
             conn.loop();
             sender.loop();
         }
 
+        /** Stop the server connection and release the allocated resources.
+         */
         void stop()
         {
             if (isConnected() && isAuthenticated())
@@ -114,6 +178,13 @@ namespace ReadyMailSMTP
             conn.stop();
         }
 
+        /** De-authentication or Signing out.
+         *
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing state.
+         */
         bool logout(bool await = true)
         {
             bool ret = sender.sendQuit();
@@ -122,8 +193,13 @@ namespace ReadyMailSMTP
             return ret;
         }
 
-        SMTPStatus status(){ return *smtp_ctx.status;}
+        /** Provides the SMTP status information.
+         *
+         * @return SMTPStatus class object.
+         */
+        SMTPStatus status() { return *smtp_ctx.status; }
 
+        // Private used by other classes.
         uint32_t contextAddr() { return reinterpret_cast<uint32_t>(&smtp_ctx); }
     };
 

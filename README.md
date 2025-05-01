@@ -42,6 +42,8 @@ The following example code is for ESP32 using it's ESP32 core `WiFi.h` and `WiFi
 
 The `ENABLE_SMTP` macro is required for using `SMTPClient` and `SMTPMessage` classes. The `ENABLE_DEBUG` macro is for allowing the processing information debugging.
 
+You may wonder that when you change the SMTP port to something like 25 or 587, the error `Connection timed out` is occurred even the network connection and internet are ok. For the reason, plese see [Ports and Clients Selection](#ports-and-clients-selection) section.
+
 ```cpp
 #include <Arduino.h>
 #include <WiFi.h>
@@ -82,11 +84,24 @@ if (smtp.isConnected())
 }
 ```
 
+### SMTP Server Rejection and Spam Prevention
+
+**Host/Domain or public IP**
+
+User should provides the host name or you public IPv4 or IPv6 to the third parameter of `SMTPClient::connect()` function.
+This information is the part of `EHLO/HELO` SMTP command to identify the client system to prevent connection rejection.
+
+If host name or public IP is not available, ignore this or use the loopback address `127.0.0.1`. This library will set the loopback address `127.0.0.1` to the `EHLO/HELO` SMTP command for the case that user provides blank, invalid host and IP to this parameter.
+
+**Date Header**
+
+The message date header should be set to prevent spam mail. 
+
 This library does not set the date header to SMTP message automatically unless system time was set in ESP8266 and ESP32 devices. 
 
 User needs to set the message date by one of the following methods before sending the SMTP message.
 
-Providing the RFC 2822 `Date` haeader using `SMTPMessage::addHeader("Date: ?????")` or using `SMTPMessage::date` with RFC 2822 date string or using `SMTPMessage::timestamp` with the UNIX timestamp. 
+Providing the RFC 2822 `Date` haeader with `SMTPMessage::addHeader("Date: Fri, 18 Apr 2025 11:42:30 +0300")` or setting RFC 2822 date string with `SMTPMessage::date = "Fri, 18 Apr 2025 11:42:30 +0300"` or setting the UNIX timestamp with `SMTPMessage::timestamp = 1744951350`. 
 
 For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
 
@@ -156,6 +171,10 @@ The size of content that allows for downloading or content streaming can be set.
 The processes for server connection and authentication for `IMAPClient` are the same as `SMTPClient` except for no domain or IP requires in the `IMAPClient::connect` method.
 
 The mailbox must be selected before fetching or working with the messages.
+
+The following example code is for ESP32 using it's ESP32 core `WiFi.h` and `WiFiClientSecure.h` libraries for network interface and SSL client.
+
+You may wonder that when you change the IMAP port to something like 143, the error `Connection timed out` is occurred even the network connection and internet are ok. For the reason, plese see [Ports and Clients Selection](#ports-and-clients-selection) section.
 
 ```cpp
 #include <Arduino.h>
@@ -327,6 +346,8 @@ The following sections showed how to select proper ports and Clients based on th
 In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for using in plain text mode.
 
 *This may not support by many mail services and is blocked by many ISPs. Please use SSL or TLS instead*.
+
+*Port 25 is for plain text or non-encryption mail treansfer and may be reserved for local SMTP Relay usage.*
 
 **SMTP Port 25**
 ```cpp

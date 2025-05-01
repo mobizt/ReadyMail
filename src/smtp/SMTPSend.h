@@ -31,12 +31,12 @@ namespace ReadyMailSMTP
         {
             bool validRecipient = false;
 
-            if (!validEmail(msg.sender.email.c_str()))
+            if (!isValidEmail(msg.sender.email.c_str()))
                 return setError(__func__, SMTP_ERROR_INVALID_SENDER_EMAIL, "", false);
 
             for (uint8_t i = 0; i < recpVec(msg).size(); i++)
             {
-                if (validEmail(recpVec(msg)[i].email.c_str()))
+                if (isValidEmail(recpVec(msg)[i].email.c_str()))
                     validRecipient = true;
             }
 
