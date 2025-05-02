@@ -122,7 +122,7 @@ This library does not set the date header to SMTP message automatically unless s
 
 User needs to set the message date by one of the following methods before sending the SMTP message.
 
-Providing the RFC 2822 `Date` haeader with `SMTPMessage::addHeader("Date: Fri, 18 Apr 2025 11:42:30 +0300")` or setting RFC 2822 date string with `SMTPMessage::date = "Fri, 18 Apr 2025 11:42:30 +0300"` or setting the UNIX timestamp with `SMTPMessage::timestamp = 1744951350`. 
+Providing the RFC 2822 `Date` haeader with `SMTPMessage::headers.add(rfc822_date, "Fri, 18 Apr 2025 11:42:30 +0300")` or setting the UNIX timestamp with `SMTPMessage::timestamp = ???????????`. 
 
 For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
 
