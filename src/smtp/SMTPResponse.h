@@ -92,7 +92,7 @@ namespace ReadyMailSMTP
                         setReturn(true, complete, ret);
                     }
                 }
-                else if (statusCode() >= smtp_server_status_code_500)
+                else if (statusCode() >= 400)
                 {
                     setReturn(false, complete, ret);
                     statusCode() = 0;

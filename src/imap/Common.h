@@ -307,7 +307,7 @@ namespace ReadyMailIMAP
         size_t search_limit = 20;
         bool recent_sort = true, read_only_mode = true, mailbox_selected = false, mailboxes_updated = false;
         uint32_t fetch_number;
-        uint32_t modsequence = 0, part_size_limit = 1024 * 1024;
+        int32_t modsequence = -1, part_size_limit = 1024 * 1024;
         bool uid_search = false, uid_fetch = false, searching = false, processing = false, idling = false, skipping = false, multiline = false, await = false;
     };
 

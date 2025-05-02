@@ -201,13 +201,13 @@ namespace ReadyMailIMAP
                     setDebugState(state, "Fetching message " + getFetchString() + " envelope...");
 
                 // Fetching full for ENVELOPE and BODY to count attachment.
-                rd_print_to(buf, 200, " %sFETCH %d FULL (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.modsequence);
+                rd_print_to(buf, 200, " %sFETCH %d FULL", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number);
             }
             else if (mode == imap_fetch_body_structure)
             {
                 state = imap_state_fetch_body_structure;
                 setDebugState(state, "Fetching message " + getFetchString() + " body...");
-                rd_print_to(buf, 200, " %sFETCH %d BODYSTRUCTURE (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.modsequence);
+                rd_print_to(buf, 200, " %sFETCH %d BODYSTRUCTURE", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number);
             }
             else if (mode == imap_fetch_body_part)
             {
@@ -234,7 +234,7 @@ namespace ReadyMailIMAP
                 }
 
                 if (!sizeLimit && cPartIndex() < (int)cMsg().parts.size())
-                    rd_print_to(buf, 200, " %sFETCH %d BODY%s[%s] (CHANGEDSINCE %d)", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.read_only_mode ? ".PEEK" : "", section.c_str(), imap_ctx->options.modsequence);
+                    rd_print_to(buf, 200, " %sFETCH %d BODY%s[%s]", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.read_only_mode ? ".PEEK" : "", section.c_str());
             }
 
             if (buf.length() && !tcpSend(true, 2, imap_ctx->tag.c_str(), buf.c_str()))
@@ -313,6 +313,8 @@ namespace ReadyMailIMAP
         }
 
         bool isCondStoreSupported() { return imap_ctx->feature_caps[imap_read_cap_condstore]; }
+
+        bool isModseqSupported() { return isCondStoreSupported() && !res->mailbox_info.noModseq; }
 
         bool select(const String &mailbox, imap_mailbox_mode mode)
         {

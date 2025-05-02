@@ -145,12 +145,15 @@ namespace ReadyMailSMTP
       return *this;
     }
 
+    /** Clear all RFC822 headers
+     */
     smtp_headers &clear()
     {
       el.clear();
       return *this;
     }
-
+    /** Provides size of headers
+     */
     size_t size() const { return el.size(); }
   };
 
@@ -170,12 +173,13 @@ namespace ReadyMailSMTP
 
     Attachment &operator[](int index)
     {
-      if (index < size())
+      if (index < (int)size())
         return el[index];
       return att;
     }
 
     bool exists(smtp_attach_type type) { return count(type) > 0; }
+
     int count(smtp_attach_type type)
     {
       int count = 0;
@@ -211,9 +215,13 @@ namespace ReadyMailSMTP
 
   public:
     size_t size() const { return el.size(); }
+
+    /** Clear all attachments
+     */
     void clear() { el.clear(); }
 
-    /** Clear attachments
+    /** Clear attachments by type
+     * @param type smtp_attach_type enum.
      */
     void clearAttachments(smtp_attach_type type)
     {
@@ -279,17 +287,6 @@ namespace ReadyMailSMTP
       rfc822[rfc822.size() - 1].rfc822_filename = filename;
     }
 
-    void printHeaders()
-    {
-      for (size_t i = 0; i < headers.size(); i++)
-      {
-        if (headers[i].type >= rfc822_from && headers[i].type <= rfc822_bcc)
-          READYMAIL_DEFAULT_DEBUG_PORT.printf("%s: %s<%s>\n", rfc822_headers[headers[i].type].text, headers[i].name.c_str(), headers[i].value.c_str());
-        else
-          READYMAIL_DEFAULT_DEBUG_PORT.printf("%s: %s\n", headers[i].name.c_str(), headers[i].value.c_str());
-      }
-    }
-
     // The text version message.
     TextMessage text;
 
@@ -299,7 +296,10 @@ namespace ReadyMailSMTP
     // UNIX timestamp for message
     uint32_t timestamp = 0;
 
+    // RFC 822 headers
     smtp_headers headers;
+
+    // Attachments
     smtp_attachment attachments;
 
   private:
