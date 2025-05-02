@@ -142,13 +142,7 @@ namespace ReadyMailSMTP
 
         smtp_function_return_code &cCode() { return smtp_ctx->server_status->ret; }
 
-        Attachment &cAttach(SMTPMessage &msg) { return msg.attachments[msg.attachments_idx]; }
-
-        std::vector<smtp_mail_address_t> recpVec(const SMTPMessage &msg) { return msg.recipients; }
-
-        std::vector<smtp_mail_address_t> ccVec(const SMTPMessage &msg) { return msg.ccs; }
-
-        std::vector<smtp_mail_address_t> bccVec(const SMTPMessage &msg) { return msg.bccs; }
+        Attachment &cAttach(SMTPMessage &msg) { return msg.attachments[msg.attachments.attachments_idx]; }
 
         int &statusCode() { return smtp_ctx->status->statusCode; }
 

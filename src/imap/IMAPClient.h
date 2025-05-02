@@ -388,6 +388,7 @@ namespace ReadyMailIMAP
          * 
          * HEADER - Messages that have a header with the specified field-name (as defined in [RFC-2822])
          * and that contains the specified string in the text of the header (what comes after the colon).
+         * 
          * If the string to search is zero-length, this matches all messages that have a header line with
          * the specified field-name regardless of the contents.
          *

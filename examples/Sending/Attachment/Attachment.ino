@@ -94,10 +94,7 @@ void addFileAttachment(SMTPMessage &msg, const String &filename, const String &m
     attachment.attach_file.path = filepath;
     // Specify only when content is already encoded.
     attachment.content_encoding = encoding;
-    if (cid.length() > 0)
-        msg.addInlineImage(attachment);
-    else
-        msg.addAttachment(attachment);
+    msg.attachments.add(attachment, cid.length() > 0 ? attach_type_inline : attach_type_attachment);
 }
 
 void setup()
@@ -130,16 +127,14 @@ void setup()
         return;
 
     SMTPMessage msg;
-    msg.sender.name = "ReadyMail";
-    msg.sender.email = AUTHOR_EMAIL;
-    msg.subject = "ReadyMail Hello message with attachment";
-    msg.addRecipient("User", RECIPIENT_EMAIL);
+    msg.headers.add(rfc822_subject, "ReadyMail Hello message with attachment");
+    msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
 
     String bodyText = "Hello everyone.\n";
-    msg.text.content = bodyText;
-    msg.text.transfer_encoding = "base64";
-    msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
-    msg.html.transfer_encoding = "base64";
+    msg.text.body(bodyText);
+    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>");
 
     // current timestamp
     msg.timestamp = 1746013620;

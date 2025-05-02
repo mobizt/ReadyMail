@@ -143,17 +143,18 @@ namespace ReadyMailSMTP
          *
          * @param message The SMTPMessage class object. If the await parameter is false, the message will be coppied
          * for internal async mode processing.
+         * @param notify Optional. The Delivery Status Notification on SUCCESS,FAILURE, and DELAY. Set with comma separated value i.e SUCCESS,FAILURE,DELAY.
          * @param await Optional. The boolean option for using in await or blocking mode.
          * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
          * to handle the async processes.
          * @return boolean status of processing state.
          */
-        bool send(SMTPMessage &message, bool await = true)
+        bool send(SMTPMessage &message, const String &notify = "", bool await = true)
         {
             amsg.clear();
             if (!await)
                 amsg = message;
-            bool ret = sender.send(await ? message : amsg);
+            bool ret = sender.send(await ? message : amsg, notify);
             if (ret && await)
                 return awaitLoop();
             return ret;

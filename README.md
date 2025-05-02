@@ -34,7 +34,7 @@ The SSL connection mode and await options are set true by default which can be c
 
 Then authenticate using `SMTPClient::authenticate` by providing the auth credentials and the type of authentication enum e.g. `readymail_auth_password`, `readymail_auth_access_token` and `readymail_auth_disabled`
 
-Compose your message by setting the `SMTPMessage` class objects's attributes e.g. sender, recipient, subject, content etc. 
+Compose your message by adding the `SMTPMessage`'s headers and the text's body and html's body etc. 
 
 Then, calling `SMTPClient::send` using the composed message to send the message.
 
@@ -72,17 +72,38 @@ if (smtp.isConnected())
     if (smtp.isAuthenticated())
     {
         SMTPMessage msg;
-        msg.sender.name = "ReadyMail";
-        msg.sender.email = "sender email here";
-        msg.subject = "Greeting message";
-        msg.addRecipient("User", "recipient email here");
-        msg.text.content = "Hello";
-        msg.html.content = "<html><body>Hello</body></html>";
+        msg.headers.add(rfc822_from, "ReadyMail <sender email here>");
+        // msg.headers.add(rfc822_sender, "ReadyMail <sender email here>");
+        msg.headers.add(rfc822_subject, "Greeting message");
+        msg.headers.add(rfc822_to, "User1 <recipient email here>");
+        msg.headers.add(rfc822_to, "User2 <another recipient email here>");
+        msg.headers.add(rfc822_cc, "User3 <cc email here>");
+        msg.text.body("Hello");
+        msg.html.body("<html><body>Hello</body></html>");
         msg.timestamp = 1744951350; // The UNIX timestamp (seconds since Midnight Jan 1, 1970)
         smtp.send(msg);
     }
 }
 ```
+
+### Changes from v0.0.x to v0.1.0 and newer
+
+Many SMTP classes and structs are refactored. The `SMTPMessage` public members are removed or kept private and the methods are added.
+
+There are four structs that are public and access from the `SMTPMessage` class are `SMTPMessage::headers`, `SMTPMessage::text`, `SMTPMessage::html` and `SMTPMessage::attachments`.
+
+The sender, recipients and subject are now provided using `SMTPMessage::headers::add()` function.
+
+The `SMTPMessage::text` and `SMTPMessage::html`'s members are kept private and the new methods are added.
+
+The content should set via `SMTPMessage::text::body()` and `SMTPMessage::html::body()` functions.
+
+The attachments can be added with `SMTPMessage::attachments::add()` function.
+
+The DSN option is added to the `SMTPClient::send()` function.
+
+Plese check the library's [examples](/examples/Sending/) for the changes.
+
 
 ### SMTP Server Rejection and Spam Prevention
 

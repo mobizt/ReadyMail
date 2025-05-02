@@ -23,6 +23,10 @@
 
 #define SSL_MODE true
 #define AUTHENTICATION true
+#define NOTIFY "SUCCESS,FAILURE,DELAY" // Delivery Status Notification (if SMTP server supports this DSN extension)
+#define PRIORITY "High"                // High, Normal, Low
+#define PRIORITY_NUM "1"               // 1 = high, 3, 5 = low
+#define EMBED_MESSAGE false            // To send the html or text content as attachment
 
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -67,23 +71,40 @@ void setup()
     }
 
     SMTPMessage msg;
-    msg.sender.name = "ReadyMail";
-    msg.sender.email = AUTHOR_EMAIL;
-    msg.subject = "ReadyMail test message";
-    msg.addRecipient("User", RECIPIENT_EMAIL);
+    msg.headers.add(rfc822_subject, "ReadyMail test message");
+
+    // Using 'name <email>' or <email> or 'email' for the from, sender and recipients.
+    // The 'name' section of cc and bcc is ignored.
+    
+    // Multiple recipents can be added but only the first one of sender and from can be added.
+    msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
+
+    // Use addCustom to add custom header e.g. Imprtance and Priority.
+    msg.headers.addCustom("Importance", PRIORITY);
+    msg.headers.addCustom("X-MSMail-Priority", PRIORITY);
+    msg.headers.addCustom("X-Priority", PRIORITY_NUM);
 
     String bodyText = "Hello everyone.\n";
     bodyText += "こんにちは、日本の皆さん\n";
     bodyText += "大家好，中国人\n";
     bodyText += "Здравей български народе\n";
-    msg.text.content = bodyText;
-    msg.text.transfer_encoding = "base64";
-    msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
-    msg.html.transfer_encoding = "base64";
+
+    // Set the content, content transfer encoding or charset
+    msg.text.body(bodyText);
+    msg.text.transferEncoding("base64");
+    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>");
+    msg.text.transferEncoding("base64");
+
+    // With embedFile function, the html message will send as attachment.
+    if (EMBED_MESSAGE)
+        msg.html.embedFile(true, "msg.html", embed_message_type_attachment);
 
     // current timestamp
     msg.timestamp = 1746013620;
-    smtp.send(msg);
+
+    smtp.send(msg, NOTIFY);
 }
 
 void loop()

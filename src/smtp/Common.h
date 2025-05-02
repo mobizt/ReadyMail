@@ -186,24 +186,23 @@ namespace ReadyMailSMTP
         smtp_server_status_code_556 = 556, // Domain does not accept mail[RFC 7504]
     };
 
-    enum smtp_rfc822_header_field_types
+    enum rfc822_header_types
     {
-        smtp_rfc822_header_field_from,
-        smtp_rfc822_header_field_sender,
-        smtp_rfc822_header_field_to,
-        smtp_rfc822_header_field_cc,
-        smtp_rfc822_header_field_subject,
-        smtp_rfc822_header_field_date,
-        smtp_rfc822_header_field_msg_id,
-        smtp_rfc822_header_field_return_path,
-        smtp_rfc822_header_field_reply_to,
-        smtp_rfc822_header_field_in_reply_to,
-        smtp_rfc822_header_field_references,
-        smtp_rfc822_header_field_comments,
-        smtp_rfc822_header_field_keywords,
-        smtp_rfc822_header_field_bcc,
-        smtp_rfc822_header_field_flags,
-        smtp_rfc822_header_field_max_type
+        rfc822_date,
+        rfc822_subject,
+        rfc822_from,
+        rfc822_sender,
+        rfc822_reply_to,
+        rfc822_to,
+        rfc822_cc,
+        rfc822_bcc,
+        rfc822_in_reply_to,
+        rfc822_message_id,
+        rfc822_references,
+        rfc822_comments,
+        rfc822_keywords,
+        rfc822_custom,
+        rfc822_max_type
     };
 
     enum smtp_auth_caps_enum
@@ -227,21 +226,6 @@ namespace ReadyMailSMTP
         smtp_send_cap_dsn,
         smtp_send_cap_esmtp,
         smtp_send_cap_max_type
-    };
-
-    enum smtp_priority
-    {
-        message_priority_high = 1,
-        message_priority_normal = 3,
-        message_priority_low = 5,
-    };
-
-    enum smtp_notify
-    {
-        message_notify_never = 0,
-        message_notify_success = 1,
-        message_notify_failure = 2,
-        message_notify_delay = 4
     };
 
     enum smtp_attach_type
@@ -291,6 +275,7 @@ namespace ReadyMailSMTP
     {
         friend class SMTPMessage;
         friend class SMTPSend;
+        friend class smtp_attachment;
 
     public:
         /* The name of attachment */
@@ -358,36 +343,75 @@ namespace ReadyMailSMTP
         friend class SMTPSend;
 
     public:
-        /* The option to embed this message content as a file */
-        embed_message_body_t embed;
+        /* Set the body */
+        smtp_message_body_t &body(const String &body)
+        {
+            content = body;
+            return *this;
+        }
 
-        /* The PLAIN/HTML content of the message */
-        String content;
+        /* Set the character set */
+        smtp_message_body_t &charset(const String &charset)
+        {
+            charSet = charset;
+            return *this;
+        }
 
-        /* The charset of the PLAIN/HTML content of the message */
-        String charSet = "UTF-8";
+        /* Set the content type */
+        smtp_message_body_t &contentType(const String &contentType)
+        {
+            content_type = contentType;
+            return *this;
+        }
 
-        /* The content type of message */
-        String content_type = "text/html";
+        /* Set the content transfer encoding */
+        smtp_message_body_t &transferEncoding(const String &enc)
+        {
+            transfer_encoding = enc;
+            return *this;
+        }
 
-        /* The option to encode the content for data transfer */
-        String transfer_encoding = "7bit";
+        /* Set the PLAIN text wrapping */
+        smtp_message_body_t &textFlow(bool value)
+        {
+            flowed = value;
+            return *this;
+        }
 
-        /* The option to send the PLAIN text with wrapping */
-        bool flowed = false;
+        /* Set the body as a file */
+        smtp_message_body_t &embedFile(bool enable, const String &filename, smtp_embed_message_type type)
+        {
+            embed.enable = enable;
+            embed.filename = filename;
+            embed.type = type;
+            return *this;
+        }
+
+        smtp_message_body_t &clear()
+        {
+            content.remove(0, content.length());
+            charSet.remove(0, charSet.length());
+            content_type.remove(0, content_type.length());
+            transfer_encoding.remove(0, transfer_encoding.length());
+            embed.enable = false;
+            flowed = false;
+            return *this;
+        }
 
     private:
         String cid;
         int data_index = 0, data_size = 0;
         String enc_text;
         smtp_content_xenc xenc = xenc_none;
+        String content, charSet = "UTF-8", content_type = "text/html", transfer_encoding = "7bit";
+        bool flowed = false;
+        embed_message_body_t embed;
     };
 
-    struct message_response_t
+    struct smtp_header_item
     {
-        String reply_to;
-        String return_path;
-        int notify = message_notify_never;
+        String name, value;
+        rfc822_header_types type = rfc822_custom;
     };
 
     typedef struct smtp_response_status_t
@@ -414,10 +438,12 @@ namespace ReadyMailSMTP
         smtp_function_return_code ret = function_return_undefined;
     };
 
-    struct smtp_rfc822_header_field_t
+    struct smtp_rfc822_envelope
     {
-        char text[20];
-        bool isNum, trim;
+        char text[12];
+        bool multi; // multi fields
+        bool enc;   // needs encode
+        int8_t sub_type;
     };
 
     struct smtp_auth_cap_t
@@ -430,7 +456,7 @@ namespace ReadyMailSMTP
         char text[15];
     };
 
-    const struct smtp_rfc822_header_field_t rfc822_headers[smtp_rfc822_header_field_max_type] PROGMEM = {{"From", false, true}, {"Sender", false, true}, {"To", false, true}, {"Cc", false, true}, {"Subject", false, false}, {"Date", false, false}, {"Message-ID", false, false}, {"Return-Path", false, true}, {"Reply-To", false, true}, {"In-Reply-To", false, true}, {"References", false, true}, {"Comments", false, false}, {"Keywords", false, false}, {"Bcc", false, true}, {"Flags", false, false}};
+    const struct smtp_rfc822_envelope rfc822_headers[rfc822_max_type] PROGMEM = {{"Date", false, false, -1}, {"Subject", false, true, -1}, {"From", false, true, 0}, {"Sender", false, true, 0}, {"Reply-To", false, false, 0}, {"To", true, true, 0}, {"Cc", true, false, 1}, {"Bcc", true, false, 1}, {"In-Reply-To", false, false, -1}, {"Message-ID", false, false, -1}, {"References", false, false, -1}, {"Comments", true, false, -1}, {"Keywords", true, false, -1}, {"", true, false, -1}};
     const struct smtp_auth_cap_t smtp_auth_cap_token[smtp_auth_cap_max_type] PROGMEM = {"PLAIN", "XOAUTH2", "CRAM-MD5", "DIGEST-MD5", "LOGIN", "STARTTLS"};
     const struct smtp_send_cap_t smtp_send_cap_token[smtp_send_cap_max_type] PROGMEM = {"BINARYMIME", "8BITMIME", "CHUNKING", "SMTPUTF8", "PIPELINING", "DSN", "" /* ESMTP */};
 
@@ -447,6 +473,7 @@ namespace ReadyMailSMTP
     struct smtp_options
     {
         smtp_timeout timeout;
+        String notify;
         bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false;
         int level = 0, data_len = 0;
     };

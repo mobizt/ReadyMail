@@ -23,6 +23,7 @@
 
 #define SSL_MODE true
 #define AWAIT_MODE false
+#define NOTIFY "SUCCESS,FAILURE,DELAY" // Delivery Status Notification (if SMTP server supports this DSN extension)
 
 const char *greenImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAABAUlEQVR4Xu3RoQHAIBDAwKf7L8C04LsAEXcyNmv2nCHj+wfeMiTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkJgLfx8CYHc7t9oAAAAASUVORK5CYII=";
 
@@ -53,29 +54,26 @@ void addBlobAttachment(SMTPMessage &msg, const String &filename, const String &m
     attachment.attach_file.blob_size = size;
     // Specify only when content is already encoded.
     attachment.content_encoding = encoding;
-    if (cid.length() > 0)
-        msg.addInlineImage(attachment);
-    else
-        msg.addAttachment(attachment);
+    msg.attachments.add(attachment, cid.length() > 0 ? attach_type_inline : attach_type_attachment);
 }
 
 void sendMesssage()
 {
     SMTPMessage msg;
-    msg.sender.name = "ReadyMail";
-    msg.sender.email = AUTHOR_EMAIL;
-    msg.subject = "ReadyMail Hello message";
-    msg.addRecipient("User", RECIPIENT_EMAIL);
+    msg.headers.add(rfc822_subject, "ReadyMail Hello message");
+    msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
+    msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
 
     String bodyText = "Hello everyone.\n";
-    msg.text.content = bodyText;
-    msg.html.content = "<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>";
+    msg.text.body(bodyText);
+    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>");
 
     // current timestamp
     msg.timestamp = 1746013620;
 
     addBlobAttachment(msg, "green.png", "image/png", "green.png", (const uint8_t *)greenImg, strlen(greenImg), "base64");
-    smtp.send(msg, AWAIT_MODE);
+    smtp.send(msg, NOTIFY, AWAIT_MODE);
 }
 
 void setup()

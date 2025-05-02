@@ -59,12 +59,15 @@ void smtpCb(SMTPStatus status)
 
 void createMessage(SMTPMessage &msg, const String &name, const String &email, const String &subject, const String &recipient, const String &recipientEmail, const String &content, const String &htmlColor)
 {
-    msg.sender.name = name;
-    msg.sender.email = email;
-    msg.subject = subject;
-    msg.addRecipient(recipient, recipientEmail);
-    msg.text.content = content;
-    msg.html.content = "<html><body><div style=\"color:" + htmlColor + ";\">" + content + "</div></body></html>";
+    SMTPMessage msg;
+    msg.headers.add(rfc822_subject, subject);
+    msg.headers.add(rfc822_from, name + " <" + email + ">");
+    // msg.headers.add(rfc822_sender, name + " <" + email + ">");
+    msg.headers.add(rfc822_to, recipient + " <" + recipientEmail + ">");
+
+    String bodyText = "Hello everyone.\n";
+    msg.text.body(content);
+    msg.html.body("<html><body><div style=\"color:" + htmlColor + ";\">" + content + "</div></body></html>");
 
     // current timestamp
     msg.timestamp = 1746013620;
@@ -83,10 +86,7 @@ void addBlobAttachment(SMTPMessage &msg, const String &filename, const String &m
     attachment.attach_file.blob_size = size;
     // Specify only when content is already encoded.
     attachment.content_encoding = encoding;
-    if (cid.length() > 0)
-        msg.addInlineImage(attachment);
-    else
-        msg.addAttachment(attachment);
+    msg.attachments.add(attachment, cid.length() > 0 ? attach_type_inline : attach_type_attachment);
 }
 
 void setup()

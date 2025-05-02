@@ -43,176 +43,145 @@ namespace ReadyMailSMTP
     }
   };
 
-  class SMTPMessage
+  struct smtp_headers
   {
-  public:
-    SMTPMessage()
-    {
-      text.content_type = "text/plain";
-      html.content_type = "text/html";
-    }
-    ~SMTPMessage() { clear(); };
-    void clear()
-    {
-      sClear(sender.name);
-      sClear(sender.email);
-      sClear(subject);
-      sClear(text.charSet);
-      sClear(text.content);
-      sClear(text.content_type);
-      text.embed.enable = false;
-      sClear(html.charSet);
-      sClear(html.content);
-      sClear(html.content_type);
-      html.embed.enable = false;
-      sClear(response.reply_to);
-      response.notify = message_notify_never;
-      priority = message_priority_normal;
-      recipients.clear();
-      ccs.clear();
-      bccs.clear();
-      headers.clear();
-      attachments.clear();
-      content_types.clear();
-    }
-    void clearInlineimages()
-    {
-      for (int i = (int)attachments.size() - 1; i >= 0; i--)
-      {
-        if (attachments[i].type == attach_type_inline)
-          attachments.erase(attachments.begin() + i);
-      }
-    }
-    void clearAttachments()
-    {
-      for (int i = (int)attachments.size() - 1; i >= 0; i--)
-      {
-        if (attachments[i].type == attach_type_attachment)
-          attachments.erase(attachments.begin() + i);
-      }
-    }
-    void clearRecipients() { recipients.clear(); };
-    void clearCc() { ccs.clear(); };
-    void clearBcc() { bccs.clear(); };
-    void clearHeader() { headers.clear(); };
-    void addAttachment(Attachment &att)
-    {
-      att.type = attach_type_attachment;
-      attachments.push_back(att);
-    }
-    void addParallelAttachment(Attachment &att)
-    {
-      att.type = attach_type_parallel;
-      attachments.push_back(att);
-    }
-    void addInlineImage(Attachment &att)
-    {
-      att.type = attach_type_inline;
-      att.cid = numString.get(random(2000, 4000));
-      attachments.push_back(att);
-    }
-    void addMessage(SMTPMessage &msg, const String &name = "msg.eml", const String &filename = "msg.eml")
-    {
-      rfc822.push_back(msg);
-      rfc822[rfc822.size() - 1].rfc822_name = name;
-      rfc822[rfc822.size() - 1].rfc822_filename = filename;
-    }
-    void addRecipient(const String &name, const String &email)
-    {
-      smtp_mail_address_t rcp;
-      rcp.name = name;
-      rcp.email = email;
-      recipients.push_back(rcp);
-    }
-    void addCc(const String &email)
-    {
-      smtp_mail_address_t cc;
-      cc.email = email;
-      ccs.push_back(cc);
-    }
-    void addBcc(const String &email)
-    {
-      smtp_mail_address_t bcc;
-      bcc.email = email;
-      bccs.push_back(bcc);
-    }
-    void addHeader(const String &hdr) { headers.push_back(hdr); }
-
-    // The message author config.
-    smtp_mail_address_t author;
-
-    // The message sender (agent or teansmitter) config.
-    smtp_mail_address_t sender;
-
-    // The topic of message.
-    String subject;
-
-    // The PLAIN text message.
-    TextMessage text;
-
-    // The HTML text message.
-    HtmlMessage html;
-
-    // The response config.
-    message_response_t response;
-
-    // The priority of the message.
-    smtp_priority priority = message_priority_normal;
-
-    // The message from config.
-    smtp_mail_address_t from;
-
-    // The message identifier.
-    String messageID;
-
-    // The keywords or phrases, separated by commas.
-    String keywords;
-
-    // The comments about message.
-    String comments;
-
-    // The date of message.
-    String date;
-
-    // The field that contains the parent's message ID of the message to which this one is a reply.
-    String in_reply_to;
-
-    // The field that contains the parent's references (if any) and followed by the parent's message ID (if any) of the message to which this one is a reply.
-    String references;
-
-    // UNIX timestamp for message
-    uint32_t timestamp = 0;
+    friend class SMTPMessage;
+    friend class SMTPSend;
 
   private:
+    std::vector<smtp_header_item> el;
+    smtp_header_item hdr;
+
+    void push_back(smtp_header_item hdr) { el.push_back(hdr); }
+
+    smtp_header_item &operator[](int index)
+    {
+      if (index < size())
+        return el[index];
+      return hdr;
+    }
+
+    int findHeaders(rfc822_header_types type)
+    {
+      for (size_t i = 0; i < size(); i++)
+      {
+        if (el[i].type == type)
+          return i;
+      }
+      return -1;
+    }
+
+    // RFC2047 encode word (UTF-8 only)
+    String encodeWord(const char *src)
+    {
+      String buf;
+      size_t len = strlen(src);
+      if (len > 4 && src[0] != '=' && src[1] != '?' && src[len - 1] != '=' && src[len - 2] != '?')
+      {
+        char *enc = rd_base64_encode((const unsigned char *)src, len);
+        rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
+        rd_release((void *)enc);
+      }
+      else
+        buf = src;
+      return buf;
+    }
+
+  public:
+    /** Add header
+     *
+     * @param type The rfc822_header_types enum.
+     * @param value The value.
+     */
+    smtp_headers &add(rfc822_header_types type, const String &value)
+    {
+      if (type == rfc822_max_type || type == rfc822_custom || findHeaders(type) > -1 && !rfc822_headers[type].multi)
+        return *this;
+
+      // email sub type
+      if (rfc822_headers[type].sub_type > -1)
+      {
+        int p1 = value.indexOf("<");
+        int p2 = value.indexOf(">");
+
+        if ((p1 == -1 && p2 > -1) || (p1 > -1 && p2 == -1) || (p1 > p2))
+          return *this;
+
+        String email = p1 > -1 && p2 > -1 ? value.substring(p1 + 1, p2) : value;
+
+        smtp_header_item hdr;
+
+        // email with name
+        if (rfc822_headers[type].sub_type == 0 && p1 > -1 && p2 > -1)
+          hdr.name = "\"" + value.substring(0, p1 - 1) + "\" ";
+
+        hdr.type = type;
+        hdr.value = email;
+        el.push_back(hdr);
+      }
+      else
+      {
+        smtp_header_item hdr;
+        hdr.type = type;
+        hdr.name = rfc822_headers[type].text;
+        hdr.value = (rfc822_headers[type].enc ? encodeWord(value.c_str()) : value);
+        el.push_back(hdr);
+      }
+      return *this;
+    }
+
+    /** Add custom header
+     *
+     * @param name The header name.
+     * @param value The header value.
+     */
+    smtp_headers &addCustom(const String &name, const String &value)
+    {
+      smtp_header_item hdr;
+      hdr.type = rfc822_custom;
+      hdr.name = name;
+      hdr.value = value;
+      el.push_back(hdr);
+      return *this;
+    }
+
+    smtp_headers &clear()
+    {
+      el.clear();
+      return *this;
+    }
+
+    size_t size() const { return el.size(); }
+  };
+
+  struct smtp_attachment
+  {
+    friend class SMTPMessage;
     friend class SMTPSend;
     friend class SMTPBase;
 
+  private:
     NumString numString;
-    int attachments_idx = 0, attachment_idx = 0, inline_idx = 0, parallel_idx = 0, rfc822_idx = 0;
-    String buf, header, rfc822_name, rfc822_filename;
-#if defined(ENABLE_FS)
-    File file;
-#endif
-    uint8_t recipient_index = 0, cc_index = 0, bcc_index = 0;
-    bool send_recipient_complete = false;
-    int send_state = smtp_send_state_undefined, send_state_root = smtp_send_state_undefined;
-    SMTPMessage *parent = nullptr;
-    std::vector<smtp_mail_address_t> recipients;
-    std::vector<smtp_mail_address_t> ccs;
-    std::vector<smtp_mail_address_t> bccs;
-    std::vector<String> headers;
-    std::vector<Attachment> attachments;
-    std::vector<SMTPMessage> rfc822;
-    bool file_opened = false;
-    std::vector<content_type_data> content_types;
+    std::vector<Attachment> el;
+    Attachment att;
+    int attachments_idx = 0, attachment_idx = 0, inline_idx = 0, parallel_idx = 0;
 
-    bool hasAttachment(smtp_attach_type type) { return attachmentCount(type) > 0; }
-    int attachmentCount(smtp_attach_type type)
+    void push_back(Attachment att) { el.push_back(att); }
+
+    Attachment &operator[](int index)
+    {
+      if (index < size())
+        return el[index];
+      return att;
+    }
+
+    bool exists(smtp_attach_type type) { return count(type) > 0; }
+    int count(smtp_attach_type type)
     {
       int count = 0;
-      for (int i = 0; i < (int)attachments.size(); i++)
+      for (int i = 0; i < (int)size(); i++)
       {
-        if (attachments[i].type == type)
+        if (el[i].type == type)
           count++;
       }
       return count;
@@ -220,27 +189,141 @@ namespace ReadyMailSMTP
 
     void inlineToAttachment()
     {
-      for (int i = 0; i < (int)attachments.size(); i++)
+      for (int i = 0; i < (int)size(); i++)
       {
-        if (attachments[i].type == attach_type_inline)
-          attachments[i].type = attach_type_attachment;
+        if (el[i].type == attach_type_inline)
+          el[i].type = attach_type_attachment;
       }
     }
 
-    void resetAttachmentIndex()
+    void resetIndex()
     {
       attachments_idx = 0;
       attachment_idx = 0;
       inline_idx = 0;
       parallel_idx = 0;
-      rfc822_idx = 0;
-      for (int i = 0; i < (int)attachments.size(); i++)
+      for (int i = 0; i < (int)size(); i++)
       {
-        attachments[i].data_index = 0;
-        attachments[i].data_size = 0;
+        el[i].data_index = 0;
+        el[i].data_size = 0;
       }
     }
-    void sClear(String &s) { s.remove(0, s.length()); }
+
+  public:
+    size_t size() const { return el.size(); }
+    void clear() { el.clear(); }
+
+    /** Clear attachments
+     */
+    void clearAttachments(smtp_attach_type type)
+    {
+      for (int i = (int)size() - 1; i >= 0; i--)
+      {
+        if (el[i].type == type)
+          el.erase(el.begin() + i);
+      }
+    }
+
+    /** Add attachment
+     *
+     * @param att The Attachment object.
+     * @param type The smtp_attach_type enum.
+     */
+    void add(Attachment &att, smtp_attach_type type)
+    {
+      if (type == attach_type_inline)
+        att.cid = numString.get(random(2000, 4000));
+      att.type = type;
+      el.push_back(att);
+    }
+  };
+
+  class SMTPMessage
+  {
+    friend class smtp_message_body_t;
+
+  public:
+    /** SMTPMessage class constructor
+     */
+    SMTPMessage()
+    {
+      text.contentType("text/plain");
+      html.contentType("text/html");
+    }
+
+    /** SMTPMessage class deconstructor
+     */
+    ~SMTPMessage() { clear(); };
+
+    /** Clear message
+     */
+    void clear()
+    {
+      text.clear();
+      html.clear();
+      headers.clear();
+      attachments.clear();
+      content_types.clear();
+    }
+
+    /** Add RFC 822 message
+     *
+     * @param msg The SMTPMessage object.
+     * @param name The name of message.
+     * @param filename The file name of message.
+     */
+    void addMessage(SMTPMessage &msg, const String &name = "msg.eml", const String &filename = "msg.eml")
+    {
+      rfc822.push_back(msg);
+      rfc822[rfc822.size() - 1].rfc822_name = name;
+      rfc822[rfc822.size() - 1].rfc822_filename = filename;
+    }
+
+    void printHeaders()
+    {
+      for (size_t i = 0; i < headers.size(); i++)
+      {
+        if (headers[i].type >= rfc822_from && headers[i].type <= rfc822_bcc)
+          READYMAIL_DEFAULT_DEBUG_PORT.printf("%s: %s<%s>\n", rfc822_headers[headers[i].type].text, headers[i].name.c_str(), headers[i].value.c_str());
+        else
+          READYMAIL_DEFAULT_DEBUG_PORT.printf("%s: %s\n", headers[i].name.c_str(), headers[i].value.c_str());
+      }
+    }
+
+    // The text version message.
+    TextMessage text;
+
+    // The html version message.
+    HtmlMessage html;
+
+    // UNIX timestamp for message
+    uint32_t timestamp = 0;
+
+    smtp_headers headers;
+    smtp_attachment attachments;
+
+  private:
+    friend class SMTPSend;
+    friend class SMTPBase;
+
+    String buf, header, rfc822_name, rfc822_filename;
+#if defined(ENABLE_FS)
+    File file;
+#endif
+    uint8_t recipient_index = 0, cc_index = 0, bcc_index = 0;
+    bool send_recipient_complete = false;
+    int send_state = smtp_send_state_undefined, send_state_root = smtp_send_state_undefined;
+    int rfc822_idx = 0;
+    SMTPMessage *parent = nullptr;
+    std::vector<SMTPMessage> rfc822;
+    bool file_opened = false;
+    std::vector<content_type_data> content_types;
+
+    void resetIndex()
+    {
+      rfc822_idx = 0;
+      attachments.resetIndex();
+    }
   };
 }
 #endif

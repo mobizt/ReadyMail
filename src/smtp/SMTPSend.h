@@ -27,30 +27,33 @@ namespace ReadyMailSMTP
             beginBase(smtp_ctx);
         }
 
-        bool checkEmail(const SMTPMessage &msg)
+        bool checkEmail(SMTPMessage &msg)
         {
-            bool validRecipient = false;
-
-            if (!isValidEmail(msg.sender.email.c_str()))
-                return setError(__func__, SMTP_ERROR_INVALID_SENDER_EMAIL, "", false);
-
-            for (uint8_t i = 0; i < recpVec(msg).size(); i++)
+            bool sender = false, recp = false;
+            for (size_t i = 0; i < msg.headers.size(); i++)
             {
-                if (isValidEmail(recpVec(msg)[i].email.c_str()))
-                    validRecipient = true;
+                if (msg.headers[i].type == rfc822_from || msg.headers[i].type == rfc822_sender)
+                    sender = true;
+                else if (msg.headers[i].type >= rfc822_to || msg.headers[i].type <= rfc822_bcc)
+                    recp = true;
+
+                if ((msg.headers[i].type >= rfc822_from && msg.headers[i].type <= rfc822_bcc) && !isValidEmail(msg.headers[i].value.c_str()))
+                    return setError(__func__, msg.headers[i].type == rfc822_from || msg.headers[i].type == rfc822_sender ? SMTP_ERROR_INVALID_SENDER_EMAIL : SMTP_ERROR_INVALID_RECIPIENT_EMAIL, "", false);
             }
 
-            if (!validRecipient)
-                return setError(__func__, SMTP_ERROR_INVALID_RECIPIENT_EMAIL, "", false);
+            if (!sender || !recp)
+                return setError(__func__, !sender ? SMTP_ERROR_INVALID_SENDER_EMAIL : SMTP_ERROR_INVALID_RECIPIENT_EMAIL, "", false);
 
             return true;
         }
 
-        bool send(SMTPMessage &msg)
+        bool send(SMTPMessage &msg, const String &notify)
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 setDebugState(smtp_state_send_header_sender, "Sending E-mail...");
+
+                smtp_ctx->options.notify = notify;
 
                 if (conn && !conn->isConnected())
                     return setError(__func__, TCP_CLIENT_ERROR_NOT_CONNECTED, "", false);
@@ -78,24 +81,40 @@ namespace ReadyMailSMTP
             clear(msg.header);
             setXEnc(msg);
 
-            if (msg.priority >= message_priority_high && msg.priority <= message_priority_low)
+            for (size_t i = 0; i < msg.headers.size(); i++)
             {
-                rd_print_to(msg.header, 50, "%s: %d\r\n", "X-Priority", msg.priority);
-                rd_print_to(msg.header, 50, "%s: %s\r\n", "X-MSMail-Priority", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
-                rd_print_to(msg.header, 50, "%s: %s\r\n", "Importance", msg.priority == message_priority_high ? "High" : (msg.priority == message_priority_normal ? "Normal" : "Low"));
+                if ((msg.headers[i].type == rfc822_from || msg.headers[i].type == rfc822_sender))
+                    rd_print_to(msg.header, 250, "%s: %s<%s>\r\n", rfc822_headers[msg.headers[i].type].text, msg.headers[i].name.c_str(), msg.headers[i].value.c_str());
             }
-
-            // If author and transmitter (sender or agent) are not identical, send both 'From' and 'Sender' headers
-            if (msg.sender.email.length() > 0 && msg.author.email.length() > 0 && strcmp(msg.sender.email.c_str(), msg.author.email.c_str()) != 0)
-            {
-                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.author.name.c_str()).c_str(), msg.author.email.c_str());
-                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_sender].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
-            }
-            // If author and transmitter (agent) are identical, send only 'From' header
-            else if (msg.sender.email.length() > 0)
-                rd_print_to(msg.header, 250, "%s: \"%s\" <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_from].text, encodeWord(msg.sender.name.c_str()).c_str(), msg.sender.email.c_str());
 
             return startTransaction(msg);
+        }
+
+        size_t headerSize(SMTPMessage &msg, rfc822_header_types type)
+        {
+            int count = 0;
+            for (size_t i = 0; i < msg.headers.size(); i++)
+            {
+                if (msg.headers[i].type == type)
+                    count++;
+            }
+            return count;
+        }
+
+        smtp_header_item getHeader(SMTPMessage &msg, rfc822_header_types type, int index)
+        {
+            smtp_header_item hdr;
+            int count = 0;
+            for (size_t i = 0; i < msg.headers.size(); i++)
+            {
+                if (msg.headers[i].type == type)
+                {
+                    if (index == count)
+                        return msg.headers[i];
+                    count++;
+                }
+            }
+            return hdr;
         }
 
         bool startTransaction(SMTPMessage &msg)
@@ -103,7 +122,18 @@ namespace ReadyMailSMTP
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 setDebugState(smtp_state_send_header_sender, "Sending envelope...");
-                rd_print_to(msg.buf, 250, "MAIL FROM:<%s>", msg.author.email.length() ? msg.author.email.c_str() : msg.sender.email.c_str());
+
+                String sender;
+                for (size_t i = 0; i < msg.headers.size(); i++)
+                {
+                    if ((msg.headers[i].type == rfc822_from || msg.headers[i].type == rfc822_sender))
+                    {
+                        sender = msg.headers[i].value;
+                        break;
+                    }
+                }
+
+                rd_print_to(msg.buf, 250, "MAIL FROM:<%s>", sender.c_str());
                 if ((msg.text.xenc == xenc_binary || msg.html.xenc == xenc_binary) && res->feature_caps[smtp_send_cap_binary_mime])
                     msg.buf += " BODY=BINARYMIME";
                 else if ((msg.text.xenc == xenc_8bit || msg.html.xenc == xenc_8bit) && res->feature_caps[smtp_send_cap_8bit_mime])
@@ -125,28 +155,35 @@ namespace ReadyMailSMTP
             bool is_recipient = false, is_cc_bcc = false;
             int i = 0;
 
-            if (msg.recipient_index < recpVec(msg).size())
+            int to_size = headerSize(msg, rfc822_to);
+            int cc_size = headerSize(msg, rfc822_cc);
+            int bcc_size = headerSize(msg, rfc822_bcc);
+
+            if (msg.recipient_index < to_size)
             {
                 i = msg.recipient_index;
-                email = recpVec(msg)[msg.recipient_index].email;
-                name = recpVec(msg)[msg.recipient_index].name;
+                smtp_header_item hdr = getHeader(msg, rfc822_to, msg.recipient_index);
+                email = hdr.value;
+                name = hdr.name;
                 msg.recipient_index++;
                 is_recipient = true;
-                rd_print_to(msg.header, 250, "%s\"%s\" <%s>%s", i == 0 ? "To: " : ",", encodeWord(name.c_str()).c_str(), email.c_str(), i == (int)recpVec(msg).size() - 1 ? "\r\n" : "");
+                rd_print_to(msg.header, 250, "%s%s<%s>%s", i == 0 ? "To: " : ",", name.c_str(), email.c_str(), i == to_size - 1 ? "\r\n" : "");
             }
-            else if (msg.cc_index < ccVec(msg).size())
+            else if (msg.cc_index < cc_size)
             {
                 i = msg.cc_index;
-                email = ccVec(msg)[msg.cc_index].email;
-                name = ccVec(msg)[msg.cc_index].name;
+                smtp_header_item hdr = getHeader(msg, rfc822_cc, msg.cc_index);
+                email = hdr.value;
+                name = hdr.name;
                 msg.cc_index++;
                 is_cc_bcc = true;
-                rd_print_to(msg.header, 250, "%s<%s>%s", i == 0 ? "Cc: " : ",", email.c_str(), i == (int)ccVec(msg).size() - 1 ? "\r\n" : "");
+                rd_print_to(msg.header, 250, "%s<%s>%s", i == 0 ? "Cc: " : ",", email.c_str(), i == cc_size - 1 ? "\r\n" : "");
             }
-            else if (msg.bcc_index < bccVec(msg).size())
+            else if (msg.bcc_index < bcc_size)
             {
-                email = bccVec(msg)[msg.bcc_index].email;
-                name = bccVec(msg)[msg.bcc_index].name;
+                smtp_header_item hdr = getHeader(msg, rfc822_bcc, msg.bcc_index);
+                email = hdr.value;
+                name = hdr.name;
                 msg.bcc_index++;
                 is_cc_bcc = true;
             }
@@ -164,35 +201,16 @@ namespace ReadyMailSMTP
                 clear(msg.buf);
                 rd_print_to(msg.buf, 250, "RCPT TO:<%s>", email.c_str());
 
-                if (is_recipient)
-                {
-                    // rfc3461, rfc3464
-                    if (res->feature_caps[smtp_send_cap_dsn])
-                    {
-                        if (msg.response.notify != message_notify_never)
-                        {
-                            String notify;
-                            msg.buf += " NOTIFY=";
-                            if ((msg.response.notify & message_notify_success) == message_notify_success)
-                                notify = "SUCCESS";
-                            if (notify.length())
-                                notify += ",";
-                            if ((msg.response.notify & message_notify_failure) == message_notify_failure)
-                                notify += "FAILURE";
-                            if (notify.length())
-                                notify += ",";
-                            if ((msg.response.notify & message_notify_delay) == message_notify_delay)
-                                notify += "DELAY";
-                            msg.buf += notify;
-                        }
-                    }
-                }
+                // rfc3461, rfc3464
+                if (is_recipient && res->feature_caps[smtp_send_cap_dsn] && (smtp_ctx->options.notify.indexOf("SUCCESS") > -1 || smtp_ctx->options.notify.indexOf("FAILURE") > -1 || smtp_ctx->options.notify.indexOf("DELAY") > -1))
+                    msg.buf += " NOTIFY=" + smtp_ctx->options.notify;
+
                 msg.buf += "\r\n";
 
                 if (!sendBuffer(msg.buf))
                     return false;
 
-                if (msg.recipient_index == recpVec(msg).size() && msg.cc_index == ccVec(msg).size() && msg.bcc_index == bccVec(msg).size())
+                if (msg.recipient_index == to_size && msg.cc_index == cc_size && msg.bcc_index == bcc_size)
                     msg.send_recipient_complete = true;
 
                 setState(smtp_state_send_header_recipient, smtp_server_status_code_250);
@@ -288,7 +306,7 @@ namespace ReadyMailSMTP
 
                 if (msg.rfc822.size() && msg.rfc822_idx < (int)msg.rfc822.size())
                     return sendRFC822Message(msg);
-                else if (msg.hasAttachment(attach_type_attachment))
+                else if (msg.attachments.exists(attach_type_attachment))
                     return sendAttachment(msg, attach_type_attachment, 0 /* mixed */, false);
                 else
                 {
@@ -414,9 +432,9 @@ namespace ReadyMailSMTP
             smtp_ctx->ts = msg.timestamp;
             for (uint8_t k = 0; k < msg.headers.size(); k++)
             {
-                if (msg.headers[k].indexOf("Date") > -1)
+                if (msg.headers[k].name == "Date")
                 {
-                    smtp_ctx->ts = getTimestamp(msg.headers[k].substring(msg.headers[k].indexOf(":") + 1), true);
+                    smtp_ctx->ts = getTimestamp(msg.headers[k].value, true);
                     valid = smtp_ctx->ts > READYMAIL_TIMESTAMP;
                     break;
                 }
@@ -425,9 +443,6 @@ namespace ReadyMailSMTP
             // Set the timestamp
             if (!valid)
             {
-                if (smtp_ctx->ts < READYMAIL_TIMESTAMP && msg.date.length() > 0)
-                    smtp_ctx->ts = getTimestamp(msg.date, true);
-
 #if defined(ESP32) || defined(ESP8266)
                 if (smtp_ctx->ts < READYMAIL_TIMESTAMP)
                     smtp_ctx->ts = time(nullptr);
@@ -444,34 +459,15 @@ namespace ReadyMailSMTP
         {
             String buf;
             buf.reserve(1024);
-            rd_print_to(buf, 250, "Subject: %s\r\n", encodeWord(msg.subject.c_str()).c_str());
 
             for (uint8_t k = 0; k < msg.headers.size(); k++)
-                rd_print_to(buf, msg.headers[k].length(), "%s\r\n", msg.headers[k].c_str());
+            {
+                if (msg.headers[k].type < rfc822_from || msg.headers[k].type > rfc822_bcc)
+                    rd_print_to(buf, msg.headers[k].name.length() + msg.headers[k].value.length(), "%s: %s\r\n", msg.headers[k].name.c_str(), msg.headers[k].value.c_str());
+            }
 
             if (!isDateSet(msg)) // If Date header is not set, set it from timestamp
-                rd_print_to(buf, 250, "Date: %s\r\n", getDateTimeString(smtp_ctx->ts, "%a, %d %b %Y %H:%M:%S %z").c_str());
-
-            if (msg.response.reply_to.length() > 0)
-                rd_print_to(buf, 250, "%s: <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_reply_to].text, msg.response.reply_to.c_str());
-
-            if (msg.response.return_path.length() > 0)
-                rd_print_to(buf, msg.response.return_path.length(), "%s: <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_return_path].text, msg.response.return_path.c_str());
-
-            if (msg.in_reply_to.length() > 0)
-                rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[smtp_rfc822_header_field_in_reply_to].text, msg.in_reply_to.c_str());
-
-            if (msg.references.length() > 0)
-                rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[smtp_rfc822_header_field_references].text, msg.references.c_str());
-
-            if (msg.comments.length() > 0)
-                rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[smtp_rfc822_header_field_comments].text, encodeWord(msg.comments.c_str()).c_str());
-
-            if (msg.keywords.length() > 0)
-                rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[smtp_rfc822_header_field_keywords].text, encodeWord(msg.keywords.c_str()).c_str());
-
-            if (msg.messageID.length() > 0)
-                rd_print_to(buf, 250, "%s: <%s>\r\n", rfc822_headers[smtp_rfc822_header_field_msg_id].text, msg.messageID.c_str());
+                rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[rfc822_date].text, getDateTimeString(smtp_ctx->ts, "%a, %d %b %Y %H:%M:%S %z").c_str());
 
             buf += "MIME-Version: 1.0\r\n";
 
@@ -683,7 +679,7 @@ namespace ReadyMailSMTP
 
         bool sendAttachment(SMTPMessage &msg, smtp_attach_type type, int content_type_index, bool close_parent_boundary)
         {
-            if (msg.attachments_idx < (int)msg.attachments.size() && cAttach(msg).type == type)
+            if (msg.attachments.attachments_idx < (int)msg.attachments.size() && cAttach(msg).type == type)
             {
                 if (cAttach(msg).data_index == 0)
                 {
@@ -710,18 +706,18 @@ namespace ReadyMailSMTP
                         switch (type)
                         {
                         case attach_type_inline:
-                            msg.inline_idx++;
-                            rd_print_to(str, 100, "Sending inline image content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.inline_idx, msg.attachmentCount(type));
+                            msg.attachments.inline_idx++;
+                            rd_print_to(str, 100, "Sending inline image content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.inline_idx, msg.attachments.count(type));
                             break;
 
                         case attach_type_attachment:
-                            msg.attachment_idx++;
-                            rd_print_to(str, 100, "Sending attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachment_idx, msg.attachmentCount(type));
+                            msg.attachments.attachment_idx++;
+                            rd_print_to(str, 100, "Sending attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.attachment_idx, msg.attachments.count(type));
                             break;
 
                         case attach_type_parallel:
-                            msg.parallel_idx++;
-                            rd_print_to(str, 100, "Sending parallel attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.parallel_idx, msg.attachmentCount(type));
+                            msg.attachments.parallel_idx++;
+                            rd_print_to(str, 100, "Sending parallel attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.parallel_idx, msg.attachments.count(type));
                             break;
 
                         default:
@@ -748,12 +744,12 @@ namespace ReadyMailSMTP
                     return sendAttachData(msg);
             }
 
-            msg.attachments_idx++;
+            msg.attachments.attachments_idx++;
 
             // if send data completes
-            if (msg.attachmentCount(type) == (type == attach_type_inline ? msg.inline_idx : (type == attach_type_parallel ? msg.parallel_idx : msg.attachment_idx)))
+            if (msg.attachments.count(type) == (type == attach_type_inline ? msg.attachments.inline_idx : (type == attach_type_parallel ? msg.attachments.parallel_idx : msg.attachments.attachment_idx)))
             {
-                msg.resetAttachmentIndex();
+                msg.resetIndex();
 
                 if (!sendEndBoundary(msg, content_type_index))
                     return false;
@@ -764,7 +760,7 @@ namespace ReadyMailSMTP
                 if (type == attach_type_inline || type == attach_type_parallel)
                     msg.send_state++;
 
-                if ((type == attach_type_parallel && msg.hasAttachment(attach_type_attachment) == 0) || (type == attach_type_attachment) || (type == attach_type_inline && content_type_index >= 0 && msg.send_state_root != smtp_send_state_body_type_2 && msg.send_state_root != smtp_send_state_body_type_2P && msg.send_state_root != smtp_send_state_body_type_3 && msg.send_state_root != smtp_send_state_body_type_3P) /* related only */)
+                if ((type == attach_type_parallel && !msg.attachments.exists(attach_type_attachment)) || (type == attach_type_attachment) || (type == attach_type_inline && content_type_index >= 0 && msg.send_state_root != smtp_send_state_body_type_2 && msg.send_state_root != smtp_send_state_body_type_2P && msg.send_state_root != smtp_send_state_body_type_3 && msg.send_state_root != smtp_send_state_body_type_3P) /* related only */)
                     return terminateData(msg);
             }
             return true;
@@ -1008,16 +1004,16 @@ namespace ReadyMailSMTP
 
         void setMIMEList(SMTPMessage &msg)
         {
-            msg.resetAttachmentIndex();
+            msg.resetIndex();
             msg.content_types.clear();
 
             // If no html version or no content id, treat inline image as a attachment
-            if (msg.hasAttachment(attach_type_inline) && (msg.html.content.length() == 0 || msg.html.content.indexOf("cid:") == -1))
-                msg.inlineToAttachment();
+            if (msg.attachments.exists(attach_type_inline) && (msg.html.content.length() == 0 || msg.html.content.indexOf("cid:") == -1))
+                msg.attachments.inlineToAttachment();
 
-            if (!msg.hasAttachment(attach_type_attachment) && !msg.hasAttachment(attach_type_parallel) && msg.rfc822.size() == 0)
+            if (!msg.attachments.exists(attach_type_attachment) && !msg.attachments.exists(attach_type_parallel) && msg.rfc822.size() == 0)
             {
-                if (msg.hasAttachment(attach_type_inline))
+                if (msg.attachments.exists(attach_type_inline))
                 {
                     if (msg.text.content.length() > 0)
                     {
@@ -1034,7 +1030,7 @@ namespace ReadyMailSMTP
             {
                 msg.content_types.push_back(content_type_data("mixed"));
                 // has attachment and inline image
-                if (msg.hasAttachment(attach_type_inline))
+                if (msg.attachments.exists(attach_type_inline))
                 {
                     // has text and html versions
                     if (msg.text.content.length() > 0)
@@ -1044,7 +1040,7 @@ namespace ReadyMailSMTP
                 else // has only attachment
                     msg.content_types.push_back(content_type_data(msg.html.content.length() > 0 && msg.text.content.length() > 0 ? "alternative" : (msg.html.content.length() > 0 ? "text/html" : "text/plain")));
 
-                if (msg.hasAttachment(attach_type_parallel))
+                if (msg.attachments.exists(attach_type_parallel))
                     msg.content_types.push_back(content_type_data("parallel"));
 
                 for (size_t i = 0; i < msg.rfc822.size(); i++)
@@ -1127,22 +1123,6 @@ namespace ReadyMailSMTP
                 rd_print_to(buf, 250, "\r\n--%s\r\n", parent_boundary.c_str());
             rd_print_to(buf, 250, "Content-Type: multipart/%s; boundary=\"%s\"\r\n", mime.c_str(), boundary.c_str());
             return sendBuffer(buf);
-        }
-
-        // RFC2047 encode word (UTF-8 only)
-        String encodeWord(const char *src)
-        {
-            String buf;
-            size_t len = strlen(src);
-            if (len > 4 && src[0] != '=' && src[1] != '?' && src[len - 1] != '=' && src[len - 2] != '?')
-            {
-                char *enc = rd_base64_encode((const unsigned char *)src, len);
-                rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
-                rd_release((void *)enc);
-            }
-            else
-                buf = src;
-            return buf;
         }
 
     public:

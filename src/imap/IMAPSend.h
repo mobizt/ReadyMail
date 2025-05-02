@@ -150,7 +150,7 @@ namespace ReadyMailIMAP
             case imap_state_append_init:
 
                 imap_ctx->smtp_ctx->options.imap_mode = true;
-                imap_ctx->smtp->send(imap_ctx->msg, imap_ctx->options.await);
+                imap_ctx->smtp->send(imap_ctx->msg, imap_ctx->smtp_ctx->options.notify, imap_ctx->options.await);
                 setState(imap_state_append_last);
                 break;
 
