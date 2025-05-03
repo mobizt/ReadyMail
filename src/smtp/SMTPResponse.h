@@ -59,7 +59,7 @@ namespace ReadyMailSMTP
                 // get the status code again for unexpected return code
                 if (cState() == smtp_state_start_tls || statusCode() == 0)
                     getResponseStatus(response, smtp_server_status_code_0, 0, *smtp_ctx->status);
-#if defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_CORE_DEBUG)
                 if (statusCode() < 500)
                     setDebug(line, true);
 #endif

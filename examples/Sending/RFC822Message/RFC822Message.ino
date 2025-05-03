@@ -65,11 +65,12 @@ void createMessage(SMTPMessage &msg, const String &name, const String &email, co
     // msg.headers.add(rfc822_sender, name + " <" + email + ">");
     msg.headers.add(rfc822_to, recipient + " <" + recipientEmail + ">");
 
-    String bodyText = "Hello everyone.\n";
+    String bodyText = "Hello everyone.";
     msg.text.body(content);
     msg.html.body("<html><body><div style=\"color:" + htmlColor + ";\">" + content + "</div></body></html>");
 
-    // current timestamp
+    // Set message timestamp (change this with current time)
+    // See https://bit.ly/4jy8oU1
     msg.timestamp = 1746013620;
 }
 
@@ -108,6 +109,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb, SSL_MODE);
     if (!smtp.isConnected())
         return;
@@ -120,21 +123,21 @@ void setup()
     }
 
     SMTPMessage blueMsg, pinkMsg, orangeMsg, greenMsg;
-    createMessage(greenMsg, "Green", "green@example.cfom", "ReadyMail green message", "Steve", "steve@example.com", "This is the green text message\n", "#009900");
+    createMessage(greenMsg, "Green", "green@example.cfom", "ReadyMail green message", "Steve", "steve@example.com", "This is the green text message", "#009900");
     addBlobAttachment(greenMsg, "green.png", "image/png", "green.png", (const uint8_t *)greenImg, strlen(greenImg), "base64");
     addBlobAttachment(greenMsg, "green.txt", "text/plain", "green.txt", greenText, sizeof(greenText));
 
-    createMessage(orangeMsg, "Orange", "orange@example.cfom", "ReadyMail orange message", "Mike", "mike@xample.com", "This is the orange text message that contains green message\n", "#ff9900");
+    createMessage(orangeMsg, "Orange", "orange@example.cfom", "ReadyMail orange message", "Mike", "mike@xample.com", "This is the orange text message that contains green message", "#ff9900");
     addBlobAttachment(orangeMsg, "orange.png", "image/png", "orange.png", (const uint8_t *)orangeImg, strlen(orangeImg), "base64");
     addBlobAttachment(orangeMsg, "orange.txt", "text/plain", "orange.txt", orangeText, sizeof(orangeText));
     orangeMsg.addMessage(greenMsg, "green", "green.eml");
 
-    createMessage(pinkMsg, "Pink", "pink@example.cfom", "ReadyMail pink message", "Joe", "joe@example.com", "This is the pink text message that contains orange message\n", "#ff66cc");
+    createMessage(pinkMsg, "Pink", "pink@example.cfom", "ReadyMail pink message", "Joe", "joe@example.com", "This is the pink text message that contains orange message", "#ff66cc");
     addBlobAttachment(pinkMsg, "pink.png", "image/png", "pink.png", (const uint8_t *)pinkImg, strlen(pinkImg), "base64");
     addBlobAttachment(pinkMsg, "pink.txt", "text/plain", "pink.txt", pinkText, sizeof(pinkText));
     pinkMsg.addMessage(orangeMsg, "orange", "orange.eml");
 
-    createMessage(blueMsg, "Blue", "blue@example.cfom", "ReadyMail blue message", "User", RECIPIENT_EMAIL, "This is the blue text message that contains pink message\n", "#0066ff");
+    createMessage(blueMsg, "Blue", "blue@example.cfom", "ReadyMail blue message", "User", RECIPIENT_EMAIL, "This is the blue text message that contains pink message", "#0066ff");
     addBlobAttachment(blueMsg, "blue.png", "image/png", "blue.png", (const uint8_t *)blueImg, strlen(blueImg), "base64");
     addBlobAttachment(blueMsg, "blue.txt", "text/plain", "blue.txt", blueText, sizeof(blueText));
     blueMsg.addMessage(pinkMsg, "pink", "pink.eml");

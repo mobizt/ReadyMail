@@ -6,7 +6,7 @@
 static String rd_err(int code)
 {
     String msg;
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
     switch (code)
     {
     case TCP_CLIENT_ERROR_CONNECTION:

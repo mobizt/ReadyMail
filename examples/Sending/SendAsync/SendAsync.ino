@@ -65,11 +65,12 @@ void sendMesssage()
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
 
-    String bodyText = "Hello everyone.\n";
+    String bodyText = "Hello everyone.";
     msg.text.body(bodyText);
-    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>");
+    msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "</div></body></html>");
 
-    // current timestamp
+    // Set message timestamp (change this with current time)
+    // See https://bit.ly/4jy8oU1
     msg.timestamp = 1746013620;
 
     addBlobAttachment(msg, "green.png", "image/png", "green.png", (const uint8_t *)greenImg, strlen(greenImg), "base64");
@@ -94,6 +95,8 @@ void setup()
     Serial.println();
 
     ssl_client.setInsecure();
+
+    Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
     // Setting AWAIT_MODE parameter with false
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb, SSL_MODE, AWAIT_MODE);

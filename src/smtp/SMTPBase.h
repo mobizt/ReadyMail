@@ -66,7 +66,7 @@ namespace ReadyMailSMTP
             for (int i = 0; i < argLen; ++i)
                 data += va_arg(args, const char *);
             va_end(args);
-#if defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_CORE_DEBUG)
             if (!smtp_ctx->options.accumulate)
                 setDebug(data, true);
 #endif
@@ -87,14 +87,14 @@ namespace ReadyMailSMTP
         void setDebugState(smtp_state state, const String &msg)
         {
             tState() = state;
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(msg);
 #endif
         }
 
         void setDebug(const String &info, bool core = false)
         {
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             if (smtp_ctx->status)
             {
                 int i = 0, j = 0;
@@ -330,7 +330,7 @@ namespace ReadyMailSMTP
         String errMsg(int code)
         {
             String msg;
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             msg = rd_err(code);
             if (msg.length() == 0)
             {

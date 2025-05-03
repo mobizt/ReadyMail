@@ -45,7 +45,7 @@ namespace ReadyMailIMAP
             int readLen = readLine(line);
             if (readLen > 0)
             {
-#if defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_CORE_DEBUG)
                 if (cState() != imap_state_search && cState() != imap_state_fetch_body_part && !imap_ctx->options.multiline)
                     setDebug(imap_ctx, line, true);
 #endif
@@ -143,10 +143,27 @@ namespace ReadyMailIMAP
                 case imap_state_custom_command:
                     if (cCode() != function_return_failure && cCode() != function_return_success)
                     {
-                        imap_ctx->cb.command_response = line;
                         if (imap_ctx->cb.cmd)
-                            imap_ctx->cb.cmd(imap_ctx->cmd.c_str(), line.c_str());
+                            imap_ctx->cb.command_response.text = line;
+                        else
+                            imap_ctx->cb.command_response.text += imap_ctx->cb.command_response.text.length() ? "\r\n" + line : line;
+
+                        imap_ctx->cb.command_response.command = imap_ctx->cmd;
+                        imap_ctx->cb.command_response.errorCode = 0;
+                        imap_ctx->cb.command_response.isComplete = false;
                     }
+                    else
+                    {
+                        if (imap_ctx->cb.cmd)
+                            imap_ctx->cb.command_response.text.remove(0, imap_ctx->cb.command_response.text.length());
+                        imap_ctx->cb.command_response.command = imap_ctx->cmd;
+                        imap_ctx->cb.command_response.errorCode = cCode() == function_return_failure ? IMAP_ERROR_RESPONSE : 0;
+                        imap_ctx->cb.command_response.isComplete = true;
+                    }
+
+                    if (imap_ctx->cb.cmd)
+                        imap_ctx->cb.cmd(imap_ctx->cb.command_response);
+
                     break;
 
                 default:

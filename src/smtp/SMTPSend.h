@@ -466,7 +466,7 @@ namespace ReadyMailSMTP
                     rd_print_to(buf, msg.headers[k].name.length() + msg.headers[k].value.length(), "%s: %s\r\n", msg.headers[k].name.c_str(), msg.headers[k].value.c_str());
             }
 
-            if (!isDateSet(msg)) // If Date header is not set, set it from timestamp
+            if (!isDateSet(msg)) // If Date header does not set, set it from timestamp
                 rd_print_to(buf, 250, "%s: %s\r\n", rfc822_headers[rfc822_date].text, getDateTimeString(smtp_ctx->ts, "%a, %d %b %Y %H:%M:%S %z").c_str());
 
             buf += "MIME-Version: 1.0\r\n";
@@ -504,7 +504,7 @@ namespace ReadyMailSMTP
 
             if ((html && msg.html.data_size == 0) || (!html && msg.text.data_size == 0))
             {
-                setDebugState(smtp_state_send_body, "Sending text/" + String((html ? "html" : "plain")) + "' content...");
+                setDebugState(smtp_state_send_body, "Sending text/" + String((html ? "html" : "plain")) + " body...");
                 String buf, ct_prop;
                 getTextContent(msg, html);
                 bool embed = (html && msg.html.embed.enable) || (!html && msg.text.embed.enable);
@@ -707,17 +707,17 @@ namespace ReadyMailSMTP
                         {
                         case attach_type_inline:
                             msg.attachments.inline_idx++;
-                            rd_print_to(str, 100, "Sending inline image content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.inline_idx, msg.attachments.count(type));
+                            rd_print_to(str, 100, "Sending inline image, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.inline_idx, msg.attachments.count(type));
                             break;
 
                         case attach_type_attachment:
                             msg.attachments.attachment_idx++;
-                            rd_print_to(str, 100, "Sending attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.attachment_idx, msg.attachments.count(type));
+                            rd_print_to(str, 100, "Sending attachment, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.attachment_idx, msg.attachments.count(type));
                             break;
 
                         case attach_type_parallel:
                             msg.attachments.parallel_idx++;
-                            rd_print_to(str, 100, "Sending parallel attachment content, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.parallel_idx, msg.attachments.count(type));
+                            rd_print_to(str, 100, "Sending parallel attachment, %s (%d) %d of %d...", cAttach(msg).filename.c_str(), cAttach(msg).data_size, msg.attachments.parallel_idx, msg.attachments.count(type));
                             break;
 
                         default:

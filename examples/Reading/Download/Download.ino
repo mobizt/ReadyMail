@@ -100,6 +100,9 @@ void fileCb(File &file, const char *filename, readymail_file_operating_mode mode
     default:
         break;
     }
+
+    // This is required by library to get the file object
+    // that uses in its read/write processes.
     file = myFile;
 }
 #endif

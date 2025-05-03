@@ -115,6 +115,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())
         return;

@@ -150,8 +150,8 @@ namespace ReadyMailIMAP
 
         /** Send command to IMAP server.
          *
-         * @param cmd Optional. The command to send.
-         * @param cb The IMAPCustomComandCallback callback function to get the server untagged response.
+         * @param cmd The command to send.
+         * @param cb Optional. The IMAPCustomComandCallback callback function to get the server untagged response.
          * @param await Optional. The boolean option for using in await or blocking mode.
          * For async mode, set this parameter with false and calling the IMAPClient::loop() in the loop
          * to handle the async processes.
@@ -163,6 +163,11 @@ namespace ReadyMailIMAP
         bool sendCommand(const String &cmd, IMAPCustomComandCallback cb, bool await = true)
         {
             validateMailboxesChange();
+
+            imap_ctx.cb.command_response.text.remove(0, imap_ctx.cb.command_response.text.length());
+            imap_ctx.cb.command_response.command.remove(0, imap_ctx.cb.command_response.command.length());
+            imap_ctx.cb.command_response.errorCode = 0;
+            imap_ctx.cb.command_response.isComplete = false;
 
             sender.setDebugState(imap_state_custom_command, "Sending custom command \"" + cmd + "\"...");
 
@@ -540,7 +545,7 @@ namespace ReadyMailIMAP
          *
          * @return String of untagged response.
          */
-        String getCmdResponse() { return imap_ctx.cb.command_response; }
+        IMAPCommandResponse getCmdResponse() { return imap_ctx.cb.command_response; }
 
     private:
         IMAPConnection conn;

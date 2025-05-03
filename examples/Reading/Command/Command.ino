@@ -33,10 +33,13 @@ void imapCb(IMAPStatus status)
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
 }
 
-// For more information, see https://github.com/mobizt/ReadyMail#imap-custom-command-processing-information
-void cmdCb(const char *cmd, const char *response)
+// For more information, see https://bit.ly/430BPan
+void cmdCb(IMAPCommandResponse response)
 {
-    ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.status().state, cmd, response);
+    if (response.isComplete)
+        ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.status().state, response.command.c_str(), response.errorCode < 0 ? "error" : "success");
+    else
+        ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.status().state, response.command.c_str(), response.text.c_str());
 }
 
 void setup()

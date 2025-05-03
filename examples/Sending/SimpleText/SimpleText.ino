@@ -59,6 +59,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb, SSL_MODE);
     if (!smtp.isConnected())
         return;
@@ -75,7 +77,7 @@ void setup()
 
     // Using 'name <email>' or <email> or 'email' for the from, sender and recipients.
     // The 'name' section of cc and bcc is ignored.
-    
+
     // Multiple recipents can be added but only the first one of sender and from can be added.
     msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
@@ -86,22 +88,25 @@ void setup()
     msg.headers.addCustom("X-MSMail-Priority", PRIORITY);
     msg.headers.addCustom("X-Priority", PRIORITY_NUM);
 
-    String bodyText = "Hello everyone.\n";
-    bodyText += "こんにちは、日本の皆さん\n";
-    bodyText += "大家好，中国人\n";
-    bodyText += "Здравей български народе\n";
+    String bodyText = "Hello everyone.\r\n";
+    bodyText += "こんにちは、日本の皆さん\r\n";
+    bodyText += "大家好，中国人\r\n";
+    bodyText += "Здравей български народе";
 
     // Set the content, content transfer encoding or charset
     msg.text.body(bodyText);
     msg.text.transferEncoding("base64");
-    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "</div></body></html>");
-    msg.text.transferEncoding("base64");
+
+    bodyText.replace("\r\n", "<br>\r\n");
+    msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "</div></body></html>");
+    msg.html.transferEncoding("base64");
 
     // With embedFile function, the html message will send as attachment.
     if (EMBED_MESSAGE)
         msg.html.embedFile(true, "msg.html", embed_message_type_attachment);
 
-    // current timestamp
+    // Set message timestamp (change this with current time)
+    // See https://bit.ly/4jy8oU1
     msg.timestamp = 1746013620;
 
     smtp.send(msg, NOTIFY);

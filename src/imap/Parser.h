@@ -985,7 +985,7 @@ namespace ReadyMailIMAP
 
         void debugBodystructure(imap_msg_ctx &cmsg, imap_context *imap_ctx)
         {
-#if defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_CORE_DEBUG)
             for (int i = 0; i < (int)cmsg.parts.size(); i++)
             {
                 String tab;

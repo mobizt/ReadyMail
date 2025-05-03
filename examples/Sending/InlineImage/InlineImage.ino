@@ -71,6 +71,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb);
     if (!smtp.isConnected())
         return;
@@ -85,11 +87,12 @@ void setup()
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
 
-    String bodyText = "This message contains inline images.\n";
+    String bodyText = "This message contains inline images.";
     msg.text.body(bodyText);
-    msg.html.body("<html><body><div style=\"color:#00ffff;\">" + bodyText + "<br/><br/><img src=\"cid:orange_image\" alt=\"orange image\"> <img src=\"cid:blue_image\" alt=\"blue image\"></div></body></html>");
+    msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "<br/><br/><img src=\"cid:orange_image\" alt=\"orange image\"> <img src=\"cid:blue_image\" alt=\"blue image\"></div></body></html>");
 
-    // current timestamp
+    // Set message timestamp (change this with current time)
+    // See https://bit.ly/4jy8oU1
     msg.timestamp = 1746013620;
 
     addBlobAttachment(msg, "orange.png", "image/png", "orange.png", (const uint8_t *)orangeImg, strlen(orangeImg), "base64", "orange_image");

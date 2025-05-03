@@ -13,7 +13,7 @@ namespace ReadyMailIMAP
     public:
         static void setDebug(imap_context *imap_ctx, const String &info, bool core = false)
         {
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             if (imap_ctx->status)
             {
                 int i = 0, j = 0;
@@ -65,7 +65,7 @@ namespace ReadyMailIMAP
             for (int i = 0; i < argLen; ++i)
                 data += va_arg(args, const char *);
             va_end(args);
-#if defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_CORE_DEBUG)
             setDebug(imap_ctx, data, true);
 #endif
             data += crlf ? "\r\n" : "";
@@ -87,7 +87,6 @@ namespace ReadyMailIMAP
                     print(imap_ctx);
                 }
             }
-            imap_ctx->cb.command_response.remove(0, imap_ctx->cb.command_response.length());
             resetProcessFlag();
             releaseSMTP();
             return false;
@@ -143,7 +142,7 @@ namespace ReadyMailIMAP
         {
             err_timer.stop();
             tState() = state;
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(imap_ctx, msg);
 #endif
         }
@@ -233,7 +232,7 @@ namespace ReadyMailIMAP
         String errMsg(int code)
         {
             String msg;
-#if defined(ENABLE_DEBUG) || defined(READYMAIL_CORE_DEBUG)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             msg = rd_err(code);
             if (msg.length() == 0)
             {

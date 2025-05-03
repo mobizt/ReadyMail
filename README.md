@@ -122,9 +122,13 @@ This library does not set the date header to SMTP message automatically unless s
 
 User needs to set the message date by one of the following methods before sending the SMTP message.
 
-Providing the RFC 2822 `Date` haeader with `SMTPMessage::headers.add(rfc822_date, "Fri, 18 Apr 2025 11:42:30 +0300")` or setting the UNIX timestamp with `SMTPMessage::timestamp = ???????????`. 
+Providing the RFC 2822 `Date` haeader with `SMTPMessage::headers.add(rfc822_date, "Fri, 18 Apr 2025 11:42:30 +0300")` or setting the UNIX timestamp with `SMTPMessage::timestamp = UNIX timestamp`. 
 
 For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
+
+In ESP8266 and ESP32, the system time is able to set with time from NTP server e.g. configTime(0, 0, "pool.ntp.org"); then wait until the time(nullptr) returns the valid timestamp, and library will use the system time for Date header setting.
+
+In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMessage::timestamp = WiFi.getTime();`
 
 ### SMTP Processing Information
 
@@ -239,6 +243,11 @@ if (imap.isConnected())
 }
 ```
 
+The library provides the simple IMAP APIs for idling (mailbox polling), searching and fetching the messages. If additional works are needed e.g. setting and deleting flags, or creating, moving and deleting folder, or copying, moving and deleting mssage etc., those taks can be done through the `IMAPClient::sendCommand()`. 
+
+The [Command.ino](/examples/Reading/Command/Command.ino) example show how to do those works. The server responses from sending the command will be discussed in the [IMAP Custom Comand Processing Information](#imap-custom-comand-processing-information) section below.
+
+
 ### IMAP Processing Information
 
 The `IMAPStatus` is the struct of processing information which can be obtained from the `IMAPClient::status()` function.
@@ -351,16 +360,38 @@ void dataCallback(IMAPCallbackData data)
 
 ### IMAP Custom Comand Processing Information
 
-The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendCommand()` function, provides the untagged server response for the IMAP command.
+The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendCommand()` function, provides the instance of `IMAPCommandResponse` for the IMAP command. The `IMAPCommandResponse` can also be obtained from `IMAPClient::getCmdResponse()`.
+
+The `IMAPCommandResponse` consists of `IMAPCommandResponse::command`, `IMAPCommandResponse::text`, `IMAPCommandResponse::isComplete`, and `IMAPCommandResponse::errorCode`.
+
+The `IMAPCommandResponse::command` provides the command of the response.  The `IMAPCommandResponse::text` provides the instance of untagged response when it obtains from `IMAPCustomComandCallback` callback function or represents all untagged server responses when it obtains from `IMAPClient::getCmdResponse()` function.
+
+The `IMAPCommandResponse::isComplete` value will be true when the server responses are complete. When the `IMAPCommandResponse::isComplete` value is true, the `IMAPCommandResponse::errorCode` value can be used for error checking if its value is negative number.
+
+The [Command.ino](/examples/Reading/Command/Command.ino) example showed how to use `IMAPClient::sendCommand()` to more with flags, message and folder or mailbox.
 
 
 ## Ports and Clients Selection
 
 As the library works with external network/SSL client, the client that was selected, should work with protocols or ports that are used for the server connection.
 
-The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`). 
+The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`).
 
-The following sections showed how to select proper ports and Clients based on the protocols.
+Additional to the proper SSL client selected for the ports, the SSL ckient itself may need some additional setting before use.
+
+Some SSL client allows user to use in insecure mode without server or Rooth CA SSL certificate verification e.g. using `WiFiClientSecure::setInsecure()` in ESP32 and ESP8266 `WiFiClientSecure.h`.
+
+All examples in this library are for ESP32 for simply demonstation and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`
+
+If server supports the SSL fragmentation and some SSL client supports SSL fragmentation, allows user to setup the IO buffer sise for receive and transmit buffer in lower size (less than 16k), this allows us to operate SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.
+
+Some SsL client e.g. `WiFiNINA/WiFi101`, it requires secure connection that server or Rooth CA SSL certificate is required for verification during establishing the connection. This kind of SSL client works with device firmware that stores the list of cerificates in its firmware.
+
+If the IMAP or SMTP server to connect is Google and Microsoft or from well-known servers, the connection may be successfull as the device firmware contains the root certificates of those servers and they are not yet expired. The connection to other server may be rejected because of missing the server certificates. In that case, user needs to add certificates to the device firmware.
+
+In some use case where the network is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, these network client should be assign to the SSL client before use depends on the functions or APIs provided by SSL client.
+
+Bavc to the our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
 
 ### Plain Text Connection
 

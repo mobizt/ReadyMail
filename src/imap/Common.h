@@ -284,6 +284,13 @@ namespace ReadyMailIMAP
         String text;
     } IMAPStatus;
 
+    typedef struct imap_connand_response_status_t
+    {
+        int errorCode = 0;
+        bool isComplete = false;
+        String command, text;
+    } IMAPCommandResponse;
+
     struct imap_server_status_t
     {
         bool start_tls = false, connected = false, secured = false, server_greeting_ack = false, authenticated = false;
@@ -293,7 +300,7 @@ namespace ReadyMailIMAP
 
     typedef void (*IMAPResponseCallback)(IMAPStatus status);
 
-    typedef void (*IMAPCustomComandCallback)(const char *cmd, const char *response);
+    typedef void (*IMAPCustomComandCallback)(IMAPCommandResponse response);
 
     struct imap_timeout
     {
@@ -351,7 +358,8 @@ namespace ReadyMailIMAP
         IMAPResponseCallback resp = NULL;
         IMAPDataCallback data = NULL;
         IMAPCustomComandCallback cmd = NULL;
-        String download_path, command_response;
+        String download_path;
+        IMAPCommandResponse command_response;
 #if defined(ENABLE_FS)
         FileCallback file = NULL;
 #endif
