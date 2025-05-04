@@ -118,25 +118,33 @@ If host name or public IP is not available, ignore this or use the loopback addr
 
 **Date Header**
 
-The message date header should be set to prevent spam mail. 
+The message `Date` header should be set to prevent spam mail. 
 
-This library does not set the date header to SMTP message automatically unless system time was set in ESP8266 and ESP32 devices. 
+This library does not set the `Date` header to SMTP message automatically unless system time was set in ESP8266 and ESP32 devices. 
 
-User needs to set the message date by one of the following methods before sending the SMTP message.
+User needs to set the message `Date` by one of the following methods before sending the SMTP message.
 
 Providing the RFC 2822 `Date` haeader with `SMTPMessage::headers.add(rfc822_date, "Fri, 18 Apr 2025 11:42:30 +0300")` or setting the UNIX timestamp with `SMTPMessage::timestamp = UNIX timestamp`. 
 
-For ESP8266 and ESP32 devices as mentioned above the message date header will be auto-set, if the device system time was already set before sending the message.
+For ESP8266 and ESP32 devices that mentioned above, the message `Date` header will be auto-set, if the device system time was already set before sending the message.
 
-In ESP8266 and ESP32, the system time is able to set with time from NTP server e.g. configTime(0, 0, "pool.ntp.org"); then wait until the time(nullptr) returns the valid timestamp, and library will use the system time for Date header setting.
+In ESP8266 and ESP32, the system time is able to set e.g. using configTime(0, 0, "pool.ntp.org"); then wait until the time(nullptr) returns the valid timestamp, and library will use the system time for `Date` header setting.
 
 In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMessage::timestamp = WiFi.getTime();`
 
-**Half Line-Break (LF)**
+**Half Line-Break**
 
 Depending on server policy, some SMTP server may reject the Email sending when the Lf (line feed) was used for line break in the content instead of CrLf (Carriage return + Line feed). 
 
 Then we recommend using CrLf instead of Lf in the content to avoid this issue.
+
+```cpp
+// Recommend
+String text1 = "Line 1 text.\r\nLine 2 text.\r\nLine 3 text.";
+
+// Not recommend
+String text2 = "Line 1 text.\nLine 2 text.\nLine 3 text.";
+```
 
 
 ### SMTP Processing Information
@@ -386,19 +394,19 @@ As the library works with external network/SSL client, the client that was selec
 
 The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`).
 
-Additional to the proper SSL client selected for the ports, the SSL client itself may require some additional settings before use.
+*Additional to the proper SSL client selected for the ports, the SSL client itself may require some additional settings before use.*
 
-Some SSL client allows user to use in insecure mode without server or Rooth CA SSL certificate verification e.g. using `WiFiClientSecure::setInsecure()` in ESP32 and ESP8266 `WiFiClientSecure.h`.
+*Some SSL client allows user to use in insecure mode without server or Rooth CA SSL certificate verification e.g. using `WiFiClientSecure::setInsecure()` in ESP32 and ESP8266 `WiFiClientSecure.h`.*
 
-All examples in this library are for ESP32 for simply demonstation and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`
+*All examples in this library are for ESP32 for simply demonstation and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`.*
 
-If server supports the SSL fragmentation and some SSL client supports SSL fragmentation by allowing user to setup the allocate IO buffers in any size, this allows user to operate the SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.
+*If server supports the SSL fragmentation and some SSL client supports SSL fragmentation by allowing user to allocate the IO buffers in any size, this allows user to operate the SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.*
 
-Some SsL client e.g. `WiFiNINA` and `WiFi101`, they require secure connection. The server or Rooth CA SSL certificate is required for verification during establishing the connection. This kind of SSL client works with device firmware that stores the list of cerificates in its firmware.
+*Some SSL client e.g. `WiFiNINA` and `WiFi101`, they require secure connection. The server or Rooth CA SSL certificate is required for verification during establishing the connection. This kind of SSL client works with device firmware that stores the list of cerificates in its firmware.*
 
-There is no problem when connecting to Google and Microsoft servers as the SSL Root certificate is already installed in firmware and it does not exire. The connection to other servers may be failed because of missing the server certificates. User needs to add or upload SSL certificates to the device firmware in this case.
+*There is no problem when connecting to Google and Microsoft servers as the SSL Root certificate is already installed in firmware and it does not exire. The connection to other servers may be failed because of missing the server certificates. User needs to add or upload SSL certificates to the device firmware in this case.*
 
-In some use case where the network to connect is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, there are few SSL clients that can be used. One of these SSL client is `ESP_SSLClient`.
+*In some use case where the network to connect is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, there are few SSL clients that can be used. One of these SSL client is `ESP_SSLClient`.*
 
 Back to our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
 
@@ -443,7 +451,7 @@ The `TLSHandshakeCallback` function and `startTLS` boolean option should be assi
 
 Note that, when using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient), the basic network client e.g. `WiFiClient`, `EthernetClient` and `GSMClient` sould be assigned to `ESP_SSLClient::setClient()` and the second parameter should be  `false` to start the connection in plain text mode.
 
-The benefits of using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) are it supports all 32-bit MCUs, PSRAM and adjustable IO buffer while the only trade off is it requires additional 85k program space. 
+*The benefits of using [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) are it supports all 32-bit MCUs, PSRAM and adjustable IO buffer while the only trade off is it requires additional 85k program space.*
 
 When the TLS handshake is done inside the `TLSHandshakeCallback` function, the reference parameter, `success` should be set (`true`).
 
