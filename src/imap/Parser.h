@@ -969,8 +969,7 @@ namespace ReadyMailIMAP
         {
 #if defined(ENABLE_FS)
             cpart.filepath.remove(0, cpart.filepath.length());
-            String name = getFileName(cpart);
-            rd_print_to(cpart.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, name.c_str());
+            rd_print_to(cpart.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, cpart.filename.c_str());
             if (imap_ctx->cb.file)
             {
                 String path = imap_ctx->cb.download_path.length() ? imap_ctx->cb.download_path + "/" : "";
