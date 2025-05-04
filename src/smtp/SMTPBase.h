@@ -178,24 +178,9 @@ namespace ReadyMailSMTP
         void serialPrint()
         {
             if (smtp_ctx->status->progressUpdated)
-                printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", smtp_ctx->status->state, smtp_ctx->status->filename.c_str(), smtp_ctx->status->progress);
+                ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", smtp_ctx->status->state, smtp_ctx->status->filename.c_str(), smtp_ctx->status->progress);
             else
-                printf("ReadyMail[smtp][%d]%s\n", smtp_ctx->status->state, smtp_ctx->status->text.c_str());
-        }
-
-        void printf(const char *format, ...)
-        {
-#if defined(MAIL_CLIENT_PRINTF_BUFFER)
-            const int size = MAIL_CLIENT_PRINTF_BUFFER;
-#else
-            const int size = 1024;
-#endif
-            char s[size];
-            va_list va;
-            va_start(va, format);
-            vsnprintf(s, size, format, va);
-            va_end(va);
-            READYMAIL_DEFAULT_DEBUG_PORT.print(s);
+                ReadyMail.printf("ReadyMail[smtp][%d]%s\n", smtp_ctx->status->state, smtp_ctx->status->text.c_str());
         }
 
         String getDateTimeString(time_t ts, const char *format)

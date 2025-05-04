@@ -57,6 +57,10 @@ void dataCb(IMAPCallbackData data)
             {
                 ReadyMail.printf("Performing OTA update...\n");
                 otaErr = !Update.begin(data.size);
+
+                if (data.progressUpdated)
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.filename, data.dataIndex + data.dataLength, data.size, data.progress);
+
                 if (!otaErr)
                     otaErr = Update.write((uint8_t *)data.blob, data.dataLength) != data.dataLength;
             }
@@ -77,9 +81,7 @@ void dataCb(IMAPCallbackData data)
                     otaErr = !Update.end(true);
 
                 if (otaErr)
-                {
                     ReadyMail.printf("OTA update failed.\n");
-                }
                 else
                 {
                     ReadyMail.printf("OTA update success.\n");

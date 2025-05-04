@@ -212,22 +212,7 @@ namespace ReadyMailIMAP
                 serialPrint(imap_ctx);
         }
 
-        static void serialPrint(imap_context *imap_ctx) { printf("ReadyMail[imap][%d]%s\n", imap_ctx->status->state, imap_ctx->status->text.c_str()); }
-
-        static void printf(const char *format, ...)
-        {
-#if defined(READYMAIL_PRINTF_BUFFER)
-            const int size = READYMAIL_PRINTF_BUFFER;
-#else
-            const int size = 1024;
-#endif
-            char s[size];
-            va_list va;
-            va_start(va, format);
-            vsnprintf(s, size, format, va);
-            va_end(va);
-            READYMAIL_DEFAULT_DEBUG_PORT.print(s);
-        }
+        static void serialPrint(imap_context *imap_ctx) { ReadyMail.printf("ReadyMail[imap][%d]%s\n", imap_ctx->status->state, imap_ctx->status->text.c_str()); }
 
         String errMsg(int code)
         {

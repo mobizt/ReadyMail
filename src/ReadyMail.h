@@ -107,58 +107,6 @@
 
 #endif // ENABLE_FS
 
-enum readymail_auth_type
-{
-    readymail_auth_password,
-    readymail_auth_accesstoken,
-    readymail_auth_disabled
-};
-
-enum readymail_file_operating_mode
-{
-    readymail_file_mode_open_read,
-    readymail_file_mode_open_write,
-    readymail_file_mode_open_append,
-    readymail_file_mode_remove
-};
-
-namespace ReadyMailCallbackNS
-{
-#if defined(ENABLE_FS)
-    typedef void (*FileCallback)(File &file, const char *filename, readymail_file_operating_mode mode);
-#else
-    typedef void (*FileCallback)();
-#endif
-    typedef void (*TLSHandshakeCallback)(bool &success);
-}
-
-#include "./core/ReadyError.h"
-
-#if defined(ENABLE_IMAP)
-typedef struct imap_callback_data
-{
-    const char *filename = "";
-    const char *mime = "";
-    const uint8_t *blob = nullptr;
-    uint32_t dataLength = 0, size = 0;
-    int progress = 0, dataIndex = 0, currentMsgIndex = 0;
-    uint32_t searchCount = 0;
-    std::vector<uint32_t> msgList;
-    std::vector<std::pair<String, String>> header;
-    bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
-} IMAPCallbackData;
-typedef void (*IMAPDataCallback)(IMAPCallbackData data);
-
-#include "imap/MailboxInfo.h"
-#include "imap/IMAPClient.h"
-
-#endif
-
-#if defined(ENABLE_SMTP)
-#include "smtp/SMTPMessage.h"
-#include "smtp/SMTPClient.h"
-#endif
-
 class ReadyMailClass
 {
 public:
@@ -189,6 +137,44 @@ public:
 
 private:
 };
+
 ReadyMailClass ReadyMail;
+
+enum readymail_auth_type
+{
+    readymail_auth_password,
+    readymail_auth_accesstoken,
+    readymail_auth_disabled
+};
+
+enum readymail_file_operating_mode
+{
+    readymail_file_mode_open_read,
+    readymail_file_mode_open_write,
+    readymail_file_mode_open_append,
+    readymail_file_mode_remove
+};
+
+namespace ReadyMailCallbackNS
+{
+#if defined(ENABLE_FS)
+    typedef void (*FileCallback)(File &file, const char *filename, readymail_file_operating_mode mode);
+#else
+    typedef void (*FileCallback)();
+#endif
+    typedef void (*TLSHandshakeCallback)(bool &success);
+}
+
+#include "./core/ReadyError.h"
+
+#if defined(ENABLE_IMAP)
+#include "imap/MailboxInfo.h"
+#include "imap/IMAPClient.h"
+#endif
+
+#if defined(ENABLE_SMTP)
+#include "smtp/SMTPMessage.h"
+#include "smtp/SMTPClient.h"
+#endif
 
 #endif

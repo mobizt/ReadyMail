@@ -353,6 +353,20 @@ namespace ReadyMailIMAP
         bool exists = false;
     };
 
+    typedef struct imap_callback_data
+    {
+        const char *filename = "";
+        const char *mime = "";
+        const uint8_t *blob = nullptr;
+        uint32_t dataLength = 0, size = 0;
+        int progress = 0, dataIndex = 0, currentMsgIndex = 0;
+        uint32_t searchCount = 0;
+        std::vector<uint32_t> msgList;
+        std::vector<std::pair<String, String>> header;
+        bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
+    } IMAPCallbackData;
+    typedef void (*IMAPDataCallback)(IMAPCallbackData data);
+
     struct imap_callback
     {
         IMAPResponseCallback resp = NULL;
