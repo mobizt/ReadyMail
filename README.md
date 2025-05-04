@@ -1,4 +1,4 @@
-![ESP Mail](/src/resources/images/readymail.png)
+![ESP Mail](/resources/images/readymail.png)
 
 # ReadyMail #
 
