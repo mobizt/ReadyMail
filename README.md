@@ -1,4 +1,6 @@
-![ESP Mail](/resources/images/readymail.png)
+![ESP Mail](/src/resources/images/readymail.png)
+
+# ReadyMail #
 
 [![Github Stars](https://img.shields.io/github/stars/mobizt/ReadyMail?logo=github)](https://github.com/mobizt/ESP-Mail-Client/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/ReadyMail?logo=github)
 
