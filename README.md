@@ -130,6 +130,13 @@ In ESP8266 and ESP32, the system time is able to set with time from NTP server e
 
 In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMessage::timestamp = WiFi.getTime();`
 
+**Half Line-Break (LF)**
+
+Depending on server policy, some SMTP server may reject the message that the text body uses only Lf (line feed) instead of using CrLf (Carriage return + Line feed) to break the line. 
+
+Then we recommend using CrLf instead of Lf in the content to avoid this issue.
+
+
 ### SMTP Processing Information
 
 The `SMTPStatus` is the struct of processing information which can be obtained from the `SMTPClient::status()` function.
@@ -377,21 +384,21 @@ As the library works with external network/SSL client, the client that was selec
 
 The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`).
 
-Additional to the proper SSL client selected for the ports, the SSL ckient itself may need some additional setting before use.
+Additional to the proper SSL client selected for the ports, the SSL client itself may require some additional settings before use.
 
 Some SSL client allows user to use in insecure mode without server or Rooth CA SSL certificate verification e.g. using `WiFiClientSecure::setInsecure()` in ESP32 and ESP8266 `WiFiClientSecure.h`.
 
 All examples in this library are for ESP32 for simply demonstation and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`
 
-If server supports the SSL fragmentation and some SSL client supports SSL fragmentation, allows user to setup the IO buffer sise for receive and transmit buffer in lower size (less than 16k), this allows us to operate SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.
+If server supports the SSL fragmentation and some SSL client supports SSL fragmentation by allowing user to setup the allocate IO buffers in any size, this allows user to operate the SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.
 
-Some SsL client e.g. `WiFiNINA/WiFi101`, it requires secure connection that server or Rooth CA SSL certificate is required for verification during establishing the connection. This kind of SSL client works with device firmware that stores the list of cerificates in its firmware.
+Some SsL client e.g. `WiFiNINA` and `WiFi101`, they require secure connection. The server or Rooth CA SSL certificate is required for verification during establishing the connection. This kind of SSL client works with device firmware that stores the list of cerificates in its firmware.
 
-If the IMAP or SMTP server to connect is Google and Microsoft or from well-known servers, the connection may be successfull as the device firmware contains the root certificates of those servers and they are not yet expired. The connection to other server may be rejected because of missing the server certificates. In that case, user needs to add certificates to the device firmware.
+There is no problem when connecting to Google and Microsoft servers as the SSL Root certificate is already installed in firmware and it does not exire. The connection to other servers may be failed because of missing the server certificates. User needs to add or upload SSL certificates to the device firmware in this case.
 
-In some use case where the network is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, these network client should be assign to the SSL client before use depends on the functions or APIs provided by SSL client.
+In some use case where the network to connect is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, there are few SSL clients that can be used. One of these SSL client is `ESP_SSLClient`.
 
-Bavc to the our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
+Back to our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
 
 ### Plain Text Connection
 
