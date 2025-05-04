@@ -33,7 +33,7 @@ void imapCb(IMAPStatus status)
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
 }
 
-// For more information, see https://github.com/mobizt/ReadyMail#imap-enveloping-data-and-content-stream
+// For more information, see https://bit.ly/4k6Uybd
 void dataCb(IMAPCallbackData data)
 {
     // Showing envelope data.

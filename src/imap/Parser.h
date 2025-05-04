@@ -286,6 +286,7 @@ namespace ReadyMailIMAP
             cpart.mime += "/";
             cpart.mime += getField(cpart, non_multipart_field_subtype);
             cpart.data_index = 0;
+            cpart.filename = getFileName(cpart);
             if (cpart.text_part)
                 cpart.char_encoding = getCharEncoding(getCharset(cpart));
 
@@ -399,7 +400,7 @@ namespace ReadyMailIMAP
 
         void storeDecodedData(uint8_t *decoded, int decoded_len, bool isComplete, part_ctx &cpart, imap_context *imap_ctx)
         {
-            imap_ctx->cb_data.filename = cpart.filepath.c_str();
+            imap_ctx->cb_data.filename = cpart.filename.c_str();
             imap_ctx->cb_data.mime = cpart.mime.c_str();
             imap_ctx->cb_data.dataIndex = cpart.data_index;
             imap_ctx->cb_data.blob = decoded;
@@ -952,10 +953,8 @@ namespace ReadyMailIMAP
                 cpart.progress = 100.0f;
         }
 
-        void openFile(imap_context *imap_ctx, part_ctx &cpart)
+        String getFileName(part_ctx &cpart)
         {
-#if defined(ENABLE_FS)
-            cpart.filepath.remove(0, cpart.filepath.length());
             String name = getField(cpart, non_multipart_field_type) == "message" ? getName(cpart) : getFilename(cpart);
             if (name.length() == 0)
             {
@@ -963,7 +962,14 @@ namespace ReadyMailIMAP
                 part.replace(".", "_");
                 rd_print_to(name, 100, "%s.%s", part.c_str(), getField(cpart, non_multipart_field_type) == "message" ? "eml" : (getField(cpart, non_multipart_field_subtype) == "plain" ? "txt" : "html"));
             }
+            return name;
+        }
 
+        void openFile(imap_context *imap_ctx, part_ctx &cpart)
+        {
+#if defined(ENABLE_FS)
+            cpart.filepath.remove(0, cpart.filepath.length());
+            String name = getFileName(cpart);
             rd_print_to(cpart.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, name.c_str());
             if (imap_ctx->cb.file)
             {

@@ -330,7 +330,7 @@ namespace ReadyMailIMAP
     struct part_ctx
     {
         std::vector<body_part_field> field;
-        String name, section, id, parent_id, filepath, mime;
+        String name, section, id, parent_id, filepath, mime, filename;
         uint8_t num_specifier = 0, part_count = 0;
         int data_index = 0, depth = 0, field_index = 0;
         uint32_t decoded_size = 0 /* The decoded size */, total_read = 0, octet_count = 0, decoded_len = 0 /* The sum of the decoded octet */;

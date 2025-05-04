@@ -1,5 +1,3 @@
-# ReadyMail #
-
 ![ESP Mail](/src/resources/images/readymail.png)
 
 [![Github Stars](https://img.shields.io/github/stars/mobizt/ReadyMail?logo=github)](https://github.com/mobizt/ESP-Mail-Client/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/ReadyMail?logo=github)
@@ -330,7 +328,7 @@ Both `IMAPCallbackData::mime` and `IMAPCallbackData::filename` can be used for f
 
 There is no total numbers of chunks information provided. Then zero from `IMAPCallbackData::dataIndex` value means the chunked data that sent to the callback is the first chunk while the last chunk is delivered when `IMAPCallbackData::isComplete` value is `true`. 
 
-For OTA firmware update implementation, the chunked data and its information can be used.
+For OTA firmware update implementation, the chunked data and its information can be used. See [OTA.ino](/examples/Reading/OTA/OTA.ino) example for OTA update usage.
 
 When the `IMAPCallbackData::progressUpdated` value is `true`, the information that set to callback contains the progress of content fetching. Because of `IMAPCallbackData::size` will be zero for `text/plain` and `text/html` types content, the progress of this type of content fetching will not available.
 
