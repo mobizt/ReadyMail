@@ -132,7 +132,7 @@ In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMe
 
 **Half Line-Break (LF)**
 
-Depending on server policy, some SMTP server may reject the message that the text body uses only Lf (line feed) instead of using CrLf (Carriage return + Line feed) to break the line. 
+Depending on server policy, some SMTP server may reject the Email sending when the Lf (line feed) was used for line break in the content instead of CrLf (Carriage return + Line feed). 
 
 Then we recommend using CrLf instead of Lf in the content to avoid this issue.
 
