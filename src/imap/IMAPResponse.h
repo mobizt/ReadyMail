@@ -140,13 +140,13 @@ namespace ReadyMailIMAP
                         parser.parseIdle(line, mailbox_info, imap_ctx);
                     break;
 
-                case imap_state_custom_command:
+                case imap_state_send_command:
                     if (cCode() != function_return_failure && cCode() != function_return_success)
                     {
                         if (imap_ctx->cb.cmd)
-                            imap_ctx->cb.command_response.text = line;
+                            imap_ctx->cb.command_response.text = line.substring(0, line.length() - 2);
                         else
-                            imap_ctx->cb.command_response.text += imap_ctx->cb.command_response.text.length() ? "\r\n" + line : line;
+                            imap_ctx->cb.command_response.text += line;
 
                         imap_ctx->cb.command_response.command = imap_ctx->cmd;
                         imap_ctx->cb.command_response.errorCode = 0;

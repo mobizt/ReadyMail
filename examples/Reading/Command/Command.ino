@@ -9,10 +9,10 @@
 #define ENABLE_IMAP  // Allows IMAP class and data
 #define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
-#include "ReadyMail.h"
+#include <ReadyMail.h>
 
 #define IMAP_HOST "_______"
-#define IMAP_PORT 993
+#define IMAP_PORT 993 // SSL or 143 for PLAIN TEXT or STARTTLS
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 
@@ -30,16 +30,16 @@ IMAPClient imap(ssl_client);
 // For more information, see https://bit.ly/3RH9ock
 void imapCb(IMAPStatus status)
 {
-    ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
+    ReadyMail.printf("ReadyMail[dbg][%d]%s\n", status.state, status.text.c_str());
 }
 
 // For more information, see https://bit.ly/430BPan
 void cmdCb(IMAPCommandResponse response)
 {
     if (response.isComplete)
-        ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.status().state, response.command.c_str(), response.errorCode < 0 ? "error" : "success");
+        ReadyMail.printf("ReadyMail[cmd][%d] %s\n", imap.status().state, response.errorCode < 0 ? "error" : "success");
     else
-        ReadyMail.printf("ReadyMail[imap][%d] %s --> %s\n", imap.status().state, response.command.c_str(), response.text.c_str());
+        ReadyMail.printf("ReadyMail[cmd][%d] %s\n", imap.status().state, response.text.c_str());
 }
 
 void setup()

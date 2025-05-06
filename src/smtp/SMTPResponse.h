@@ -37,6 +37,12 @@ namespace ReadyMailSMTP
                 return cCode();
             }
 
+            if (cState() == smtp_state_send_data)
+            {
+                cCode() = function_return_success;
+                return cCode();
+            }
+
             cCode() = function_return_undefined;
             bool ret = false;
             String line;
@@ -47,6 +53,40 @@ namespace ReadyMailSMTP
                 response += line;
                 getResponseStatus(line, smtp_ctx->server_status->state_info.status_code, 0, *smtp_ctx->status);
 
+                if (cState() == smtp_state_connect_command || cState() == smtp_state_send_command)
+                {
+                    if (smtp_ctx->cmd_ctx.cb)
+                        smtp_ctx->cmd_ctx.resp.text = line.substring(0, line.length() - 2);
+                    else
+                        smtp_ctx->cmd_ctx.resp.text += line;
+
+                    if (smtp_ctx->cmd_ctx.cb)
+                    {
+                        if ((smtp_ctx->cmd_ctx.cmd.startsWith("EHLO") || smtp_ctx->cmd_ctx.cmd.startsWith("HELO")) && statusCode() == smtp_server_status_code_250)
+                        {
+                            smtp_ctx->server_status->server_greeting_ack = true;
+                            parseCaps(line);
+                        }
+                        else if (statusCode() == smtp_server_status_code_235)
+                            smtp_ctx->server_status->authenticated = true;
+                        else if (statusCode() == smtp_server_status_code_221)
+                        {
+                            smtp_ctx->server_status->authenticated = false;
+                            smtp_ctx->server_status->server_greeting_ack = false;
+                        }
+
+                        smtp_ctx->cmd_ctx.resp.command = cState() == smtp_state_connect_command ? "connect" : smtp_ctx->cmd_ctx.cmd;
+                        smtp_ctx->cmd_ctx.resp.statusCode = statusCode();
+                        smtp_ctx->cmd_ctx.resp.errorCode = statusCode() >= 400 ? SMTP_ERROR_RESPONSE : 0;
+                        smtp_ctx->cmd_ctx.cb(smtp_ctx->cmd_ctx.resp);
+                    }
+
+                    if (statusCode() > 0)
+                        cCode() = statusCode() >= 400 ? function_return_failure : function_return_success;
+
+                    return cCode();
+                }
+
                 if (cState() == smtp_state_greeting)
                     parseCaps(line);
 
@@ -56,12 +96,9 @@ namespace ReadyMailSMTP
                     return cCode();
                 }
 
-                // get the status code again for unexpected return code
-                if (cState() == smtp_state_start_tls || statusCode() == 0)
-                    getResponseStatus(response, smtp_server_status_code_0, 0, *smtp_ctx->status);
 #if defined(ENABLE_CORE_DEBUG)
-                if (statusCode() < 500)
-                    setDebug(line, true);
+                if (statusCode() < 500 && cState() != smtp_state_send_command)
+                    setDebug(line, true, "[receive]");
 #endif
                 // positive completion
                 if (statusCode() >= 200 && statusCode() < 300)

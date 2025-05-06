@@ -10,10 +10,10 @@
 #define ENABLE_IMAP  // Allows IMAP class and data
 #define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
-#include "ReadyMail.h"
+#include <ReadyMail.h>
 
 #define IMAP_HOST "_______"
-#define IMAP_PORT 993
+#define IMAP_PORT 993 // SSL or 143 for PLAIN TEXT or STARTTLS
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 

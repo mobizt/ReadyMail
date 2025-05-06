@@ -46,7 +46,10 @@ namespace ReadyMailSMTP
         smtp_state_wait_data,
         smtp_state_send_body,
         smtp_state_data_termination,
-        smtp_state_terminated
+        smtp_state_terminated,
+        smtp_state_connect_command,
+        smtp_state_send_command,
+        smtp_state_send_data
     };
 
     enum smtp_send_state
@@ -438,6 +441,12 @@ namespace ReadyMailSMTP
         smtp_function_return_code ret = function_return_undefined;
     };
 
+    typedef struct smtp_connand_response_status_t
+    {
+        int errorCode = 0, statusCode = 0;
+        String command, text;
+    } SMTPCommandResponse;
+
     struct smtp_rfc822_envelope
     {
         char text[12];
@@ -464,6 +473,7 @@ namespace ReadyMailSMTP
     typedef struct smtp_message_body_t TextMessage;
     typedef struct smtp_message_body_t HtmlMessage;
     typedef void (*SMTPResponseCallback)(SMTPStatus status);
+    typedef void (*SMTPCustomComandCallback)(SMTPCommandResponse response);
 
     struct smtp_timeout
     {
@@ -478,10 +488,18 @@ namespace ReadyMailSMTP
         int level = 0, data_len = 0;
     };
 
+    struct smtp_cmd_ctx
+    {
+        SMTPCustomComandCallback cb = NULL;
+        String cmd;
+        SMTPCommandResponse resp;
+    };
+
     struct smtp_context
     {
         Client *client = nullptr;
         SMTPResponseCallback resp_cb = NULL;
+        smtp_cmd_ctx cmd_ctx;
         SMTPStatus *status = nullptr;
         smtp_server_status_t *server_status = nullptr;
         smtp_options options;

@@ -60,7 +60,7 @@ namespace ReadyMailIMAP
             String buf;
             switch (cState())
             {
-            case imap_state_custom_command:
+            case imap_state_send_command:
                 setDebug(imap_ctx, "The command is sent successfully\n");
                 exitState(cCode(), imap_ctx->options.processing);
                 break;
@@ -257,7 +257,7 @@ namespace ReadyMailIMAP
             imap_ctx->cmd = cmd;
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", cmd.c_str()))
                 return false;
-            setState(imap_state_custom_command);
+            setState(imap_state_send_command);
             return true;
         }
 

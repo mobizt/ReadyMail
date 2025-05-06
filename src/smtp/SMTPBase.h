@@ -68,7 +68,7 @@ namespace ReadyMailSMTP
             va_end(args);
 #if defined(ENABLE_CORE_DEBUG)
             if (!smtp_ctx->options.accumulate)
-                setDebug(data, true);
+                setDebug(data, true, "[send]");
 #endif
             data += crlf ? "\r\n" : "";
             return tcpSend((uint8_t *)data.c_str(), data.length()) == data.length();
@@ -92,7 +92,7 @@ namespace ReadyMailSMTP
 #endif
         }
 
-        void setDebug(const String &info, bool core = false)
+        void setDebug(const String &info, bool core = false, const String &tag = "[core]")
         {
 #if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             if (smtp_ctx->status)
@@ -103,7 +103,7 @@ namespace ReadyMailSMTP
                     while (info[j] != '\r' && info[j] != '\n' && j < (int)info.length())
                         j++;
 
-                    smtp_ctx->status->text = (core ? "[core] " : " ");
+                    smtp_ctx->status->text = (core ? tag + " " : " ");
                     smtp_ctx->status->text += info.substring(i, j);
                     if (info[j] == '\n' && j == (int)info.length() - 1)
                         smtp_ctx->status->text += "\n";
@@ -171,16 +171,6 @@ namespace ReadyMailSMTP
             smtp_ctx->status->state = (smtp_ctx->server_status->state_info.target > 0 ? smtp_ctx->server_status->state_info.target : smtp_ctx->server_status->state_info.state);
             if (smtp_ctx->resp_cb)
                 smtp_ctx->resp_cb(*smtp_ctx->status);
-            else
-                serialPrint();
-        }
-
-        void serialPrint()
-        {
-            if (smtp_ctx->status->progressUpdated)
-                ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", smtp_ctx->status->state, smtp_ctx->status->filename.c_str(), smtp_ctx->status->progress);
-            else
-                ReadyMail.printf("ReadyMail[smtp][%d]%s\n", smtp_ctx->status->state, smtp_ctx->status->text.c_str());
         }
 
         String getDateTimeString(time_t ts, const char *format)

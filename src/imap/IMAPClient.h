@@ -169,7 +169,8 @@ namespace ReadyMailIMAP
             imap_ctx.cb.command_response.errorCode = 0;
             imap_ctx.cb.command_response.isComplete = false;
 
-            sender.setDebugState(imap_state_custom_command, "Sending custom command \"" + cmd + "\"...");
+            sender.setDebugState(imap_state_send_command, "Sending command...");
+            sender.setDebugState(imap_state_send_command, cmd);
 
             if (!conn.isIdleState(__func__))
                 return false;
@@ -545,7 +546,7 @@ namespace ReadyMailIMAP
          *
          * @return String of untagged response.
          */
-        IMAPCommandResponse getCmdResponse() { return imap_ctx.cb.command_response; }
+        IMAPCommandResponse commandResponse() { return imap_ctx.cb.command_response; }
 
     private:
         IMAPConnection conn;

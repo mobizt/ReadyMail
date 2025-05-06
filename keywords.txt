@@ -37,11 +37,14 @@ currentState    KEYWORD2
 idleStatus  KEYWORD2
 currentMessage  KEYWORD2
 sendCommand KEYWORD2
+sendData    KEYWORD2
 addAttachment   KEYWORD2
 addInlineImage  KEYWORD2
 isComplete  KEYWORD2
 getCmdResponse  KEYWORD2
 getDateTimeString   KEYWORD2
+base64Encode    KEYWORD2
+plainSASLEncode KEYWORD2
 
 #######################################
 # Struct and Enum (KEYWORD3)
@@ -52,3 +55,13 @@ smtp_state  KEYWORD3
 SMTPStatus  KEYWORD3
 IMAPStatus  KEYWORD3
 readymail_file_operating_mode   KEYWORD3
+TLSHandshakeCallback    KEYWORD3
+FileCallback    KEYWORD3
+SMTPResponseCallback    KEYWORD3
+SMTPCustomComandCallback    KEYWORD3
+SMTPCommandResponse KEYWORD3
+IMAPCallbackData    KEYWORD3
+IMAPDataCallback    KEYWORD3
+IMAPCommandResponse KEYWORD3
+IMAPCustomComandCallback    KEYWORD3
+IMAPResponseCallback    KEYWORD3

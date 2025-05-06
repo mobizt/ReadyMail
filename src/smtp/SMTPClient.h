@@ -115,6 +115,34 @@ namespace ReadyMailSMTP
             return ret;
         }
 
+        /** SMTP server connection for custom SMTP command.
+         *
+         * @param host The SMTP server host name to connect.
+         * @param port The SMTP port to connect.
+         * @param commandcallback The SMTPCustomComandCallback callback function that provides the server response.
+         * @param responseCallback Optional. The SMTPResponseCallback callback function that provides the instant status for the processing states for debugging.
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing states.
+         */
+        bool connect(const String &host, uint16_t port, SMTPCustomComandCallback commandcallback, SMTPResponseCallback responseCallback = NULL, bool await = true)
+        {
+            smtp_ctx.cmd_ctx.cb = commandcallback;
+            smtp_ctx.resp_cb = responseCallback;
+            smtp_ctx.cmd_ctx.resp.text.remove(0, smtp_ctx.cmd_ctx.resp.text.length());
+            sender.setDebugState(smtp_state_connect_command, "Connecting to \"" + host + "\" via port " + String(port) + "...");
+            sender.serverStatus() = smtp_ctx.client->connect(host.c_str(), port);
+            if (!sender.serverStatus())
+                return false;
+
+            sender.setState(smtp_state_connect_command, smtp_server_status_code_220);
+
+            if (sender.serverStatus() && await)
+                return awaitLoop();
+            return sender.serverStatus();
+        }
+
         /** Provides the SMTP server authentication status.
          * @return boolean status of authentication.
          */
@@ -160,6 +188,36 @@ namespace ReadyMailSMTP
             return ret;
         }
 
+        /** Send command to SMTP server.
+         *
+         * @param cmd The command to send.
+         * @param cb Optional. The IMAPCustomComandCallback callback function to get the server untagged response.
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing state.
+         *
+         * The following commands are not allowed.
+         * DONE, LOGOUT, STARTTLS, IDLE, ID, CLOSE, AUTHENTICATE, LOGIN, SELECT and EXAMINE.
+         */
+        bool sendCommand(const String &cmd, SMTPCustomComandCallback cb, bool await = true)
+        {
+            smtp_ctx.cmd_ctx.cb = cb;
+            bool ret = sender.sendCmd(cmd);
+            if (ret && await)
+                return awaitLoop();
+            return ret;
+        }
+
+        bool sendData(const String &data, SMTPCustomComandCallback cb, bool await = true)
+        {
+            smtp_ctx.cmd_ctx.cb = cb;
+            bool ret = sender.sendData(data);
+            if (ret && await)
+                return awaitLoop();
+            return ret;
+        }
+
         /** Perform SMTPClient async processes.
          * This is required when await parameter is set false in the SMTPClient::connect(),
          * SMTPClient::authenticate(), SMTPClient::send() and SMTPClient::logout() functions.
@@ -199,6 +257,12 @@ namespace ReadyMailSMTP
          * @return SMTPStatus class object.
          */
         SMTPStatus status() { return *smtp_ctx.status; }
+
+        /** Provides the SMTP command response information.
+         *
+         * @return SMTPStatus class object.
+         */
+        SMTPCommandResponse commandResponse() { return smtp_ctx.cmd_ctx.resp; }
 
         // Private used by other classes.
         uint32_t contextAddr() { return reinterpret_cast<uint32_t>(&smtp_ctx); }

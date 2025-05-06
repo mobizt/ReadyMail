@@ -200,6 +200,22 @@ void smtpStatusCallback(SMTPStatus status)
 }
 ```
 
+
+### SMTP Custom Comand Processing Information
+
+The `SMTPCustomComandCallback` function which assigned to `SMTPClient::sendCommand()` function, provides the instance of `SMTPCommandResponse` for the SMTP command. The `SMTPCommandResponse` can also be obtained from `SMTPClient::commandResponse()`.
+
+The `SMTPCommandResponse` consists of `SMTPCommandResponse::command`, `SMTPCommandResponse::text`, `SMTPCommandResponse::statusCode`, and `IMAPCommandResponse::errorCode`.
+
+The `SMTPCommandResponse::command` provides the command of the response.  The `SMTPCommandResponse::text` provides the instance of response when it obtains from `SMTPCustomComandCallback` callback function or represents all untagged server responses when it obtains from `SMTPClient::commandResponse()` function.
+
+The `SMTPCommandResponse::errorCode` value can be used for error checking if its value is negative number.
+
+The `SMTPCommandResponse::statusCode` value provides the SMTP server response code.
+
+The [Command.ino](/examples/Sending/Command/Command.ino) example showed how to use `SMTPClient::sendCommand()` to more with flags, message and folder or mailbox.
+
+
 ## Email Reading
 
 To receive or fetch the Email, only `IMAPClient` calss object is required.
@@ -377,11 +393,11 @@ void dataCallback(IMAPCallbackData data)
 
 ### IMAP Custom Comand Processing Information
 
-The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendCommand()` function, provides the instance of `IMAPCommandResponse` for the IMAP command. The `IMAPCommandResponse` can also be obtained from `IMAPClient::getCmdResponse()`.
+The `IMAPCustomComandCallback` function which assigned to `IMAPClient::sendCommand()` function, provides the instance of `IMAPCommandResponse` for the IMAP command. The `IMAPCommandResponse` can also be obtained from `IMAPClient::commandResponse()`.
 
 The `IMAPCommandResponse` consists of `IMAPCommandResponse::command`, `IMAPCommandResponse::text`, `IMAPCommandResponse::isComplete`, and `IMAPCommandResponse::errorCode`.
 
-The `IMAPCommandResponse::command` provides the command of the response.  The `IMAPCommandResponse::text` provides the instance of untagged response when it obtains from `IMAPCustomComandCallback` callback function or represents all untagged server responses when it obtains from `IMAPClient::getCmdResponse()` function.
+The `IMAPCommandResponse::command` provides the command of the response.  The `IMAPCommandResponse::text` provides the instance of untagged response when it obtains from `IMAPCustomComandCallback` callback function or represents all untagged server responses when it obtains from `IMAPClient::commandResponse()` function.
 
 The `IMAPCommandResponse::isComplete` value will be true when the server responses are complete. When the `IMAPCommandResponse::isComplete` value is true, the `IMAPCommandResponse::errorCode` value can be used for error checking if its value is negative number.
 

@@ -9,10 +9,10 @@
 #define ENABLE_SMTP  // Allows SMTP class and data
 #define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
-#include "ReadyMail.h"
+#include <ReadyMail.h>
 
 #define SMTP_HOST "_______"
-#define SMTP_PORT 465
+#define SMTP_PORT 465 // SSL or 587 for STARTTLS
 #define DOMAIN_OR_IP "127.0.0.1"
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"

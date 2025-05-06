@@ -90,6 +90,24 @@ namespace ReadyMailSMTP
             return startTransaction(msg);
         }
 
+        bool sendCmd(const String &cmd)
+        {
+            setDebugState(smtp_state_send_command, "Sending command...");
+            setDebugState(smtp_state_send_command, cmd);
+            smtp_ctx->cmd_ctx.resp.text.remove(0, smtp_ctx->cmd_ctx.resp.text.length());
+            smtp_ctx->cmd_ctx.cmd = cmd;
+            setState(smtp_state_send_command, smtp_server_status_code_220);
+            return sendBuffer(cmd + "\r\n");
+        }
+
+        bool sendData(const String &data)
+        {
+            setDebugState(smtp_state_send_data, "Sending data...");
+            setDebugState(smtp_state_send_data, data);
+            setState(smtp_state_send_data, smtp_server_status_code_0);
+            return sendBuffer(data);
+        }
+
         size_t headerSize(SMTPMessage &msg, rfc822_header_types type)
         {
             int count = 0;
@@ -895,6 +913,16 @@ namespace ReadyMailSMTP
                 {
                     switch (cState())
                     {
+                    case smtp_state_connect_command:
+                    case smtp_state_send_command:
+                    case smtp_state_send_data:
+                        setDebug((cState() == smtp_state_connect_command ? "The server is connected successfully\n" : (cState() == smtp_state_send_command ? "The command is sent successfully\n" : "The data is sent successfully\n")));
+                        setState(smtp_state_prompt, smtp_server_status_code_0);
+                        cCode() = function_return_exit;
+                        smtp_ctx->options.processing = false;
+                        smtp_ctx->status->isComplete = true;
+                        break;
+
                     case smtp_state_send_header_sender:
                         if (msg_ptr)
                             sendRecipient(*msg_ptr);

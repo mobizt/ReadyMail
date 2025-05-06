@@ -11,8 +11,8 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.1.3"
-#define READYMAIL_TIMESTAMP 1746350532
+#define READYMAIL_VERSION "0.1.4"
+#define READYMAIL_TIMESTAMP 1746512439
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)
@@ -113,6 +113,8 @@ public:
     ReadyMailClass() {};
     ~ReadyMailClass() {};
 
+    /** Printf
+     */
     void printf(const char *format, ...)
     {
 #if defined(READYMAIL_PRINTF_BUFFER)
@@ -128,12 +130,43 @@ public:
         READYMAIL_DEFAULT_DEBUG_PORT.print(s);
     }
 
+    /** Provides date/time string
+     *
+     * @param ts The UNIX timestamp in seconds since midnight January 1, 1970.
+     * @param format The date/time format e.g. "%a, %d %b %Y %H:%M:%S %z".
+     * @return String of date/time.
+     */
     String getDateTimeString(time_t ts, const char *format)
     {
         char tbuf[100];
         strftime(tbuf, 100, format, localtime(&ts));
         return tbuf;
     }
+
+    /** Provides base64 encoded string
+     *
+     * @param str The string to convert to base64 string.
+     * @return String of base64 encoding.
+     */
+    String base64Encode(const String &str)
+    {
+        String buf;
+        char *enc = rd_base64_encode((const unsigned char *)str.c_str(), str.length());
+        if (enc)
+        {
+            buf = enc;
+            rd_release((void *)enc);
+        }
+        return buf;
+    }
+
+    /** Provides base64 encoded string used for RFC 4616 PLAIN SASL mechanism
+     *
+     * @param email The email to convert to base64 PLAIN SASL string.
+     * @param email The password to convert to base64 PLAIN SASL string.
+     * @return String of base64 PLAIN SASL string.
+     */
+    String plainSASLEncode(const String &email, const String &password) { return rd_enc_plain(email, password); }
 
 private:
 };
