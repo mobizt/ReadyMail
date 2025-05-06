@@ -208,11 +208,7 @@ namespace ReadyMailIMAP
             imap_ctx->status->state = (imap_ctx->server_status->state_info.target > 0 ? imap_ctx->server_status->state_info.target : imap_ctx->server_status->state_info.state);
             if (imap_ctx->cb.resp)
                 imap_ctx->cb.resp(*imap_ctx->status);
-            else
-                serialPrint(imap_ctx);
         }
-
-        static void serialPrint(imap_context *imap_ctx) { ReadyMail.printf("ReadyMail[imap][%d]%s\n", imap_ctx->status->state, imap_ctx->status->text.c_str()); }
 
         String errMsg(int code)
         {
