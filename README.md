@@ -635,9 +635,9 @@ imap.connect("imap host", 993, statusCallback);
 
 ```
 
-# ESP8266 Issues #
+## ESP8266 Issues
 
-When the `ESP8266` and `WiFiClientSecure` are used, they need some adjustments before using otherwise the device may crash when starting the connection.
+When `ESP8266` device and its `WiFiClientSecure` library are used, they need some adjustments before using otherwise the device may crash when starting the connection.
 
 The ESP8266's `WiFiClientSecure` requires some IO buffers adjustment. When it was used without IO buffer adjustment, it requires 17306 bytes for IO buffers (16k + 325 (overhead) for receive and 512 + 85 (overhead) for transmit).
 
