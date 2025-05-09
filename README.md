@@ -645,7 +645,7 @@ If the mail server supports SSL fragmentation, the IO buffers can be set by usin
 
 The `ESP8266` device itself, its Heap should be selected properly so that is enough for `WiFiClientSecure`, data and library memory usage.
 
-By setting ESP8266 `MMU` options, from Arduino IDE, goto menu `Tools` > `MMU:` > `16KB cache + 48 KB IRAM and 2nd Heap (shared)` (option 3).
+By setting ESP8266 `MMU` options, from Arduino IDE, goto menu `Tools` > `MMU:` and select `16KB cache + 48 KB IRAM and 2nd Heap (shared)` (option 3).
 
 The power supply should be robusted that provides enough current with low ripple and noise. The cable should provide good power e.g. short lenght and low impedance.
 
