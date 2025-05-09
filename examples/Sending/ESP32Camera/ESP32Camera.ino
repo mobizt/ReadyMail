@@ -50,8 +50,8 @@ SMTPClient smtp(ssl_client);
 // For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
-    if (status.progressUpdated)
-        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+    if (status.progress.available)
+        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }

@@ -94,7 +94,7 @@ namespace ReadyMailIMAP
 
         void setProcessFlag(bool &flag) { flag = true; }
 
-        void clearAllProcessFlag()
+        void clearAllProcessFlags()
         {
             imap_ctx->options.searching = false;
             imap_ctx->options.idling = false;
@@ -147,17 +147,38 @@ namespace ReadyMailIMAP
 #endif
         }
 
-        bool serverConnected() { return imap_ctx->client && imap_ctx->client->connected(); }
+        bool serverConnected()
+        {
+#if defined(ESP32)
+            // In ESP32 v3.x, if WiFiClientSecure was used, it can hang when.
+            // 1. connect() in ssl or plain
+            // 2. stop()
+            // 3. setPlainStart()
+            // 4. connected() <--- hung because of peek_net_receive() until timeed out
+
+            // The work around is to define the fdset for write in the lwIP's select function
+            // https://github.com/espressif/arduino-esp32/blob/master/libraries/NetworkClientSecure/src/ssl_client.cpp#L455
+
+            // Since we don't know the type of Arduino Client that is assigned to the SMTPClient,
+            // the status flag (serverStatus) will be used instead of calling Client's
+            // connected() directly.
+            return serverStatus();
+#else
+            return imap_ctx->client && imap_ctx->client->connected();
+#endif
+        }
 
         void stopImpl(bool forceStop = false)
         {
-            if (forceStop || serverConnected())
+            if (forceStop && serverConnected())
                 imap_ctx->client->stop();
-            imap_ctx->server_status->connected = false;
+
+            serverStatus() = false;
             imap_ctx->server_status->secured = false;
             imap_ctx->server_status->server_greeting_ack = false;
             imap_ctx->server_status->authenticated = false;
-            clearAllProcessFlag();
+            clearAllProcessFlags();
+            cState() = imap_state_prompt;
         }
 
         // current message index
@@ -174,17 +195,14 @@ namespace ReadyMailIMAP
             return messagesVec()[cMsgIndex()];
         }
 
-        // current body part
-        part_ctx &cPart() { return cMsg().parts[cMsg().cur_part_index]; }
-
-        // current body part index
-        int &cPartIndex() { return cMsg().cur_part_index; }
+        // current file index
+        int &cFileIndex() { return cMsg().cur_file_index; }
 
         // current message number
         uint32_t cMsgNum() { return msgNumVec().size() > 0 ? msgNumVec()[cMsgIndex()] : 0; }
 
-        // message numbers list
-        std::vector<uint32_t> &msgNumVec() { return imap_ctx->cb_data.msgList; }
+        // Search result
+        std::vector<uint32_t> &msgNumVec() { return imap_ctx->cb_data.msgNums; }
 
         // messages list
         std::vector<imap_msg_ctx> &messagesVec() { return imap_ctx->messages; }

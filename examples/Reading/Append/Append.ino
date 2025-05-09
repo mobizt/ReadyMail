@@ -54,6 +54,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())
         return;
@@ -79,7 +81,7 @@ void setup()
     attachment.filename = "dino.png";
     attachment.mime = "image/png";
     attachment.name = "dino";
-    attachment.attach_file.blob = (uint8_t*) dinoImg;
+    attachment.attach_file.blob = (uint8_t *)dinoImg;
     attachment.attach_file.blob_size = strlen(dinoImg);
 
     // Specify only when content is already encoded.

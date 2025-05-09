@@ -38,6 +38,8 @@ idleStatus  KEYWORD2
 currentMessage  KEYWORD2
 sendCommand KEYWORD2
 sendData    KEYWORD2
+setStartTLS KEYWORD2
+commandResponse KEYWORD2
 addAttachment   KEYWORD2
 addInlineImage  KEYWORD2
 isComplete  KEYWORD2
@@ -45,6 +47,17 @@ getCmdResponse  KEYWORD2
 getDateTimeString   KEYWORD2
 base64Encode    KEYWORD2
 plainSASLEncode KEYWORD2
+fileChunk   KEYWORD2
+fileInfo    KEYWORD2
+fileProgress    KEYWORD2
+fileCount   KEYWORD2
+headerCount KEYWORD2
+getHeader   KEYWORD2
+messageIndex    KEYWORD2
+messageNum  KEYWORD2
+messageAvailable    KEYWORD2
+messageFound    KEYWORD2
+event   KEYWORD2
 
 #######################################
 # Struct and Enum (KEYWORD3)

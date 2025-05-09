@@ -1,7 +1,7 @@
 /**
  * The example to fetch the latest message in the INBOX.
  * If you want to download the content to file, see Download.ino.
- * 
+ *
  * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
@@ -57,40 +57,53 @@ void showMailboxInfo(MailboxInfo info)
     ReadyMail.printf("\n");
 }
 
-// For more information, see https://bit.ly/4k6Uybd
-void dataCb(IMAPCallbackData data)
+// For more information, see https://bit.ly/3GObULu
+void dataCb(IMAPCallbackData &data)
 {
     // Showing envelope data.
-    if (data.isEnvelope)
+    if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
-        // Additional search info
-        if (data.isSearch)
-            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
+        // Show additional search info
+        if (data.event() == imap_data_event_search)
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
 
         // Headers data
-        for (int i = 0; i < data.header.size(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
-    }
-    // Processing content stream.
-    else
-    {
-        // Showing the text content
-        if (strcmp(data.mime, "text/html") == 0 || strcmp(data.mime, "text/plain") == 0)
+        for (int i = 0; i < data.headerCount(); i++)
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+
+        // Files data
+        for (size_t i = 0; i < data.fileCount(); i++)
         {
-            if (data.dataIndex == 0) // Fist chunk
+            // You can fetch or download file while searching
+            // (or disable it while fetching) with the following options.
+
+            // To enable/disable this file for fetching.
+            // data.fetchOption(i) = true;
+
+            // To download if the fetch option is set.
+            // data.setFileCallback(i, filecb, "/downloads");
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+        }
+    }
+    else if (data.event() == imap_data_event_fetch_body)
+    {
+        // Showing the text file content
+        if (data.fileInfo().mime == "text/html" || data.fileInfo().mime == "text/plain")
+        {
+            if (data.fileChunk().index == 0) // Fist chunk
                 Serial.println("------------------");
-            Serial.print((char *)data.blob);
-            if (data.isComplete) // Last chunk
+            Serial.print((char *)data.fileChunk().data);
+            if (data.fileChunk().isComplete) // Last chunk
                 Serial.println("------------------");
         }
         else
         {
-            // Showing the progress of content fetching
-            if (data.dataIndex == 0)
+            // Showing the progress of current file fetching
+            if (data.fileChunk().index == 0)
                 Serial.print("Downloading");
-            if (data.progressUpdated)
+            if (data.fileProgress().available)
                 Serial.print(".");
-            if (data.isComplete)
+            if (data.fileChunk().isComplete)
                 Serial.println(" complete");
         }
     }
@@ -116,6 +129,8 @@ void setup()
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())

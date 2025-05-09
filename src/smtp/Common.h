@@ -417,12 +417,19 @@ namespace ReadyMailSMTP
         rfc822_header_types type = rfc822_custom;
     };
 
+    struct smtp_file_progress
+    {
+        int value = 0;
+        bool available = false;
+        String filename;
+    };
+
     typedef struct smtp_response_status_t
     {
-        int errorCode = 0, statusCode = 0, progress = 0;
+        int errorCode = 0, statusCode = 0;
         smtp_state state = smtp_state_prompt;
-        bool isComplete = false, progressUpdated = false;
-        String filename;
+        bool isComplete;
+        smtp_file_progress progress;
         String text;
     } SMTPStatus;
 

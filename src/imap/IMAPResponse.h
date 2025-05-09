@@ -31,8 +31,8 @@ namespace ReadyMailIMAP
         imap_function_return_code handleResponse()
         {
             sys_yield();
-            bool err = !serverConnected() || !imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout();
-            if (err || (imap_ctx->options.skipping && (cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_structure || cState() == imap_state_fetch_body_part)))
+            bool err = !serverConnected() || (!imap_ctx->options.idling && cState() != imap_state_idle && cState() != imap_state_done && readTimeout());
+            if (err || (!imap_ctx->options.searching && (cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_part) && cMsg().files.size() && !cMsg().files[cFileIndex()].fetch))
             {
                 cCode() = err ? function_return_failure : function_return_success;
                 return cCode();
@@ -61,7 +61,7 @@ namespace ReadyMailIMAP
                     setError(imap_ctx, __func__, IMAP_ERROR_RESPONSE, imap_ctx->status->text);
                 }
 
-                if ((cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_structure || cState() == imap_state_fetch_body_part) && line.indexOf(imap_ctx->tag) == 0 && !cMsg().exists)
+                if ((cState() == imap_state_fetch_envelope || cState() == imap_state_fetch_body_part) && line.indexOf(imap_ctx->tag) == 0 && !cMsg().exists)
                 {
                     cCode() = function_return_failure;
                     setError(imap_ctx, __func__, IMAP_ERROR_MESSAGE_NOT_EXISTS);
@@ -124,9 +124,8 @@ namespace ReadyMailIMAP
                     break;
 
                 case imap_state_fetch_envelope:
-                case imap_state_fetch_body_structure:
                 case imap_state_fetch_body_part:
-                    parser.parseFetch(line, imap_ctx, cMsg(), cState(), cPart());
+                    parser.parseFetch(line, imap_ctx, cMsg(), cState(), cMsg().files[cFileIndex()]);
                     break;
 
                 case imap_state_append_init:

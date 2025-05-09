@@ -11,8 +11,8 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.1.4"
-#define READYMAIL_TIMESTAMP 1746512439
+#define READYMAIL_VERSION "0.2.0"
+#define READYMAIL_TIMESTAMP 1746804200
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)

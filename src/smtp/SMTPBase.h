@@ -153,12 +153,32 @@ namespace ReadyMailSMTP
             return true;
         }
 
-        bool serverConnected() { return smtp_ctx->client && smtp_ctx->client->connected(); }
+        bool serverConnected()
+        {
+#if defined(ESP32)
+            // In ESP32 v3.x, if WiFiClientSecure was used, it can hang when.
+            // 1. connect() in ssl or plain
+            // 2. stop()
+            // 3. setPlainStart()
+            // 4. connected() <--- hung because of peek_net_receive() until timeed out
+
+            // The work around is to define the fdset for write in the lwIP's select function
+            // https://github.com/espressif/arduino-esp32/blob/master/libraries/NetworkClientSecure/src/ssl_client.cpp#L455
+
+            // Since we don't know the type of Arduino Client that is assigned to the SMTPClient,
+            // the status flag (serverStatus) will be used instead of calling Client's
+            // connected() directly.
+            return serverStatus();
+#else
+            return smtp_ctx->client && smtp_ctx->client->connected();
+#endif
+        }
 
         void stopImpl(bool forceStop = false)
         {
-            if (forceStop || serverConnected())
+            if (forceStop && serverConnected())
                 smtp_ctx->client->stop();
+
             serverStatus() = false;
             smtp_ctx->server_status->secured = false;
             smtp_ctx->server_status->server_greeting_ack = false;

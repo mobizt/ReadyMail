@@ -88,6 +88,15 @@ if (smtp.isConnected())
 }
 ```
 
+### Changes from v0.1.x to v0.2.0 and newer
+
+The `IMAPCallbackData` members are totally changed and cannot migrate from the old code. The `IMAPCallbackData::event()`, `imap_file_info`, `imap_file_chunk` and `imap_file_progress` are introduced.
+
+The `SMTPStatus` class members are moved and renamed. The `SMTPStatus::progressUpdated` is moved and renamed to `SMTPStatus::smtp_file_progress::available`, `SMTPStatus::progress` is moved and renamed to `SMTPStatus::smtp_file_progress::value` and `SMTPStatus::filename` is moved to `SMTPStatus::smtp_file_progress::filename`.
+
+The `STARTTLS` options can be changed directly from `SMTPClient` and `IMAPClient` classes function.
+
+
 ### Changes from v0.0.x to v0.1.0 and newer
 
 Many SMTP classes and structs are refactored. The `SMTPMessage` public members are removed or kept private and the methods are added.
@@ -159,7 +168,7 @@ The `SMTPResponseCallback` callback function will be called when:
 1. The sending process infornation is available.
 2. The file upload information is available.
 
-When the `SMTPStatus::progressUpdated` value is `true`, the information is from file upload process,  otherwise the information is from other sending process.
+When the `SMTPStatus::smtp_file_progress::available` value is `true`, the information is from file upload process,  otherwise the information is from other sending process.
 
 When the sending process is finished, the `SMTPStatus::isComplete` value will be `true`.
 
@@ -177,8 +186,8 @@ void smtpStatusCallback(SMTPStatus status)
     // For debugging.
 
     // Showing the uploading info.
-    if (status.progressUpdated) 
-        ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+    if (status.progress.available) 
+        ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress.value);
      // otherwise, showing the process state info.
     else
         ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
@@ -256,10 +265,10 @@ ssl_client.setInsecure();
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
 auto dataCallback = [](IMAPCallbackData data)
 {
-    if (data.isEnvelope) // For showing message headers.
+    if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
-        for (size_t i = 0; i < data.header.size(); i++)
-        ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), (i == data.header.size() - 1 ? "\n" : ""));
+         for (int i = 0; i < data.headerCount(); i++)
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
     }
 };
 
@@ -304,11 +313,11 @@ void imapStatusCallback(IMAPStatus status)
 }
 ```
 
-### IMAP Enveloping Data and Content Stream
+### IMAP Envelope and Body Data
 
-The `IMAPDataCallback` function provides the stream of content that is currently fetching.
+The `IMAPDataCallback` function provides the body or multi-part body that is currently fetching.
 
-The data sent to the `IMAPDataCallback` consists of envelope data and content stream.
+The data sent to the `IMAPDataCallback` consists of envelope data and body data.
 
 Those data and information are available from `IMAPCallbackData` struct.
 
@@ -316,49 +325,55 @@ Those data and information are available from `IMAPCallbackData` struct.
 
 The envelope or headers information is available when the `IMAPDataCallback` function is assigned to the search and fetch functions.
 
-The following envelope information is avaliable when `IMAPCallbackData::isEnvelope` value is `true`.
+The following envelope information is avaliable when `IMAPCallbackData::event()` value is `imap_data_event_search` or `imap_data_event_fetch_envelope`.
 
-The `IMAPCallbackData::header` object provides the list of message headers (name and value) at `IMAPCallbackData::currentMsgIndex` of the message numbers/UIDs list.
+The `IMAPCallbackData::getHeader()` provides the list of message headers (name and value pair) at the index.
 
-The additional information below is available when `IMAPCallbackData::isSearch` value is `true`.
+The `IMAPCallbackData::headerCount()` provides the number of headers that are available.
 
-The `IMAPCallbackData::searchCount` value provides the total messages found (available when `IMAPCallbackData::isSearch` value is `true`).
+The additional information below is available when `IMAPCallbackData::event()` value is `imap_data_event_search`.
 
-The `IMAPCallbackData::msgList` provides the array or list of message numbers/UIDs.
+The `IMAPCallbackData::messageFound()` value provides the total messages that have been found.
 
-The list of message in case of search, can also be obtained from `IMAPClient::searchResult()` function.
+The list of message in case of search, can be obtained from `IMAPClient::searchResult()` function.
 
 The maximum numbers of messages that can be stored in the list and the soring order can be set via the second param (`searchLimit`) and third param (`recentSort`) of `IMAPClient::search()` function.
 
-The `IMAPCallbackData::currentMsgIndex` value provides the index of message in the list.
+The `IMAPCallbackData::messageIndex()` value provides the index of message in the list.
 
-**Content Stream**
+In addition, the information of body or multi-part body is available during envenlope fetching via `IMAPCallbackData::fileInfo()`.
 
-The following chunked data and its information are avaliable when `IMAPCallbackData::isEnvelope` value is `false`.
+The `IMAPCallbackData::fileInfo().filename` provides the name of file.
 
-The `IMAPCallbackData::blob`provides the chunked data.
+The `IMAPCallbackData::fileInfo().mime` provides the mime type of file.
 
-The `IMAPCallbackData::dataIndex`provides the position of chunked data in `IMAPCallbackData::size`. 
+The `IMAPCallbackData::fileInfo().charset` provides the character set of text file.
 
-The `IMAPCallbackData::dataLength` provides the length in byte of chunked data. 
+The `IMAPCallbackData::fileInfo().transferEncoding` provides the content transfer encoding of file.
 
-The `IMAPCallbackData::size` provides the number of bytes of complete data. This size will be zero in case of `text/plain` and `text/html` content type due to the issue of incorrect non-multipart octets/transfer-size field of text part reports by some IMAP server.
+The `IMAPCallbackData::fileInfo().fileSize` provides the size in bytes of file.
 
-If the content stream with `text/plain` and `text/html` types are need be stored in memory, the memory allocation should be re-allocate for incoming chunked data.
+The `IMAPCallbackData::fileCount()` provides the numbers of files that are available in current message.
 
-The `IMAPCallbackData::mime` provides the content MIME type. 
 
-The `IMAPCallbackData::filename` provies the content name or file name.
+**Body or Multi-Part Body Data**
 
-Both `IMAPCallbackData::mime` and `IMAPCallbackData::filename` can be used for file identifier.
+The following `IMAPCallbackData::fileChunk()`, `IMAPCallbackData::fileInfo()` and `IMAPCallbackData::fileProgress()` are avaliable when `IMAPCallbackData::event()` value is `imap_data_event_fetch_body`.
 
-There is no total numbers of chunks information provided. Then zero from `IMAPCallbackData::dataIndex` value means the chunked data that sent to the callback is the first chunk while the last chunk is delivered when `IMAPCallbackData::isComplete` value is `true`. 
+The `IMAPCallbackData::fileChunk().data`provides the chunked data.
+
+The `IMAPCallbackData::fileChunk().index`provides the position of chunked data in `IMAPCallbackData::fileInfo().fileSize`. 
+
+The `IMAPCallbackData::fileChunk().size` provides the length in byte of the chunked data. 
+
+The `IMAPCallbackData::fileInfo().fileSize` provides the number of bytes of complete data. This size will be zero in case of `text/plain` and `text/html` content type due to the issue of incorrect decoded size reports by some IMAP server.
+
+There is no total numbers of chunks information provided. Then zero from `IMAPCallbackData::fileChunk().index` value means the chunked data that sent to the callback is the first chunk while the last chunk is delivered when `IMAPCallbackData::fileChunk().isComplete` value is `true`. 
 
 For OTA firmware update implementation, the chunked data and its information can be used. See [OTA.ino](/examples/Reading/OTA/OTA.ino) example for OTA update usage.
 
-When the `IMAPCallbackData::progressUpdated` value is `true`, the information that set to callback contains the progress of content fetching. Because of `IMAPCallbackData::size` will be zero for `text/plain` and `text/html` types content, the progress of this type of content fetching will not available.
+When the `IMAPCallbackData::fileProgress().value` value is `true`, the information that set to the callback contains the progress of content that is fetching. Because of `IMAPCallbackData::fileInfo().fileSize` will be zero for `text/plain` and `text/html` file, the progress of this type of content fetching will not available.
 
-This progress (percentage) information of content fetching is optional and will be available only when user fetched the message.
 
 The code below shows how to get the content stream and information from the `IMAPCallbackData` data in the `DataCallback` function.
 
@@ -366,26 +381,29 @@ The code below shows how to get the content stream and information from the `IMA
 void dataCallback(IMAPCallbackData data)
 {
     // Showing envelope data.
-    if (data.isEnvelope)
+    if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
-        // Additional search info
-        if (data.isSearch)
-            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.currentMsgIndex + 1, data.msgList[data.currentMsgIndex], data.msgList.size(), data.searchCount);
-       
+        if (data.event() == imap_data_event_search)
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
+
         // Headers data
-        for (int i = 0; i < data.header.size(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
+        for (int i = 0; i < data.headerCount(); i++)
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+
+        // Files data
+        for (size_t i = 0; i < data.fileCount(); i++)
+        {
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+        }
+
     }
-    // Processing content stream.
-    else
+    else if (data.event() == imap_data_event_fetch_body)
     {
         // Showing the progress of content fetching 
-        if (data.progressUpdated)
-            ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.filename, data.mime, data.progress);
+        if (data.fileProgress().available)
+            ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.fileInfo().filename, data.fileInfo().mime, data.fileProgress().value);
 
-        ReadyMail.printf("Data Index: %d, Length: %d, Size: %d\n", data.dataIndex, data.dataLength, data.size);
-
-        // The stream can be processed here.
+        ReadyMail.printf("Data Index: %d, Length: %d, Size: %d\n", data.fileChunk().index, data.fileChunk().size, data.fileInfo().fileSize);
         
     }
 }
@@ -425,6 +443,8 @@ The network client works only with plain text connection. Some SSL clients suppo
 *In some use case where the network to connect is not WiFi but Ethernet or mobile GSM modem, if the SSL client is required, there are few SSL clients that can be used. One of these SSL client is `ESP_SSLClient`.*
 
 Back to our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
+
+Anyway, this library supports port changing at run time, see [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) for how to.
 
 ### Plain Text Connection
 
@@ -614,6 +634,24 @@ auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
 imap.connect("imap host", 993, statusCallback);
 
 ```
+
+# ESP8266 Issues #
+
+When the `ESP8266` and `WiFiClientSecure` are used, they need some adjustments before using otherwise the device may crash when starting the connection.
+
+The ESP8266's `WiFiClientSecure` requires some IO buffers adjustment. When it was used without IO buffer adjustment, it requires 17306 bytes for IO buffers (16k + 325 (overhead) for receive and 512 + 85 (overhead) for transmit).
+
+If the mail server supports SSL fragmentation, the IO buffers can be set by using `WiFiClientSecure::setBufferSizes(rx-size, tx-size)`. In many cases, setting `WiFiClientSecure::setBufferSizes(1024, 1024)` is enough.
+
+The `ESP8266` device itself should be select the proper Heap that is enough for `WiFiClientSecure`, data and library memory usage.
+
+By setting ESP8266 `MMU` options, from Arduino IDE, goto menu `Tools` > `MMU:` > `16KB cache + 48 KB IRAM and 2nd Heap (shared)` (option 3).
+
+The power supply should be robusted that provides enough current with low ripple and noise. The cable should provide good power e.g. short lenght and low impedance.
+
+The library provides the wdt feed internally while operating in both sync and await modes.
+
+Please note that library itself does not make your device to crash, the memory leak, memory allocation failure due to available memory is low and dangling pointer when the network/SSL client that assigned to the `SMTPClient` and `IMAPClient` does not exist in its usage scope, are the major causes of the crashes.
 
 # License #
 

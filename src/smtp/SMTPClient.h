@@ -252,6 +252,17 @@ namespace ReadyMailSMTP
             return ret;
         }
 
+        /** Set the option to enable STARTTLS.
+         *
+         * @param tlsCallback Optional. The TLSHandshakeCallback callback function for performing the SSL/TLS handshake.
+         * @param value The value. True for enable STARTTLS, false to disable STARTTLS.
+         */
+        void setStartTLS(TLSHandshakeCallback tlsCallback, bool value)
+        {
+            smtp_ctx.server_status->start_tls = value;
+            conn.begin(&smtp_ctx, tlsCallback, &res);
+        }
+
         /** Provides the SMTP status information.
          *
          * @return SMTPStatus class object.

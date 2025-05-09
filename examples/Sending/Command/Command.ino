@@ -66,7 +66,7 @@ void setup()
 
     // For ESP_SSLClient
     // if SMTP port is 465, starts in SSL, otherwise starts in plain text
-    ssl_client.setClient(&ssl_client, SMTP_PORT == 465);
+    ssl_client.setClient(&basic_client, SMTP_PORT == 465);
 
     // For ESP32 WiFiClientSecure
     // If SMTP port is 587, starts in plain text
@@ -79,6 +79,8 @@ void setup()
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
     bool esmtp = true;
+
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
     smtp.connect(SMTP_HOST, SMTP_PORT, cmdCb, smtpCb /* for showing debug info */);
     if (smtp.commandResponse().statusCode != 220)

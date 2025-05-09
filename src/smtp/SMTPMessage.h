@@ -29,7 +29,7 @@ namespace ReadyMailSMTP
         --len;
         buf[0] = tmp[0];
         buf[1] = tmp[1];
-        for (size_t n = 2; n < len; n++)
+        for (int n = 2; n < len; n++)
         {
           int key = rand() % (int)(tmp.length() - 1);
           buf[n] = tmp[key];
@@ -56,7 +56,7 @@ namespace ReadyMailSMTP
 
     smtp_header_item &operator[](int index)
     {
-      if (index < size())
+      if (index < (int)size())
         return el[index];
       return hdr;
     }
@@ -72,19 +72,53 @@ namespace ReadyMailSMTP
     }
 
     // RFC2047 encode word (UTF-8 only)
-    String encodeWord(const char *src)
+    String encodeHeaderLine(const char *src)
     {
       String buf;
       size_t len = strlen(src);
       if (len > 4 && src[0] != '=' && src[1] != '?' && src[len - 1] != '=' && src[len - 2] != '?')
-      {
-        char *enc = rd_base64_encode((const unsigned char *)src, len);
-        rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
-        rd_release((void *)enc);
-      }
+        encodeHeaderLineImpl(src, buf);
       else
         buf = src;
       return buf;
+    }
+
+    void encodeHeaderLineImpl(const char *src, String &out)
+    {
+      // rfc2822 section-2.2.3 Long Header Fields
+      int len = strlen(src);
+      String buf;
+      buf.reserve(200);
+      int index = 0;
+      for (int i = 0; i < len; i++)
+      {
+        if (index <= 43)
+        {
+          buf += src[i];
+          index++;
+        }
+        else
+        {
+          encodeWord(buf, out);
+          buf.remove(0, buf.length());
+          buf += src[i];
+          index = 0;
+        }
+      }
+
+      if (buf.length())
+        encodeWord(buf, out);
+    }
+
+    void encodeWord(const String &str, String &out)
+    {
+      String buf;
+      char *enc = rd_base64_encode((const unsigned char *)str.c_str(), str.length());
+      rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
+      rd_release((void *)enc);
+      if (out.length())
+        out += "\r\n ";
+      out += buf;
     }
 
   public:
@@ -95,7 +129,7 @@ namespace ReadyMailSMTP
      */
     smtp_headers &add(rfc822_header_types type, const String &value)
     {
-      if (type == rfc822_max_type || type == rfc822_custom || findHeaders(type) > -1 && !rfc822_headers[type].multi)
+      if (type == rfc822_max_type || type == rfc822_custom || (findHeaders(type) > -1 && !rfc822_headers[type].multi))
         return *this;
 
       // email sub type
@@ -111,7 +145,7 @@ namespace ReadyMailSMTP
 
         smtp_header_item hdr;
 
-        // email with name
+        // Email with name
         if (rfc822_headers[type].sub_type == 0 && p1 > -1 && p2 > -1)
           hdr.name = "\"" + value.substring(0, p1 - 1) + "\" ";
 
@@ -124,7 +158,7 @@ namespace ReadyMailSMTP
         smtp_header_item hdr;
         hdr.type = type;
         hdr.name = rfc822_headers[type].text;
-        hdr.value = (rfc822_headers[type].enc ? encodeWord(value.c_str()) : value);
+        hdr.value = (rfc822_headers[type].enc ? encodeHeaderLine(value.c_str()) : value);
         el.push_back(hdr);
       }
       return *this;

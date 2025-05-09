@@ -54,7 +54,6 @@ namespace ReadyMailIMAP
         imap_state_search,
         imap_state_fetch,
         imap_state_fetch_envelope,
-        imap_state_fetch_body_structure,
         imap_state_fetch_body_part,
         imap_state_logout,
         imap_state_idle,
@@ -129,7 +128,6 @@ namespace ReadyMailIMAP
         imap_envelpe_bcc,
         imap_envelpe_in_reply_to,
         imap_envelpe_message_id,
-        imap_envelpe_attachments,
         imap_envelpe_max_type
     };
 
@@ -237,8 +235,14 @@ namespace ReadyMailIMAP
     enum imap_fetch_mode
     {
         imap_fetch_envelope,
-        imap_fetch_body_structure,
         imap_fetch_body_part
+    };
+
+    enum imap_data_callback_event
+    {
+        imap_data_event_search,
+        imap_data_event_fetch_envelope,
+        imap_data_event_fetch_body
     };
 
     __attribute__((used)) struct
@@ -266,7 +270,7 @@ namespace ReadyMailIMAP
         char text[12];
     };
 
-    const struct imap_envelope_t imap_envelopes[imap_envelpe_max_type] PROGMEM = {"Date", "Subject", "From", "Sender", "Reply-To", "To", "Cc", "Bcc", "In-Reply-To", "Message-ID", "Attachment"};
+    const struct imap_envelope_t imap_envelopes[imap_envelpe_max_type] PROGMEM = {"Date", "Subject", "From", "Sender", "Reply-To", "To", "Cc", "Bcc", "In-Reply-To", "Message-ID"};
     const struct imap_auth_cap_t imap_auth_cap_token[imap_auth_cap_max_type] PROGMEM = {"AUTH=PLAIN", "AUTH=XOAUTH2", "AUTH=CRAM-MD5", "AUTH=DIGEST-MD5", "AUTH=LOGIN", "STARTTLS", "SASL-IR"};
     const struct imap_read_cap_t imap_read_cap_token[imap_read_cap_max_type] PROGMEM = {"IMAP4", "IMAP4rev1", "IDLE", "LITERAL+", "LITERAL-", "MULTIAPPEND", "UIDPLUS", "ACL", "BINARY", "LOGINDISABLED", "MOVE", "QUOTA", "NAMESPACE", "ENABLE", "ID", "UNSELECT", "CHILDREN", "CONDSTORE", "" /* Auto cap */};
     const struct imap_char_encoding_t imap_char_encodings[imap_char_encoding_max_type] PROGMEM = {"utf-8", "iso-8859-1", "iso-8859-11", "tis-620", "windows-874"};
@@ -314,8 +318,9 @@ namespace ReadyMailIMAP
         size_t search_limit = 20;
         bool recent_sort = true, read_only_mode = true, mailbox_selected = false, mailboxes_updated = false;
         uint32_t fetch_number;
-        int32_t modsequence = -1, part_size_limit = 1024 * 1024;
-        bool uid_search = false, uid_fetch = false, searching = false, processing = false, idling = false, skipping = false, multiline = false, await = false;
+        int32_t modsequence = -1;
+        uint32_t part_size_limit = 1024 * 1024;
+        bool uid_search = false, uid_fetch = false, searching = false, processing = false, idling = false, multiline = false, await = false;
     };
 
     // body part field item
@@ -330,42 +335,193 @@ namespace ReadyMailIMAP
     struct part_ctx
     {
         std::vector<body_part_field> field;
-        String name, section, id, parent_id, filepath, mime, filename;
+        String name, section, id, parent_id;
         uint8_t num_specifier = 0, part_count = 0;
-        int data_index = 0, depth = 0, field_index = 0;
-        uint32_t decoded_size = 0 /* The decoded size */, total_read = 0, octet_count = 0, decoded_len = 0 /* The sum of the decoded octet */;
-        int progress = 0, last_progress = -1;
+        int depth = 0, field_index = 0;
+    };
+
+    struct imap_file_info
+    {
+        String filename, mime, charset, transferEncoding;
+        uint32_t fileSize = 0;
+    };
+
+    struct imap_file_chunk
+    {
+        uint8_t *data = nullptr;
+        uint16_t size = 0;
+        uint32_t index = 0;
+        bool isComplete = false;
+    };
+
+    struct imap_file_progress
+    {
+        int value = 0, last_value = -1;
+        bool available = false;
+    };
+
+    struct imap_file_ctx
+    {
+        friend class IMAPSend;
+
+    public:
+        imap_file_info info;
+        imap_file_chunk chunk;
+        imap_file_progress progress;
+        bool fetch = true;
+#if defined(ENABLE_FS)
+        FileCallback fileCallback = NULL;
+        String downloadFolder;
+#endif
+
+    private:
+        friend class IMAPParser;
+        String section, filepath;
+        uint32_t octet_count, total_read = 0, decoded_len = 0 /* The sum of the decoded octet */;
         imap_transfer_encoding_scheme transfer_encoding = imap_transfer_encoding_undefined;
         imap_char_encoding_scheme char_encoding = imap_char_encoding_scheme_default;
-        bool text_part = false, initialized = false, last_octet = false /* last octet bytes ')\r\n' found */;
+        bool text_part = false, last_octet = false /* last octet bytes ')\r\n' found */;
     };
 
     // message context
     struct imap_msg_ctx
     {
-        int cur_part_index = 0;
-        //  date, subject, from, sender, reply-to, to, cc, bcc,in-reply-to, and message-id
-        std::vector<std::pair<String, String>> header;
-        std::vector<part_ctx> parts;
-        part_ctx part;
+        int cur_file_index = 0, fetch_count = 0;
+        std::vector<std::pair<String, String>> headers;
+        std::vector<imap_file_ctx> files;
         String raw_chunk, qp_chunk;
-        // message exists
         bool exists = false;
     };
 
-    typedef struct imap_callback_data
+    class IMAPCallbackData
     {
-        const char *filename = "";
-        const char *mime = "";
-        const uint8_t *blob = nullptr;
-        uint32_t dataLength = 0, size = 0;
-        int progress = 0, dataIndex = 0, currentMsgIndex = 0;
-        uint32_t searchCount = 0;
-        std::vector<uint32_t> msgList;
-        std::vector<std::pair<String, String>> header;
-        bool isComplete = false, isEnvelope = false, isSearch = false, progressUpdated = false;
-    } IMAPCallbackData;
-    typedef void (*IMAPDataCallback)(IMAPCallbackData data);
+        friend class IMAPParser;
+        friend class IMAPBase;
+        friend class IMAPSend;
+
+    public:
+        /**
+         * Provides the event of callback data
+         *
+         * @return imap_data_callback_event enum of current operation i.g. imap_data_event_search,
+         * imap_data_event_fetch_envelope and imap_data_event_fetch_body.
+         */
+        imap_data_callback_event event() { return eventType; }
+
+        /**
+         * Provides the size of message headers.
+         *
+         * @return size of message headers.
+         */
+        size_t headerCount() { return headers->size(); }
+
+        /**
+         * Provides a message header at index.
+         *
+         * @param index The index.
+         * @return key-value pair of message header.
+         */
+        std::pair<String, String> getHeader(int index) { return (*headers)[index]; }
+
+        /**
+         * Provides the number of files contains in the messages (included text and message file types).
+         *
+         * @return number of files.
+         */
+        size_t fileCount() { return files->size(); }
+
+        /**
+         * Provides a file info data at index..
+         *
+         * @param index Optional. The index.
+         * Provides -1 or leave default to get current file info data.
+         * @return imap_file_info struct data i.e. filename, mime, charset, transferEncoding and fileSize.
+         */
+        imap_file_info fileInfo(int index = -1) { return getFile(index).info; }
+
+        /**
+         * Provides a file chunk data at index..
+         *
+         * @param index  Optional. The index.
+         * Provides -1 or leave default to get current file chunk data.
+         * @return imap_file_chunk struct data i.e. data (uint8_t *), index, size and isComplete.
+         */
+        imap_file_chunk fileChunk(int index = -1) { return getFile(index).chunk; }
+
+        /**
+         * Provides the file progress data at index.
+         *
+         * @param index  Optional. The index.
+         * Provides -1 or leave default to get current file progress.
+         * @return imap_file_progress struct data i.e. value and available.
+         */
+        imap_file_progress fileProgress(int index = -1) { return getFile(index).progress; }
+
+        /**
+         * Provides the fetch option at file index.
+         *
+         * @param index The index.
+         * @return file fetch option at index.
+         */
+        bool &fetchOption(int index) { return getFile(index).fetch; }
+
+#if defined(ENABLE_FS)
+        /**
+         * Provides the file callback and folder to download file at file index.
+         *
+         * @param index The index.
+         * @param fileCallback The FileCallback callback function that provides the file openning and removing operations for file/attachment download.
+         * @param downloadFolder The name of folder that stores the downloaded files.
+         */
+        void setFileCallback(int index, FileCallback fileCallback, const String &downloadFolder = "")
+        {
+            getFile(index).fileCallback = fileCallback;
+            getFile(index).downloadFolder = downloadFolder;
+        }
+#endif
+
+        /**
+         * Provides current message index from search result.
+         * @return The message index.
+         */
+        int messageIndex() { return *msgIndex; }
+
+        /**
+         * Provides the total messages found from search.
+         *
+         * @return The number of message found.
+         */
+        int messageFound() { return msgFound; }
+
+        /**
+         * Provides the total messages store in the search result.
+         *
+         * @return The number of message found.
+         */
+        int messageAvailable() { return msgNums.size(); }
+
+        /**
+         * Provides the message number or UID at the index.
+         *
+         * @param index Optional. The index of message in search result list.
+         * Provides -1 or leave default to get current message.
+         * @return The number or UID of message at index..
+         */
+        uint32_t messageNum(int index = -1) { return msgNums[index > -1 ? index : *msgIndex]; }
+
+    private:
+        int *fileIndex = nullptr;
+        int *msgIndex = nullptr;
+        int msgFound = 0;
+        std::vector<uint32_t> msgNums;
+        imap_data_callback_event eventType;
+
+        std::vector<imap_file_ctx> *files = nullptr;
+        std::vector<std::pair<String, String>> *headers = nullptr;
+        imap_file_ctx &getFile(int index = -1) { return (*files)[index > -1 ? index : *fileIndex]; }
+    };
+
+    typedef void (*IMAPDataCallback)(IMAPCallbackData &data);
 
     struct imap_callback
     {
@@ -391,7 +547,7 @@ namespace ReadyMailIMAP
         bool auth_caps[imap_auth_cap_max_type], feature_caps[imap_read_cap_max_type];
         std::vector<imap_msg_ctx> messages;
         imap_options options;
-        imap_callback_data cb_data;
+        IMAPCallbackData cb_data;
         imap_callback cb;
         IMAPStatus *status = nullptr;
         imap_server_status_t *server_status = nullptr;

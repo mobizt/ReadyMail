@@ -51,8 +51,8 @@ static const uint8_t greenText[] PROGMEM = {0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 
 // For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
-    if (status.progressUpdated)
-        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+    if (status.progress.available)
+        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }
@@ -110,6 +110,8 @@ void setup()
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb, SSL_MODE);
     if (!smtp.isConnected())

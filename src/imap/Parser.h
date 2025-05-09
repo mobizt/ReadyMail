@@ -143,22 +143,22 @@ namespace ReadyMailIMAP
             return String();
         }
 
-        uint8_t *decodeContent(String &res, int &decoded_len, part_ctx &cpart, imap_msg_ctx &cmsg)
+        uint8_t *decodeContent(String &res, int &decoded_len, imap_file_ctx &cfile, imap_msg_ctx &cmsg)
         {
             uint8_t *decoded = nullptr;
             decoded_len = 0;
             int rlen = res.length();
 
             // Binary string (string with NUL char) without base64 encoding is not allowed.
-            if (cpart.transfer_encoding == imap_transfer_encoding_base64 || cpart.transfer_encoding == imap_transfer_encoding_binary)
+            if (cfile.transfer_encoding == imap_transfer_encoding_base64 || cfile.transfer_encoding == imap_transfer_encoding_binary)
             {
                 // expected 78 bytes long or less base64 encoded string
                 removeLinebreak(res, rlen);
                 decoded = (uint8_t *)rd_base64_decode_impl((const char *)res.c_str(), decoded_len);
-                if (decoded && cpart.text_part)
+                if (decoded && cfile.text_part)
                     decoded[decoded_len] = '\0';
             }
-            else if (cpart.transfer_encoding == imap_transfer_encoding_quoted_printable)
+            else if (cfile.transfer_encoding == imap_transfer_encoding_quoted_printable)
             {
                 if (res[rlen - 3] == '=' && res[rlen - 2] == '\r' && res[rlen - 1] == '\n') // remove soft break for QP
                 {
@@ -192,13 +192,13 @@ namespace ReadyMailIMAP
                     decoded_len = strlen((char *)decoded);
                 }
             }
-            else if (cpart.transfer_encoding == imap_transfer_encoding_7bit)
+            else if (cfile.transfer_encoding == imap_transfer_encoding_7bit)
             {
                 char *buf = rd_decode_7bit_utf8(res.c_str());
                 decoded_len = strlen(buf);
                 decoded = (uint8_t *)buf;
             }
-            else if (cpart.transfer_encoding == imap_transfer_encoding_8bit)
+            else if (cfile.transfer_encoding == imap_transfer_encoding_8bit)
             {
                 char *buf = rd_decode_8bit_utf8(res.c_str());
                 decoded_len = strlen(buf);
@@ -207,11 +207,11 @@ namespace ReadyMailIMAP
             return decoded;
         }
 
-        uint8_t *decodeText(uint8_t *decoded, int decoded_len, part_ctx &cpart)
+        uint8_t *decodeText(uint8_t *decoded, int decoded_len, imap_file_ctx &cfile)
         {
-            if (cpart.text_part)
+            if (cfile.text_part)
             {
-                if (cpart.char_encoding == imap_char_encoding_scheme_iso8859_1)
+                if (cfile.char_encoding == imap_char_encoding_scheme_iso8859_1)
                 {
                     int len = (decoded_len + 1) * 2;
                     unsigned char *buf = (unsigned char *)allocate(len);
@@ -220,7 +220,7 @@ namespace ReadyMailIMAP
                     decoded_len = len;
                     decoded = (uint8_t *)buf;
                 }
-                else if (cpart.char_encoding == imap_char_encoding_scheme_tis_620 || cpart.char_encoding == imap_char_encoding_scheme_iso8859_11 || cpart.char_encoding == imap_char_encoding_scheme_windows_874)
+                else if (cfile.char_encoding == imap_char_encoding_scheme_tis_620 || cfile.char_encoding == imap_char_encoding_scheme_iso8859_11 || cfile.char_encoding == imap_char_encoding_scheme_windows_874)
                 {
                     char *buf = (char *)allocate((decoded_len + 1) * 3);
                     rd_decode_tis620_utf8(buf, (const char *)decoded, decoded_len);
@@ -257,48 +257,6 @@ namespace ReadyMailIMAP
                 }
             }
             return i < (int)cpart.field.size() ? cpart.field[i].token : String();
-        }
-
-        void getPartTransferEncoding(part_ctx &cpart)
-        {
-            if (getField(cpart, non_multipart_field_encoding) == "quoted-printable")
-                cpart.transfer_encoding = imap_transfer_encoding_quoted_printable;
-            else if (getField(cpart, non_multipart_field_encoding) == "base64")
-                cpart.transfer_encoding = imap_transfer_encoding_base64;
-            else if (getField(cpart, non_multipart_field_encoding) == "7bit")
-                cpart.transfer_encoding = imap_transfer_encoding_7bit;
-            else if (getField(cpart, non_multipart_field_encoding) == "8bit")
-                cpart.transfer_encoding = imap_transfer_encoding_8bit;
-            else if (getField(cpart, non_multipart_field_encoding) == "binary")
-                cpart.transfer_encoding = imap_transfer_encoding_binary;
-        }
-
-        void InitPart(String &line, part_ctx &cpart)
-        {
-            cpart.decoded_len = 0;
-            cpart.total_read = 0;
-            cpart.initialized = true;
-            cpart.octet_count = getField(cpart, non_multipart_field_size).toInt();
-            getPartTransferEncoding(cpart);
-
-            cpart.mime = getField(cpart, non_multipart_field_type);
-            cpart.text_part = cpart.mime == "text";
-            cpart.mime += "/";
-            cpart.mime += getField(cpart, non_multipart_field_subtype);
-            cpart.data_index = 0;
-            cpart.filename = getFileName(cpart);
-            if (cpart.text_part)
-                cpart.char_encoding = getCharEncoding(getCharset(cpart));
-
-            if (!cpart.octet_count)
-                cpart.octet_count = getOctetLen(line);
-
-            if (cpart.transfer_encoding == imap_transfer_encoding_base64 || cpart.transfer_encoding == imap_transfer_encoding_binary)
-            {
-                cpart.decoded_size = numString.toNum(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str());
-                if (cpart.decoded_size == 0)
-                    cpart.decoded_size = cpart.octet_count * 3 / 4;
-            }
         }
 
         uint32_t getOctetLen(const String &line)
@@ -343,20 +301,20 @@ namespace ReadyMailIMAP
         bool isLastOctet(const String &line) { return line.length() >= 3 && line[line.length() - 3] == ')' && line[line.length() - 2] == '\r' && line[line.length() - 1] == '\n'; }
 
         // remove last of octet bytes ')\r\n' if existed
-        void removeLastOctet(String &line, part_ctx &cpart)
+        void removeLastOctet(String &line, imap_file_ctx &cfile)
         {
-            cpart.last_octet = isLastOctet(line);
-            if (cpart.last_octet)
+            cfile.last_octet = isLastOctet(line);
+            if (cfile.last_octet)
                 line.remove(line.length() - 3, 3);
-            cpart.total_read -= 3;
+            cfile.total_read -= 3;
         }
 
         // resore last of octet bytes ')\r\n' if removed
-        void restoreLastOctet(part_ctx &cpart, imap_msg_ctx &cmsg)
+        void restoreLastOctet(imap_file_ctx &cfile, imap_msg_ctx &cmsg)
         {
-            if (cpart.last_octet && cpart.transfer_encoding != imap_transfer_encoding_base64 && cpart.transfer_encoding != imap_transfer_encoding_binary)
+            if (cfile.last_octet && cfile.transfer_encoding != imap_transfer_encoding_base64 && cfile.transfer_encoding != imap_transfer_encoding_binary)
             {
-                cpart.last_octet = false;
+                cfile.last_octet = false;
                 if (cmsg.raw_chunk.length())
                     cmsg.raw_chunk += ")\r\n";
                 else
@@ -364,13 +322,13 @@ namespace ReadyMailIMAP
             }
         }
 
-        int readContent(const String &line, String &res, part_ctx &cpart, imap_msg_ctx &cmsg)
+        int readContent(const String &line, String &res, imap_file_ctx &cfile, imap_msg_ctx &cmsg)
         {
             int llen = line.length();
             // we expect the line with linebreak
             if (line[llen - 2] == '\r' && line[llen - 1] == '\n')
             {
-                restoreLastOctet(cpart, cmsg); // check if last octet bytes removed, then restore
+                restoreLastOctet(cfile, cmsg); // check if last octet bytes removed, then restore
                 if (cmsg.raw_chunk.length())
                 {
                     res = cmsg.raw_chunk;
@@ -382,7 +340,7 @@ namespace ReadyMailIMAP
             }
             else // partial data or soft linebreak exists (qp encoded data)
             {
-                restoreLastOctet(cpart, cmsg); // check if last octet bytes removed, then restore
+                restoreLastOctet(cfile, cmsg); // check if last octet bytes removed, then restore
                 if (cmsg.raw_chunk.length())
                     cmsg.raw_chunk += line;
                 else
@@ -398,65 +356,73 @@ namespace ReadyMailIMAP
                 res.remove(rlen - 2, 2);
         }
 
-        void storeDecodedData(uint8_t *decoded, int decoded_len, bool isComplete, part_ctx &cpart, imap_context *imap_ctx)
+        void storeDecodedData(uint8_t *decoded, int decoded_len, bool isComplete, imap_file_ctx &cfile, imap_context *imap_ctx)
         {
-            imap_ctx->cb_data.filename = cpart.filename.c_str();
-            imap_ctx->cb_data.mime = cpart.mime.c_str();
-            imap_ctx->cb_data.dataIndex = cpart.data_index;
-            imap_ctx->cb_data.blob = decoded;
-            imap_ctx->cb_data.dataLength = decoded_len;
-            imap_ctx->cb_data.size = cpart.decoded_size;
-            imap_ctx->cb_data.isComplete = isComplete;
+            cfile.chunk.isComplete = isComplete;
+            cfile.chunk.size = decoded_len;
+            cfile.chunk.data = decoded;
 
-            if ((int)cpart.progress != cpart.last_progress && ((int)cpart.progress > (int)cpart.last_progress + 5 || (int)cpart.progress == 0 || (int)cpart.progress == 100))
+            if ((int)cfile.progress.value != cfile.progress.last_value && ((int)cfile.progress.value > (int)cfile.progress.last_value + 5 || (int)cfile.progress.value == 0 || (int)cfile.progress.value == 100))
             {
-                imap_ctx->cb_data.progressUpdated = true;
-                imap_ctx->cb_data.progress = cpart.progress;
-                cpart.last_progress = cpart.progress;
+                cfile.progress.available = true;
+                cfile.progress.last_value = cfile.progress.value;
             }
 
             if (imap_ctx->cb.data)
                 imap_ctx->cb.data(imap_ctx->cb_data);
 
-            imap_ctx->cb_data.progressUpdated = false;
+            cfile.progress.available = false;
 
 #if defined(ENABLE_FS)
-            if (imap_ctx->file && imap_ctx->cb.file)
+            if (imap_ctx->file && (imap_ctx->cb.file || cfile.fileCallback))
                 imap_ctx->file.write(decoded, decoded_len);
 #endif
-            cpart.data_index += decoded_len;
+            cfile.chunk.index += decoded_len;
         }
 
-        void decodeString(String &str, const char *enc = "")
+        String getEnc(const String &str)
         {
-            // handle rfc2047 Q (quoted printable) and B (base64) decodings
-            QBDecoder decoder;
             int pos1 = 0, pos2 = 0;
-            String headerEnc;
+            String enc;
+            while (str[pos1] == ' ' && pos1 < (int)str.length() - 1)
+                pos1++;
 
-            if (strlen(enc) == 0)
+            if (str[pos1] == '=' && str[pos1 + 1] == '?')
             {
-                while (str[pos1] == ' ' && pos1 < (int)str.length() - 1)
-                    pos1++;
+                pos2 = str.indexOf('?', pos1 + 2);
+                if (pos2 > -1)
+                    enc = str.substring(pos1 + 2, pos2);
+            }
+            return enc;
+        }
 
-                if (str[pos1] == '=' && str[pos1 + 1] == '?')
+        void decodeStringImpl(QBDecoder &decoder, String &str, const String &enc)
+        {
+            int i = 0;
+            String token, buf;
+            while (i < (int)str.length())
+            {
+                token = nextToken(str, i, 0, str.length());
+                if (token.length())
                 {
-                    pos2 = str.indexOf('?', pos1 + 2);
-                    if (pos2 > -1)
-                        headerEnc = str.substring(pos1 + 2, pos2 - 2);
+                    String e = enc.length() ? enc : getEnc(token);
+                    decodeChunk(decoder, token, e);
+                    buf += token;
                 }
             }
-            else
-                headerEnc = enc;
+            str = buf;
+        }
 
-            int bufSize = str.length() + 10;
+        void decodeChunk(QBDecoder &decoder, String &chunk, const String &enc)
+        {
+            int bufSize = chunk.length() + 10;
             char *buf = (char *)allocate(bufSize);
 
             // Content Q and B decodings
-            decoder.decode(buf, str.c_str(), bufSize);
+            decoder.decode(buf, chunk.c_str(), bufSize);
 
             // Char set decoding
-            imap_char_encoding_scheme scheme = getCharEncoding(headerEnc.c_str());
+            imap_char_encoding_scheme scheme = getCharEncoding(enc.c_str());
             if (scheme == imap_char_encoding_scheme_iso8859_1)
             {
                 int len = strlen(buf);
@@ -474,8 +440,18 @@ namespace ReadyMailIMAP
                 rd_release((void *)buf);
                 buf = out;
             }
-            str = buf;
+            chunk = buf;
             rd_release((void *)buf);
+        }
+
+        void decodeString(String &str, const char *enc = "")
+        {
+            if (str.startsWith("=?") || strlen(enc))
+            {
+                // Handle rfc2047 Q (quoted printable) and B (base64) decodings
+                QBDecoder decoder;
+                decodeStringImpl(decoder, str, enc);
+            }
         }
 
         String getToken(const String &line, int pos, const String &beginToken, const String &lastToken)
@@ -710,7 +686,7 @@ namespace ReadyMailIMAP
                 if (token.length() == 0)
                     break;
 
-                imap_ctx->cb_data.searchCount++;
+                imap_ctx->cb_data.msgFound++;
                 msg_num = numString.toNum(token.c_str());
                 if (imap_ctx->options.recent_sort)
                 {
@@ -774,7 +750,7 @@ namespace ReadyMailIMAP
             }
         }
 
-        void parseEnvelope(const String &line, const String &beginToken, const String &lastToken, int depth, String *header, int &header_index)
+        void parseEnvelope(imap_context *imap_ctx, imap_msg_ctx &cmsg, const String &line, const String &beginToken, const String &lastToken, int depth, String *header, int &header_index)
         {
             int beginIndex = 0, lastIndex = 0;
             getBoundary(line, beginToken, lastToken, beginIndex, lastIndex);
@@ -788,7 +764,7 @@ namespace ReadyMailIMAP
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
                     {
-                        parseEnvelope(token, "(", ")", depth + 1, header, header_index);
+                        parseEnvelope(imap_ctx, cmsg, token, "(", ")", depth + 1, header, header_index);
                         if (depth == 0)
                             header_index++;
                     }
@@ -813,6 +789,7 @@ namespace ReadyMailIMAP
                             if (addr_index == 4 && addr_struct[2] != "NIL" && addr_struct[3] != "NIL")
                             {
                                 String buf;
+                                addr_struct[0].replace("\\\"", "\"");
                                 rd_print_to(buf, 200, "%s%s<%s@%s>", addr_struct[0] != "NIL" ? addr_struct[0].c_str() : "", addr_struct[0] != "NIL" ? " " : "", addr_struct[2].c_str(), addr_struct[3].c_str());
                                 if (header[header_index].length())
                                     header[header_index] += ", ";
@@ -824,17 +801,23 @@ namespace ReadyMailIMAP
                 }
             }
             if (depth == 0)
-                header[imap_envelpe_attachments] = numString.get(getAttachCount(line, "BODY (", ")"));
+            {
+                imap_msg_ctx _cmsg;
+                std::vector<part_ctx> parts;
+                part_ctx part;
+                parseBodyStructure(line, "BODY (", ")", 0, 1, -1, parts, &part);
+                getFileInfo(imap_ctx, parts, cmsg);
+            }
         }
 
-        void parseFetch(String &line, imap_context *imap_ctx, imap_msg_ctx &cmsg, imap_state &cstate, part_ctx &cpart)
+        void parseFetch(String &line, imap_context *imap_ctx, imap_msg_ctx &cmsg, imap_state &cstate, imap_file_ctx &cfile)
         {
             if (line[0] == '*' || imap_ctx->options.multiline)
             {
                 cmsg.exists = true;
-                imap_ctx->cb_data.isEnvelope = false;
                 if (cstate == imap_state_fetch_envelope)
                 {
+                    imap_ctx->cb_data.eventType = imap_data_event_fetch_envelope;
                     if (line[0] == '*')
                         imap_ctx->current_message = numString.toNum(getToken(line, 0, "* ", "FETCH").c_str());
 
@@ -848,64 +831,56 @@ namespace ReadyMailIMAP
 
                     String header[imap_envelpe_max_type];
                     int i = imap_envelpe_date;
-                    parseEnvelope(line, "ENVELOPE (", ")", 0, header, i);
+                    parseEnvelope(imap_ctx, cmsg, line, "ENVELOPE (", ")", 0, header, i);
 
                     for (i = imap_envelpe_date; i < imap_envelpe_max_type; i++)
-                        cmsg.header.emplace_back(imap_envelopes[i].text, header[i]);
+                        cmsg.headers.emplace_back(imap_envelopes[i].text, header[i]);
 
                     if (imap_ctx->cb.data)
                     {
-                        imap_ctx->cb_data.header = cmsg.header;
-                        imap_ctx->cb_data.currentMsgIndex = imap_ctx->cur_msg_index;
-                        imap_ctx->cb_data.isEnvelope = true;
-                        imap_ctx->cb_data.isSearch = imap_ctx->options.searching;
+                        imap_ctx->cb_data.files = &cmsg.files;
+                        imap_ctx->cb_data.fileIndex = &cmsg.cur_file_index;
+                        imap_ctx->cb_data.headers = &cmsg.headers;
+                        imap_ctx->cb_data.msgIndex = &imap_ctx->cur_msg_index;
+                        imap_ctx->cb_data.eventType = imap_ctx->options.searching ? imap_data_event_search : imap_data_event_fetch_envelope;
                         imap_ctx->cb.data(imap_ctx->cb_data);
+                        cmsg.fetch_count = 0;
+                        for (size_t i = 0; i < cmsg.files.size(); i++)
+                            cmsg.fetch_count += cmsg.files[i].fetch ? 1 : 0;
                     }
                 }
-                else if (cstate == imap_state_fetch_body_structure)
+                else if (cstate == imap_state_fetch_body_part)
                 {
-                    if (line[line.length() - 3] == ')' && line[line.length() - 2] == '\r' && line[line.length() - 1] == '\n')
-                        imap_ctx->options.multiline = false;
-                    else
-                    {
-                        imap_ctx->options.multiline = true;
-                        return;
-                    }
-                    parseBodyStructure(line, "BODYSTRUCTURE (" /* also supports BODY */, ")", 0, 1, -1, cmsg.parts, &cmsg.part);
-                    debugBodystructure(cmsg, imap_ctx);
-                }
-                else if (cstate == imap_state_fetch_body_part && !cpart.initialized)
-                {
-                    InitPart(line, cpart);
-                    openFile(imap_ctx, cpart);
+                    imap_ctx->cb_data.eventType = imap_data_event_fetch_body;
+                    openFile(imap_ctx, cfile);
                 }
             }
-            else if (cstate == imap_state_fetch_body_part && cpart.initialized)
+            else if (cstate == imap_state_fetch_body_part)
             {
                 if (line.indexOf(imap_ctx->tag) != 0)
                 {
                     String res;
-                    int rlen = readContent(line, res, cpart, cmsg);
+                    int rlen = readContent(line, res, cfile, cmsg);
                     if (rlen)
                     {
-                        cpart.total_read += rlen;
+                        cfile.total_read += rlen;
                         // We cannot trust the total octet read and the octet count from non-base64 encoded string as
                         // some server reports incorrect octet count in none-base64 transfer encoding.
                         // Then we check for last octet bytes sequence ')\r\n' every line and remove it before decoding
-                        removeLastOctet(res, cpart);
+                        removeLastOctet(res, cfile);
 
                         int decoded_len = 0;
-                        if (cpart.transfer_encoding == imap_transfer_encoding_base64 && cpart.transfer_encoding == imap_transfer_encoding_binary)
+                        if (cfile.transfer_encoding == imap_transfer_encoding_base64 && cfile.transfer_encoding == imap_transfer_encoding_binary)
                             removeLinebreak(res, rlen);
 
-                        uint8_t *decoded = decodeContent(res, decoded_len, cpart, cmsg);
+                        uint8_t *decoded = decodeContent(res, decoded_len, cfile, cmsg);
                         if (decoded)
                         {
                             if (decoded_len)
                             {
-                                decoded = decodeText(decoded, decoded_len, cpart);
-                                updateDownloadStatus(decoded_len, cpart);
-                                storeDecodedData(decoded, decoded_len, false, cpart, imap_ctx);
+                                decoded = decodeText(decoded, decoded_len, cfile);
+                                updateDownloadStatus(decoded_len, cfile);
+                                storeDecodedData(decoded, decoded_len, false, cfile, imap_ctx);
                             }
                             rd_release((void *)decoded);
                         }
@@ -913,44 +888,20 @@ namespace ReadyMailIMAP
                 }
                 else
                 {
-                    cpart.progress = 100.0f;
-                    cpart.last_progress = -1;
-                    storeDecodedData(nullptr, 0, true, cpart, imap_ctx);
+                    cfile.progress.value = 100.0f;
+                    cfile.progress.last_value = -1;
+                    storeDecodedData(nullptr, 0, true, cfile, imap_ctx);
                     closeFile(imap_ctx);
                 }
             }
         }
 
-        int getAttachCount(const String &line, const String &beginToken, const String &lastToken)
+        void updateDownloadStatus(int len, imap_file_ctx &cfile)
         {
-            int beginIndex = 0, lastIndex = 0;
-            getBoundary(line, beginToken, lastToken, beginIndex, lastIndex);
-            int i = beginIndex;
-            int att_count = 0;
-            while (i <= lastIndex)
-            {
-                String token = nextToken(line, i, beginIndex, lastIndex);
-                if (token.length())
-                {
-                    if (token[0] == '(' && token[token.length() - 1] == ')')
-                        att_count += getAttachCount(token, "(", ")");
-                    else
-                    {
-                        token.toLowerCase();
-                        if (token == "image" || token == "audio" || token == "video" || token == "application" || token == "message")
-                            att_count++;
-                    }
-                }
-            }
-            return att_count;
-        }
-
-        void updateDownloadStatus(int len, part_ctx &cpart)
-        {
-            cpart.decoded_len += len;
-            cpart.progress = (float)(cpart.total_read * 100) / (float)cpart.octet_count;
-            if (cpart.progress > 100.0f)
-                cpart.progress = 100.0f;
+            cfile.decoded_len += len;
+            cfile.progress.value = (float)(cfile.total_read * 100) / (float)cfile.octet_count;
+            if (cfile.progress.value > 100.0f)
+                cfile.progress.value = 100.0f;
         }
 
         String getFileName(part_ctx &cpart)
@@ -965,17 +916,46 @@ namespace ReadyMailIMAP
             return name;
         }
 
-        void openFile(imap_context *imap_ctx, part_ctx &cpart)
+        void openFile(imap_context *imap_ctx, imap_file_ctx &cfile)
         {
 #if defined(ENABLE_FS)
-            cpart.filepath.remove(0, cpart.filepath.length());
-            rd_print_to(cpart.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, cpart.filename.c_str());
-            if (imap_ctx->cb.file)
+            cfile.filepath.remove(0, cfile.filepath.length());
+            rd_print_to(cfile.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, cfile.info.filename.c_str());
+
+            if (imap_ctx->cb.file || cfile.fileCallback)
             {
-                String path = imap_ctx->cb.download_path.length() ? imap_ctx->cb.download_path + "/" : "";
-                path += cpart.filepath;
-                imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_remove);
-                imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_open_write);
+                String path;
+                if (cfile.fileCallback)
+                {
+                    if (cfile.downloadFolder.length())
+                    {
+                        if (cfile.downloadFolder[0] != '/')
+                            path = "/";
+                        path += cfile.downloadFolder;
+                    }
+                }
+                else if (imap_ctx->cb.file)
+                {
+                    if (imap_ctx->cb.download_path.length())
+                    {
+                        if (imap_ctx->cb.download_path[0] != '/')
+                            path = "/";
+                        path += imap_ctx->cb.download_path;
+                    }
+                }
+
+                path += cfile.filepath;
+
+                if (cfile.fileCallback)
+                {
+                    cfile.fileCallback(imap_ctx->file, path.c_str(), readymail_file_mode_remove);
+                    cfile.fileCallback(imap_ctx->file, path.c_str(), readymail_file_mode_open_write);
+                }
+                else if (imap_ctx->cb.file)
+                {
+                    imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_remove);
+                    imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_open_write);
+                }
             }
 #endif
         }
@@ -988,35 +968,58 @@ namespace ReadyMailIMAP
 #endif
         }
 
-        void debugBodystructure(imap_msg_ctx &cmsg, imap_context *imap_ctx)
+        void getFileInfo(imap_context *imap_ctx, std::vector<part_ctx> &parts, imap_msg_ctx &cmsg)
         {
-#if defined(ENABLE_CORE_DEBUG)
-            for (int i = 0; i < (int)cmsg.parts.size(); i++)
+            for (int i = 0; i < (int)parts.size(); i++)
             {
-                String tab;
-                for (int j = 0; j < cmsg.parts[i].depth; j++)
-                    tab += ' ';
-
-                String buf;
-                rd_print_to(buf, 200, "%sPart: %s, Section: %s, Numeric Specifier: %d, Parts Count: %d", tab.c_str(), cmsg.parts[i].name.c_str(), cmsg.parts[i].section.c_str(), cmsg.parts[i].num_specifier, cmsg.parts[i].part_count);
-
-                IMAPBase::setDebug(imap_ctx, buf, true);
-
-                if (cmsg.parts[i].field.size())
+                String line;
+                part_ctx cpart = parts[i];
+                if (cpart.name != "mixed" && cpart.name != "alternative" && cpart.name != "related")
                 {
-                    buf.remove(0, buf.length());
-                    rd_print_to(buf, 200, "%s Part Fields", tab.c_str());
-                    IMAPBase::setDebug(imap_ctx, buf, true);
-                    for (int k = 0; k < (int)cmsg.parts[i].field.size(); k++)
+                    imap_file_ctx cfile;
+                    cfile.section = cpart.section;
+
+                    cfile.octet_count = getField(cpart, non_multipart_field_size).toInt();
+
+                    cfile.info.transferEncoding = getField(cpart, non_multipart_field_encoding);
+                    if (cfile.info.transferEncoding == "quoted-printable")
+                        cfile.transfer_encoding = imap_transfer_encoding_quoted_printable;
+                    else if (cfile.info.transferEncoding == "base64")
+                        cfile.transfer_encoding = imap_transfer_encoding_base64;
+                    else if (cfile.info.transferEncoding == "7bit")
+                        cfile.transfer_encoding = imap_transfer_encoding_7bit;
+                    else if (cfile.info.transferEncoding == "8bit")
+                        cfile.transfer_encoding = imap_transfer_encoding_8bit;
+                    else if (cfile.info.transferEncoding == "binary")
+                        cfile.transfer_encoding = imap_transfer_encoding_binary;
+
+                    cfile.info.mime = getField(cpart, non_multipart_field_type);
+                    cfile.text_part = cfile.info.mime == "text";
+                    cfile.info.mime += "/";
+                    cfile.info.mime += getField(cpart, non_multipart_field_subtype);
+
+                    cfile.info.filename = getFileName(cpart);
+                    if (cfile.text_part)
                     {
-                        buf.remove(0, buf.length());
-                        rd_print_to(buf, 200, "%s  Index: %d, Token: %s", tab.c_str(), cmsg.parts[i].field[k].index, cmsg.parts[i].field[k].token.c_str());
-                        IMAPBase::setDebug(imap_ctx, buf, true);
+                        cfile.info.charset = getCharset(cpart);
+                        cfile.char_encoding = getCharEncoding(cfile.info.charset);
                     }
-                    IMAPBase::setDebug(imap_ctx, "", true);
+
+                    if (cfile.octet_count == 0)
+                        cfile.octet_count = getOctetLen(line);
+
+                    if (cfile.transfer_encoding == imap_transfer_encoding_base64 || cfile.transfer_encoding == imap_transfer_encoding_binary)
+                    {
+                        cfile.info.fileSize = numString.toNum(getPartFiled(cpart, non_multipart_field_disposition, "size", false).c_str());
+                        if (cfile.info.fileSize == 0)
+                            cfile.info.fileSize = cfile.octet_count * 3 / 4;
+                    }
+
+                    if (imap_ctx->options.searching || cfile.info.fileSize > imap_ctx->options.part_size_limit || (cfile.info.fileSize == 0 && cfile.octet_count > imap_ctx->options.part_size_limit))
+                        cfile.fetch = false;
+                    cmsg.files.push_back(cfile);
                 }
             }
-#endif
         }
     };
 }

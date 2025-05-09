@@ -27,11 +27,10 @@ namespace ReadyMailSMTP
             if (!smtp_ctx->client || authenticating)
                 return false;
 
-            if (isConnected())
-                return true;
+            if (serverConnected())
+                stop(true);
 
             authenticating = true;
-            res->begin(smtp_ctx);
             setDebugState(smtp_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
             smtp_ctx->options.processing = true;
             serverStatus() = smtp_ctx->client->connect(host.c_str(), port);
@@ -110,6 +109,7 @@ namespace ReadyMailSMTP
             this->tls_cb = tlsCallback;
             this->res = res;
             beginBase(smtp_ctx);
+            res->begin(smtp_ctx);
         }
 
         bool connect(const String &host, uint16_t port, const String &domain, bool ssl = true)
@@ -119,7 +119,7 @@ namespace ReadyMailSMTP
             smtp_ctx->options.ssl_mode = ssl;
 
             if (serverConnected())
-                smtp_ctx->client->stop();
+                stop(true);
 
             IPChecker checker;
             this->domain = checker.isValidHost(domain.c_str()) ? domain : READYMAIL_LOOPBACK_IPV4;

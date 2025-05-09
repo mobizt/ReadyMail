@@ -61,6 +61,8 @@ void setup()
 
     ssl_client.setInsecure();
 
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())
         return;

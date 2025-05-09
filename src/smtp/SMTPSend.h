@@ -893,14 +893,14 @@ namespace ReadyMailSMTP
 
             if ((int)cAtt.progress != cAtt.last_progress && ((int)cAtt.progress > (int)cAtt.last_progress + 5 || (int)cAtt.progress == 0 || (int)cAtt.progress == 100))
             {
-                smtp_ctx->status->progress = cAtt.progress;
-                smtp_ctx->status->progressUpdated = true;
-                smtp_ctx->status->filename = cAtt.filename;
+                smtp_ctx->status->progress.value = cAtt.progress;
+                smtp_ctx->status->progress.available = true;
+                smtp_ctx->status->progress.filename = cAtt.filename;
 
                 if (smtp_ctx->resp_cb)
                     smtp_ctx->resp_cb(*smtp_ctx->status);
 
-                smtp_ctx->status->progressUpdated = false;
+                smtp_ctx->status->progress.available = false;
                 cAtt.last_progress = cAtt.progress;
             }
         }

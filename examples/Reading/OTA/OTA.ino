@@ -37,45 +37,62 @@ void imapCb(IMAPStatus status)
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
 }
 
-// For more information, see https://bit.ly/4k6Uybd
-void dataCb(IMAPCallbackData data)
+// For more information, see https://bit.ly/3GObULu
+void dataCb(IMAPCallbackData &data)
 {
     // Showing envelope data.
-    if (data.isEnvelope)
+    if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
+        // Show additional search info
+        if (data.event() == imap_data_event_search)
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
+
         // Headers data
-        for (int i = 0; i < data.header.size(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.header[i].first.c_str(), data.header[i].second.c_str(), i == data.header.size() - 1 ? "\n" : "");
+        for (int i = 0; i < data.headerCount(); i++)
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+
+        // Files data
+        for (size_t i = 0; i < data.fileCount(); i++)
+        {
+            // You can fetch or download file while searching
+            // (or disable it while fetching) with the following options.
+
+            // To enable/disable this file for fetching.
+            // data.fetchOption(i) = true;
+
+            // To download if the fetch option is set.
+            // data.setFileCallback(i, filecb, "/downloads");
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+        }
     }
-    // Processing content stream.
-    else
+    else if (data.event() == imap_data_event_fetch_body)
     {
         // Showing the text content
-        if (strcmp(data.mime, "application/octet-stream") == 0 && strcmp(data.filename, "firmware.bin") == 0)
+        if (data.fileInfo().mime == "application/octet-stream" && data.fileInfo().filename == "firmware.bin")
         {
-            if (data.dataIndex == 0) // Fist chunk
+            if (data.fileChunk().index == 0) // Fist chunk
             {
                 ReadyMail.printf("Performing OTA update...\n");
-                otaErr = !Update.begin(data.size);
+                otaErr = !Update.begin(data.fileInfo().fileSize);
 
-                if (data.progressUpdated)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.filename, data.dataIndex + data.dataLength, data.size, data.progress);
+                if (data.fileProgress().available)
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
 
                 if (!otaErr)
-                    otaErr = Update.write((uint8_t *)data.blob, data.dataLength) != data.dataLength;
+                    otaErr = Update.write((uint8_t *)data.fileChunk().data, data.fileChunk().size) != data.fileChunk().size;
             }
-            else if (!data.isComplete)
+            else if (!data.fileChunk().isComplete)
             {
                 if (!otaErr)
-                    otaErr = Update.write((uint8_t *)data.blob, data.dataLength) != data.dataLength;
+                    otaErr = Update.write((uint8_t *)data.fileChunk().data, data.fileChunk().size) != data.fileChunk().size;
 
-                if (data.progressUpdated)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.filename, data.dataIndex + data.dataLength, data.size, data.progress);
+                if (data.fileProgress().available)
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
             }
             else // Last chunk
             {
-                if (data.progressUpdated)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.filename, data.dataIndex + data.dataLength, data.size, data.progress);
+                if (data.fileProgress().available)
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
 
                 if (!otaErr)
                     otaErr = !Update.end(true);
@@ -114,6 +131,8 @@ void setup()
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())

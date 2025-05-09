@@ -20,14 +20,17 @@ namespace ReadyMailIMAP
             this->tls_cb = cb;
             this->res = res;
             beginBase(imap_ctx);
+            res->begin(imap_ctx);
         }
 
         bool connect(const String &host, uint16_t port)
         {
             this->host = host;
             this->port = port;
+
             if (serverConnected())
-                imap_ctx->client->stop();
+                stop(true);
+
             conn_timer.feed(imap_ctx->options.timeout.con / 1000);
             return connectImpl();
         }
@@ -37,11 +40,8 @@ namespace ReadyMailIMAP
             if (!imap_ctx->client || authenticating)
                 return false;
 
-            if (host.length() == 0)
+            if (serverConnected())
                 stop(true);
-
-            if (isConnected())
-                return true;
 
             authenticating = true;
             res->begin(imap_ctx);
