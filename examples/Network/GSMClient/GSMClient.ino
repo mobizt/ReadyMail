@@ -1,7 +1,7 @@
 /**
- * The example to use LilyGO TTGO T-A7670 (ESP32 board with built-in SIMA7670) 
+ * The example to use LilyGO TTGO T-A7670 (ESP32 board with built-in SIMA7670)
  * to connect to SMTP server.
- * 
+ *
  * The TinyGSMClient and ESP_SSLClient libraries are used in this example.
  *
  * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
@@ -51,8 +51,8 @@ SMTPClient smtp(ssl_client);
 
 void smtpCb(SMTPStatus status)
 {
-    if (status.progressUpdated)
-        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+    if (status.progress.available)
+        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }
@@ -132,6 +132,8 @@ void setup()
     ssl_client.setDebugLevel(1);
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
+
+    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
     smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb);
     if (!smtp.isConnected())

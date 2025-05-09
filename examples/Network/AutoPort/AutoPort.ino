@@ -28,8 +28,8 @@ SMTPClient smtp(ssl_client);
 // For more information, see https://bit.ly/44g9Fuc
 void smtpCb(SMTPStatus status)
 {
-  if (status.progressUpdated)
-    ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.filename.c_str(), status.progress);
+  if (status.progress.available)
+    ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress);
   else
     ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }
@@ -46,7 +46,8 @@ void sendEmail(int port)
   bool ssl = (port == 465 || port == 587);
 
   // Anonymous function that handles TLS handshake process.
-  auto startTLSCallback = [](bool &success) { success = ssl_client.connectSSL(); };
+  auto startTLSCallback = [](bool &success)
+  { success = ssl_client.connectSSL(); };
 
   // Set/reset the TLS handshake callback and STARTTLS option.
   // Set when port is 587 otherwise reset.
@@ -54,6 +55,8 @@ void sendEmail(int port)
     smtp.setStartTLS((startTLSCallback), true);
   else
     smtp.setStartTLS(NULL, false);
+
+  // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
   // Everytime you call connect(), the previouse session will stop.
   // If you want to reuse the session, just skipping the connect() and authenticate().
