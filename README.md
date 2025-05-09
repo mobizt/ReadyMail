@@ -643,7 +643,7 @@ The ESP8266's `WiFiClientSecure` requires some IO buffers adjustment. When it wa
 
 If the mail server supports SSL fragmentation, the IO buffers can be set by using `WiFiClientSecure::setBufferSizes(rx-size, tx-size)`. In many cases, setting `WiFiClientSecure::setBufferSizes(1024, 1024)` is enough.
 
-The `ESP8266` device itself should be select the proper Heap that is enough for `WiFiClientSecure`, data and library memory usage.
+The `ESP8266` device itself, its Heap should be selected properly so that is enough for `WiFiClientSecure`, data and library memory usage.
 
 By setting ESP8266 `MMU` options, from Arduino IDE, goto menu `Tools` > `MMU:` > `16KB cache + 48 KB IRAM and 2nd Heap (shared)` (option 3).
 
