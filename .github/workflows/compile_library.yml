@@ -50,16 +50,16 @@ jobs:
 
     - name: Create main file
       run: |
-        echo "#include <Arduino.h>\n" >> src/main.cpp
-        echo "#include <WiFi.h>\n" >> src/main.cpp
-        echo "#include <WiFiClientSecure.h>\n" >> src/main.cpp
-        echo "#include <ReadyMail.h>\n" >> src/main.cpp
-        echo "WiFiClientSecure ssl_client;\n" >> src/main.cpp
-        echo "SMTPClient smtp(ssl_client);\n" >> src/main.cpp
-        echo "void setup() {\n" >> src/main.cpp
-        echo "ssl_client.setInsecure();\n" >> src/main.cpp
-        echo "smtp.connect("", 465, "127.0.0.1", NULL);\n" >> src/main.cpp
-        echo "}\n" >> src/main.cpp
+        echo "#include <Arduino.h>" >> src/main.cpp
+        echo "#include <WiFi.h>" >> src/main.cpp
+        echo "#include <WiFiClientSecure.h>" >> src/main.cpp
+        echo "#include <ReadyMail.h>" >> src/main.cpp
+        echo "WiFiClientSecure ssl_client;" >> src/main.cpp
+        echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
+        echo "void setup() {" >> src/main.cpp
+        echo "ssl_client.setInsecure();" >> src/main.cpp
+        echo "smtp.connect("", 465, "127.0.0.1", NULL);" >> src/main.cpp
+        echo "}" >> src/main.cpp
 
         echo "void loop() {}" >> src/main.cpp
         echo "[env:rpipicow]" >> platformio.ini
