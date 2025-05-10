@@ -164,7 +164,6 @@ jobs:
     - name: Create main file
       run: |
         echo "#include <Arduino.h>" >> src/main.cpp
-        echo "#include <WiFi.h>" >> src/main.cpp
         echo "#include <WiFiNINA.h>" >> src/main.cpp
         echo "#include <WiFiSSLClient.h>" >> src/main.cpp
         echo "#define ENABLE_IMAP" >> src/main.cpp
