@@ -58,9 +58,11 @@ jobs:
         echo "#include <ReadyMail.h>" >> src/main.cpp
         echo "WiFiClientSecure ssl_client;" >> src/main.cpp
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
+        echo "IMAPClient imap(ssl_client);" >> src/main.cpp
         echo "void setup() {" >> src/main.cpp
         echo "ssl_client.setInsecure();" >> src/main.cpp
-        echo "smtp.connect(\"\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
+        echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
+        echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
 
         echo "void loop() {}" >> src/main.cpp
