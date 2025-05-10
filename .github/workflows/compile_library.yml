@@ -18,14 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         board: 
-          - "d1_mini"
-          - "nodemcuv2"
-          - "esp32dev"
-          - "lolin32"
-          - "mkrwifi1010"
-          - "bluepill_f103c8_128k"
-          - "mkr1000USB"
-          - "teensy41"
+          - "rpipicow"
     steps:
     - uses: actions/checkout@v4
     - name: Cache pip
