@@ -9,7 +9,6 @@ on:
     paths-ignore:
       - '.github/workflows/cpp_lint.yml'
       - 'examples/**'
-
 jobs:
   esp32:
     runs-on: ubuntu-latest
