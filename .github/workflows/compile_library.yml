@@ -52,6 +52,9 @@ jobs:
         echo "#include <Arduino.h>" >> src/main.cpp
         echo "#include <ESP8266WiFi.h>" >> src/main.cpp
         echo "#include <WiFiClientSecure.h>" >> src/main.cpp
+        echo "#define ENABLE_IMAP" >> src/main.cpp
+        echo "#define ENABLE_SMTP" >> src/main.cpp
+        echo "#define ENABLE_DEBUG" >> src/main.cpp
         echo "#include <ReadyMail.h>" >> src/main.cpp
         echo "WiFiClientSecure ssl_client;" >> src/main.cpp
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
