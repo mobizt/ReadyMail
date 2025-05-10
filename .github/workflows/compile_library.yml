@@ -367,13 +367,13 @@ jobs:
     - name: Run PlatformIO
       run: pio ci --board=${{ matrix.board }} src
 
-  portenta_c33:
+  portenta_h7_m7:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         board: 
-          - "portenta_c33"
+          - "portenta_h7_m7"
     steps:
     - uses: actions/checkout@v4
     - name: Cache pip
@@ -404,7 +404,7 @@ jobs:
     - name: Create main file
       run: |
         echo "#include <Arduino.h>" >> src/main.cpp
-        echo "#include <WiFiC3.h>" >> src/main.cpp
+        echo "#include <WiFi.h>" >> src/main.cpp
         echo "#include <WiFiSSLClient.h>" >> src/main.cpp
         echo "#define ENABLE_IMAP" >> src/main.cpp
         echo "#define ENABLE_SMTP" >> src/main.cpp
