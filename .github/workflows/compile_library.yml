@@ -160,6 +160,9 @@ jobs:
         pio lib -g install \
         https://github.com/mobizt/ReadyMail
 
+        pio lib -g install \
+        https://github.com/arduino-libraries/WiFiNINA
+
 
     - name: Create main file
       run: |
@@ -178,8 +181,8 @@ jobs:
         echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
-
         echo "void loop() {}" >> src/main.cpp
+        
 
     - name: Run PlatformIO
       run: pio ci --board=${{ matrix.board }} src
@@ -208,6 +211,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
 
+    - name: Install library
+      run: | 
+        pio lib -g install \
+        https://github.com/mobizt/ReadyMail
+
     - name: Create main file
       run: |
         echo "#include <Arduino.h>" >> src/main.cpp
@@ -225,7 +233,7 @@ jobs:
         echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
-        
+
         echo "[env:rpipicow]" >> platformio.ini
         echo "platform = https://github.com/maxgerhardt/platform-raspberrypi.git" >> platformio.ini
         echo "board = rpipicow" >> platformio.ini
