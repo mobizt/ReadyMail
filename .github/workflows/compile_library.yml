@@ -52,7 +52,7 @@ jobs:
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
         echo "void setup() {" >> src/main.cpp
         echo "ssl_client.setInsecure();" >> src/main.cpp
-        echo "smtp.connect("", 465, "127.0.0.1", NULL);" >> src/main.cpp
+        echo "smtp.connect(\"\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
 
         echo "void loop() {}" >> src/main.cpp
