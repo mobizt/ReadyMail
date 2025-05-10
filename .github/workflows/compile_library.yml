@@ -18,7 +18,6 @@ jobs:
       matrix:
         board: 
           - "esp32dev"
-          - "lolin32"
     steps:
     - uses: actions/checkout@v4
     - name: Cache pip
@@ -76,7 +75,6 @@ jobs:
       matrix:
         board: 
           - "d1_mini"
-          - "nodemcuv2"
     steps:
     - uses: actions/checkout@v4
     - name: Cache pip
@@ -177,6 +175,71 @@ jobs:
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
         echo "IMAPClient imap(ssl_client);" >> src/main.cpp
         echo "void setup() {" >> src/main.cpp
+        echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
+        echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
+        echo "}" >> src/main.cpp
+        echo "void loop() {}" >> src/main.cpp
+        
+
+    - name: Run PlatformIO
+      run: pio ci --board=${{ matrix.board }} src
+
+  genericSTM32F103RC:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: 
+          - "genericSTM32F103RC"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v4
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v4
+
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+
+    - name: Install library
+      run: | 
+        pio lib -g install \
+        https://github.com/mobizt/ReadyMail
+
+        pio lib -g install \
+        https://github.com/arduino-libraries/Ethernet
+
+        pio lib -g install \
+        https://github.com/mobizt/ESP_SSLClient
+
+
+    - name: Create main file
+      run: |
+        echo "#include <Arduino.h>" >> src/main.cpp
+        echo "#include <Ethernet.h>" >> src/main.cpp
+        echo "#include <ESP_SSLClient.h>" >> src/main.cpp
+        echo "#define ENABLE_IMAP" >> src/main.cpp
+        echo "#define ENABLE_SMTP" >> src/main.cpp
+        echo "#define ENABLE_DEBUG" >> src/main.cpp
+        echo "#include <ReadyMail.h>" >> src/main.cpp
+        echo "EThernetClient basic_client;" >> src/main.cpp
+        echo "ESP_SSLClient ssl_client;" >> src/main.cpp
+        echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
+        echo "IMAPClient imap(ssl_client);" >> src/main.cpp
+        echo "void setup() {" >> src/main.cpp
+        echo "ssl_client.setClient(&basic_client);" >> src/main.cpp
+        echo "ssl_client.setInsecure();" >> src/main.cpp
         echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
