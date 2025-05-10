@@ -10,7 +10,8 @@ on:
       - '.github/workflows/cpp_lint.yml'
       - 'examples/**'
 jobs:
-  esp32:
+  build:
+
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
