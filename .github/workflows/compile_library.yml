@@ -177,7 +177,6 @@ jobs:
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
         echo "IMAPClient imap(ssl_client);" >> src/main.cpp
         echo "void setup() {" >> src/main.cpp
-        echo "ssl_client.setInsecure();" >> src/main.cpp
         echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
@@ -233,6 +232,7 @@ jobs:
         echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
+        echo "void loop() {}" >> src/main.cpp
 
         echo "[env:rpipicow]" >> platformio.ini
         echo "platform = https://github.com/maxgerhardt/platform-raspberrypi.git" >> platformio.ini
