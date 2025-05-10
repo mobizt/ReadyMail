@@ -184,13 +184,14 @@ jobs:
     - name: Run PlatformIO
       run: pio ci --board=${{ matrix.board }} src
 
-  genericSTM32F103RC:
+  teensy_stm32:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         board: 
           - "genericSTM32F103RC"
+          - "teensy41"
     steps:
     - uses: actions/checkout@v4
     - name: Cache pip
@@ -233,7 +234,7 @@ jobs:
         echo "#define ENABLE_SMTP" >> src/main.cpp
         echo "#define ENABLE_DEBUG" >> src/main.cpp
         echo "#include <ReadyMail.h>" >> src/main.cpp
-        echo "EThernetClient basic_client;" >> src/main.cpp
+        echo "EthernetClient basic_client;" >> src/main.cpp
         echo "ESP_SSLClient ssl_client;" >> src/main.cpp
         echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
         echo "IMAPClient imap(ssl_client);" >> src/main.cpp
