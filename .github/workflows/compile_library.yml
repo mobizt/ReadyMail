@@ -41,6 +41,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
 
+    - name: Install library
+      run: | 
+        pio lib -g install \
+        https://github.com/mobizt/ReadyMail
+
 
     - name: Create main file
       run: |
