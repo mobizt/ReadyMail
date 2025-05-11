@@ -82,7 +82,6 @@ namespace ReadyMailSMTP
          */
         SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
-            smtp_ctx.auto_client = nullptr;
             smtp_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
             smtp_ctx.client = &client;

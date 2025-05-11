@@ -38,7 +38,6 @@ namespace ReadyMailIMAP
          */
         IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
-            imap_ctx.auto_client = nullptr;
             imap_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
             imap_ctx.client = &client;
