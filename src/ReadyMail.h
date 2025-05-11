@@ -11,8 +11,8 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.2.0"
-#define READYMAIL_TIMESTAMP 1746804200
+#define READYMAIL_VERSION "0.2.1"
+#define READYMAIL_TIMESTAMP 1746959712
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)
@@ -187,6 +187,37 @@ enum readymail_file_operating_mode
     readymail_file_mode_open_append,
     readymail_file_mode_remove
 };
+
+#if defined(READYCLIENT_SSL_CLIENT) && (defined(ENABLE_IMAP) || defined(ENABLE_SMTP))
+
+#if __has_include(<EPS_SSLClient.h>) && !defined(READYCLIENT_TYPE_1)
+#include <EPS_SSLClient.h>
+#define READYCLIENT_TYPE_1
+#endif
+
+#if __has_include(<WiFiClientSecure.h>) && !defined(READYCLIENT_TYPE_2)
+#include <WiFiClientSecure.h>
+#define READYCLIENT_TYPE_2
+#endif
+
+#if defined(READYCLIENT_TYPE_1) || defined(READYCLIENT_TYPE_2)
+#define ENABLE_READYCLIENT
+#endif
+
+enum readymail_protocol
+{
+    readymail_protocol_plain_text,
+    readymail_protocol_ssl,
+    readymail_protocol_tls
+};
+
+struct readymail_port_function
+{
+    uint16_t port;
+    readymail_protocol protocol;
+};
+#include "./core/ReadyClient.h"
+#endif
 
 namespace ReadyMailCallbackNS
 {

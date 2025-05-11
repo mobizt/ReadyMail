@@ -38,6 +38,8 @@ namespace ReadyMailIMAP
          */
         IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
+            imap_ctx.auto_client = nullptr;
+            imap_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
             imap_ctx.client = &client;
             imap_ctx.server_status = &server_status;
@@ -47,6 +49,27 @@ namespace ReadyMailIMAP
             conn.begin(&imap_ctx, tlsCallback, &res);
             sender.begin(&imap_ctx, &res, &conn);
         }
+
+#if defined(READYCLIENT_SSL_CLIENT)
+        /** SMTPClient class constructor.
+         *
+         * @param client The ReadyClient class object.
+         *
+         */
+        IMAPClient(ReadyClient &client)
+        {
+            server_status.start_tls = false;
+            imap_ctx.auto_client = &client;
+            imap_ctx.options.use_auto_client = true;
+            imap_ctx.client = &client.getClient();
+            imap_ctx.server_status = &server_status;
+            imap_ctx.status = &resp_status;
+            imap_ctx.mailboxes = &mailboxes;
+            imap_ctx.auth_mode = true;
+            conn.begin(&imap_ctx, NULL, &res);
+            sender.begin(&imap_ctx, &res, &conn);
+        }
+#endif
 
         /** IMAPClient class deconstructor.
          */

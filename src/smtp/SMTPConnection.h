@@ -170,7 +170,7 @@ namespace ReadyMailSMTP
                     res->auth_caps[smtp_auth_cap_login] = true;
                     cState() = smtp_state_prompt;
                     // start TLS when needed, rfc3207
-                    if (smtp_ctx->options.ssl_mode && (res->auth_caps[smtp_auth_cap_starttls] || smtp_ctx->server_status->start_tls) && tls_cb && !smtp_ctx->server_status->secured)
+                    if (smtp_ctx->options.ssl_mode && res->auth_caps[smtp_auth_cap_starttls] && smtp_ctx->server_status->start_tls && (tls_cb || smtp_ctx->options.use_auto_client) && !smtp_ctx->server_status->secured)
                         startTLS();
                     else
                     {
@@ -249,10 +249,19 @@ namespace ReadyMailSMTP
         }
         void tlsHandshake()
         {
-            if (tls_cb && !smtp_ctx->server_status->secured)
+            if ((tls_cb || smtp_ctx->options.use_auto_client) && !smtp_ctx->server_status->secured)
             {
                 setDebugState(smtp_state_start_tls, "Performing TLS handshake...");
-                tls_cb(smtp_ctx->server_status->secured);
+#if defined(ENABLE_READYCLIENT)
+                if (smtp_ctx->auto_client && smtp_ctx->options.use_auto_client)
+                    smtp_ctx->server_status->secured = smtp_ctx->auto_client->connectSSL();
+                else if (tls_cb)
+                    tls_cb(smtp_ctx->server_status->secured);
+#else
+                if (tls_cb)
+                    tls_cb(smtp_ctx->server_status->secured);
+#endif
+
                 if (smtp_ctx->server_status->secured)
                 {
                     cState() = smtp_state_start_tls_ack;

@@ -444,7 +444,9 @@ The network client works only with plain text connection. Some SSL clients suppo
 
 Back to our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
 
-Anyway, this library supports port changing at run time, see [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) for how to.
+Anyway, this library supports port changing at run time, see [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) and [AutoClient.ino](/examples/Network/AutoClient/AutoClient.ino) for how to.
+
+The `ReadyClient` used in [AutoClient.ino](/examples/Network/AutoClient/AutoClient.ino) example is the SSL client wrapper class that allows user to assign the predefined ports and protocols which is easier than the method that is used in [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) example. 
 
 ### Plain Text Connection
 

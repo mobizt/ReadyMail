@@ -14,7 +14,10 @@ namespace ReadyMailIMAP
 
     class IMAPConnection : public IMAPBase
     {
-    public:
+        friend class IMAPClient;
+        friend class IMAPSend;
+
+    private:
         void begin(imap_context *imap_ctx, TLSHandshakeCallback cb, IMAPResponse *res)
         {
             this->tls_cb = cb;
@@ -215,9 +218,7 @@ namespace ReadyMailIMAP
                     exitState(ret, imap_ctx->options.processing);
                 else if (ret == function_return_success)
                 {
-                    if (imap_ctx->ssl_mode && (imap_ctx->auth_caps[imap_auth_cap_starttls] || imap_ctx->server_status->start_tls) && tls_cb && !imap_ctx->server_status->secured)
-                        startTLS();
-                    else if (imap_ctx->ssl_mode && (imap_ctx->server_status->start_tls) && tls_cb && !imap_ctx->server_status->secured)
+                    if (imap_ctx->ssl_mode && imap_ctx->auth_caps[imap_auth_cap_starttls] && imap_ctx->server_status->start_tls && (tls_cb || imap_ctx->options.use_auto_client) && !imap_ctx->server_status->secured)
                         startTLS();
                     else
                     {
@@ -299,10 +300,19 @@ namespace ReadyMailIMAP
 
         void tlsHandshake()
         {
-            if (tls_cb && !imap_ctx->server_status->secured)
+            if ((tls_cb || imap_ctx->options.use_auto_client) && !imap_ctx->server_status->secured)
             {
                 setDebugState(imap_state_start_tls, "Performing TLS handshake...");
-                tls_cb(imap_ctx->server_status->secured);
+#if defined(ENABLE_READYCLIENT)
+                if (imap_ctx->auto_client && imap_ctx->options.use_auto_client)
+                    imap_ctx->server_status->secured = imap_ctx->auto_client->connectSSL();
+                else if (tls_cb)
+                    tls_cb(imap_ctx->server_status->secured);
+#else
+                if (tls_cb)
+                    tls_cb(imap_ctx->server_status->secured);
+#endif
+
                 if (imap_ctx->server_status->secured)
                 {
                     setState(imap_state_start_tls_ack);

@@ -491,7 +491,7 @@ namespace ReadyMailSMTP
     {
         smtp_timeout timeout;
         String notify;
-        bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false;
+        bool last_append = false, ssl_mode = false, processing = false, accumulate = false, imap_mode = false, use_auto_client = false;
         int level = 0, data_len = 0;
     };
 
@@ -505,6 +505,9 @@ namespace ReadyMailSMTP
     struct smtp_context
     {
         Client *client = nullptr;
+#if defined(ENABLE_READYCLIENT)
+        ReadyClient *auto_client = nullptr;
+#endif
         SMTPResponseCallback resp_cb = NULL;
         smtp_cmd_ctx cmd_ctx;
         SMTPStatus *status = nullptr;

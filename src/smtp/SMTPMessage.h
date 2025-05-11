@@ -132,7 +132,7 @@ namespace ReadyMailSMTP
       if (type == rfc822_max_type || type == rfc822_custom || (findHeaders(type) > -1 && !rfc822_headers[type].multi))
         return *this;
 
-      // email sub type
+      // Email sub type
       if (rfc822_headers[type].sub_type > -1)
       {
         int p1 = value.indexOf("<");

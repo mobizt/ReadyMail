@@ -82,6 +82,8 @@ namespace ReadyMailSMTP
          */
         SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
+            smtp_ctx.auto_client = nullptr;
+            smtp_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
             smtp_ctx.client = &client;
             smtp_ctx.server_status = &server_status;
@@ -89,6 +91,25 @@ namespace ReadyMailSMTP
             conn.begin(&smtp_ctx, tlsCallback, &res);
             sender.begin(&smtp_ctx, &res, &conn);
         }
+
+#if defined(READYCLIENT_SSL_CLIENT)
+        /** SMTPClient class constructor.
+         *
+         * @param client The ReadyClient class object.
+         *
+         */
+        SMTPClient(ReadyClient &client)
+        {
+            server_status.start_tls = false;
+            smtp_ctx.auto_client = &client;
+            smtp_ctx.options.use_auto_client = true;
+            smtp_ctx.client = &client.getClient();
+            smtp_ctx.server_status = &server_status;
+            smtp_ctx.status = &resp_status;
+            conn.begin(&smtp_ctx, NULL, &res);
+            sender.begin(&smtp_ctx, &res, &conn);
+        }
+#endif
 
         /** SMTPClient class deconstructor.
          */
@@ -108,6 +129,10 @@ namespace ReadyMailSMTP
          */
         bool connect(const String &host, uint16_t port, const String &domain, SMTPResponseCallback responseCallback = NULL, bool ssl = true, bool await = true)
         {
+#if defined(ENABLE_READYCLIENT)
+            if (smtp_ctx.auto_client)
+                smtp_ctx.auto_client->configPort(port, ssl, smtp_ctx.server_status->start_tls);
+#endif
             smtp_ctx.resp_cb = responseCallback;
             bool ret = conn.connect(host, port, domain, ssl);
             if (ret && await)
@@ -278,7 +303,6 @@ namespace ReadyMailSMTP
         // Private used by other classes.
         uint32_t contextAddr() { return reinterpret_cast<uint32_t>(&smtp_ctx); }
     };
-
 }
 #endif
 #endif

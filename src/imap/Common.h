@@ -321,6 +321,7 @@ namespace ReadyMailIMAP
         int32_t modsequence = -1;
         uint32_t part_size_limit = 1024 * 1024;
         bool uid_search = false, uid_fetch = false, searching = false, processing = false, idling = false, multiline = false, await = false;
+        bool use_auto_client = false;
     };
 
     // body part field item
@@ -541,6 +542,9 @@ namespace ReadyMailIMAP
         File file;
 #endif
         Client *client = nullptr;
+#if defined(ENABLE_READYCLIENT)
+        ReadyClient *auto_client = nullptr;
+#endif
         String tag = "ReadyMail", cmd, current_mailbox;
         uint32_t ts = 0;
         int cur_msg_index = 0;
