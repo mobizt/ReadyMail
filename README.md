@@ -659,7 +659,7 @@ Please note that library itself does not make your device to crash, the memory l
 
 Since ESP32 v3.0.0 RC1, the network protocols upgrade feature is added to the new `NetworkClientSecure` aka `WiFiClientSecure` class.
 
-There is some code flaws in [this PR](https://github.com/espressif/arduino-esp32/pull/9100) that introduces the protocols upgrade integration.
+There is some code flaws in [this PR](https://github.com/espressif/arduino-esp32/pull/9100) that introduces the protocols upgrade integration and merged in Commit [48072ee](https://github.com/espressif/arduino-esp32/commit/48072ee09802739cf4883c044e65bd1a77823038).
 
 The issue is when stooping the `NetworkClienSecure` since it was connected, if the `NetworkClienSecure::setPlainStart()` was called, the `NetworkClienSecure::connected()` will get stuck for 30 seconds.
 
