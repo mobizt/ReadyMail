@@ -657,7 +657,7 @@ Please note that library itself does not make your device to crash, the memory l
 
 ## ESP32 Issues
 
-Since ESP32 v3.0.0 RC1, the network protocols upgrade feature is added to the new NetworkClientSecure aka WiFiClientSecure class.
+Since ESP32 v3.0.0 RC1, the network protocols upgrade feature is added to the new `NetworkClientSecure` aka `WiFiClientSecure` class.
 
 There is some code flaws in [this PR](https://github.com/espressif/arduino-esp32/pull/9100) that introduces the protocols upgrade integration.
 
