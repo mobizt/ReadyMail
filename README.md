@@ -659,7 +659,7 @@ This issue has occurred only in user code in ESP32 v3.x when using `NetworkClien
 
 Since ESP32 v3.0.0 RC1, the network protocols upgrade feature is added to the new `NetworkClientSecure` aka `WiFiClientSecure` class.
 
-The issue that is from the Commit [48072ee](https://github.com/espressif/arduino-esp32/commit/48072ee09802739cf4883c044e65bd1a77823038), when the `NetworkClienSecure` has stopped, if the `NetworkClienSecure::setPlainStart()` was called, the `NetworkClienSecure::connected()` will get stuck for 30 seconds.
+The issue that is from the commit [48072ee](https://github.com/espressif/arduino-esp32/commit/48072ee09802739cf4883c044e65bd1a77823038), when the `NetworkClienSecure` has stopped, if the `NetworkClienSecure::setPlainStart()` was called, the `NetworkClienSecure::connected()` will get stuck for 30 seconds.
 
 Independent of networks, library uses `Client::connected()` to check the server status.
 
