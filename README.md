@@ -655,17 +655,15 @@ Please note that library itself does not make your device to crash, the memory l
 
 ## ESP32 Issues
 
+This issue has occurred only in user code in ESP32 v3.x when using `NetworkClientSecure` in plain text mode.
+
 Since ESP32 v3.0.0 RC1, the network protocols upgrade feature is added to the new `NetworkClientSecure` aka `WiFiClientSecure` class.
 
-There is some code flaws in [this PR](https://github.com/espressif/arduino-esp32/pull/9100) that introduces the protocols upgrade integration and merged in Commit [48072ee](https://github.com/espressif/arduino-esp32/commit/48072ee09802739cf4883c044e65bd1a77823038).
+The issue that is from the in Commit [48072ee](https://github.com/espressif/arduino-esp32/commit/48072ee09802739cf4883c044e65bd1a77823038) the `NetworkClienSecure` has stopped, if the `NetworkClienSecure::setPlainStart()` was called, the `NetworkClienSecure::connected()` will get stuck for 30 seconds.
 
-The issue is when stooping the `NetworkClienSecure` since it was connected, if the `NetworkClienSecure::setPlainStart()` was called, the `NetworkClienSecure::connected()` will get stuck for 30 seconds.
+Independent of networks, library uses `Client::connected()` to check the server status.
 
-The issue is from the code that is trying to call [lwIP::select()](https://github.com/espressif/arduino-esp32/blob/15e71a6afd21f9723a0777fa2f38d4c647279933/libraries/NetworkClientSecure/src/ssl_client.cpp#L455) function without the write's `fdset` even if that select is used for lwIP socket reading purpose. It will get stuck until the timeout is occurred.
-
-The work around to fix this issue can be done by adding the write's `fdset` to the `lwIP::select()` parameter.
-
-The `ReadyMail` has nothing to do with the ESP32 `NetworkClienSecure` unless avoiding to call `Client::connected()` in the code when compiling for ESP32. The server connection status is obtained from the returning status of `Client::connect()` and reset when calling `Client::stop()`.
+The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15e71a6afd21f9723a0777fa2f38d4c647279933/libraries/NetworkClientSecure/src/ssl_client.cpp#L455) where the write's `fdset` does not assign to the `lwIP::select()`. The result is it will get stuck at this line until the timeout is occurred.
 
 # License #
 
