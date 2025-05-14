@@ -2,6 +2,9 @@
 #define READYMAIL_H
 
 #include <Arduino.h>
+#if defined(ENABLE_FS)
+#include <FS.h>
+#endif
 #include <array>
 #include <vector>
 #include <algorithm>
@@ -11,8 +14,8 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.2.1"
-#define READYMAIL_TIMESTAMP 1746959712
+#define READYMAIL_VERSION "0.2.2"
+#define READYMAIL_TIMESTAMP 1747236916
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)
@@ -37,10 +40,6 @@
 
 #endif
 
-#if defined(ENABLE_FS)
-#include <FS.h>
-#endif
-
 #if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
 #define READYMAIL_STRSEP strsepImpl
 #define READYMAIL_USE_STRSEP_IMPL
@@ -48,8 +47,7 @@
 #define READYMAIL_STRSEP strsep
 #endif
 
-#define FLOWED_TEXT_LEN 78
-#define BASE64_CHUNKED_LEN 76
+#define MAX_LINE_LEN 76
 
 #define TCP_CLIENT_ERROR_CONNECTION -1
 #define TCP_CLIENT_ERROR_NOT_CONNECTED -2

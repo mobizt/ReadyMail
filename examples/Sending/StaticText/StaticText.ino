@@ -1,5 +1,5 @@
 /**
- * The example to send message with attachment.
+ * The example to send simple text message from file of flash.
  * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
  */
 #include <Arduino.h>
@@ -33,8 +33,8 @@ File myFile;
 #endif
 #define MY_FS SPIFFS
 
-const char *orangeImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAEASURBVHhe7dEhAQAgEMBA2hCT6I+nABMnzsxuzdlDx3oDfxkSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0iMITGGxBgSY0jMBYxyLEpP9PqyAAAAAElFTkSuQmCCjhSDb5FKG9Q4";
-const char *blueImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAEASURBVHhe7dEhAQAgAMAwmmEJTyfwFOBiYub2Y6596Bhv4C9DYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJMSTGkBhDYgyJuZ7+qGdQMlUbAAAAAElFTkSuQmCC";
+const char *static_text1 = "A rabies-like disease spreads across the planet, transforming people into aggressive creatures. Manel takes refuge at home with his cat, using his wits to survive. Soon, they’ll have to leave for food, looking for safe places on land and sea. Apocalypse Z: The Beginning of the End is a story of survival, both physical and emotional, with action, tension, a rabid infection... and a grumpy cat.";
+const char *static_text2 = "Speak No Evil is a 2024 American psychological horror thriller film written and directed by James Watkins. A remake of the 2022 Danish-Dutch film of the same name, the film stars James McAvoy, Mackenzie Davis, Aisling Franciosi, Alix West Lefler, Dan Hough, and Scoot McNairy. Its plot follows an American family who are invited to stay at a remote farmhouse of a British couple for the weekend, and the hosts soon test the limits of their guests as the situation escalates. Jason Blum serves as a producer through his Blumhouse Productions banner. Speak No Evil premiered at the DGA Theater in New York City on September 9, 2024 and was released in the United States by Universal Pictures on September 13, 2024. The film received generally positive reviews from critics and grossed $77 million worldwide with a budget of $15 million.";
 
 void fileCb(File &file, const char *filename, readymail_file_operating_mode mode)
 {
@@ -61,16 +61,12 @@ void fileCb(File &file, const char *filename, readymail_file_operating_mode mode
     file = myFile;
 }
 
-void createAttachment()
+void createTextFile()
 {
     MY_FS.begin(true);
 
-    File file = MY_FS.open("/orange.png", FILE_WRITE);
-    file.print(orangeImg);
-    file.close();
-
-    file = MY_FS.open("/blue.png", FILE_WRITE);
-    file.print(blueImg);
+    File file = MY_FS.open("/static.txt", FILE_WRITE);
+    file.print(static_text2);
     file.close();
 }
 #endif
@@ -82,22 +78,6 @@ void smtpCb(SMTPStatus status)
         ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress.value);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
-}
-
-void addFileAttachment(SMTPMessage &msg, const String &filename, const String &mime, const String &name, FileCallback cb, const String &filepath, const String &encoding = "", const String &cid = "")
-{
-    Attachment attachment;
-    attachment.filename = filename;
-    attachment.mime = mime;
-    attachment.name = name;
-    // The inline content disposition.
-    // Should be matched the image src's cid in html body
-    attachment.content_id = cid;
-    attachment.attach_file.callback = cb;
-    attachment.attach_file.path = filepath;
-    // Specify only when content is already encoded.
-    attachment.content_encoding = encoding;
-    msg.attachments.add(attachment, cid.length() > 0 ? attach_type_inline : attach_type_attachment);
 }
 
 void setup()
@@ -117,9 +97,11 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    createAttachment();
-
     ssl_client.setInsecure();
+
+#if defined(ENABLE_FS)
+    createTextFile();
+#endif
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
@@ -134,21 +116,29 @@ void setup()
         return;
 
     SMTPMessage msg;
-    msg.headers.add(rfc822_subject, "ReadyMail Hello message with attachment");
+    msg.headers.add(rfc822_subject, "ReadyMail test static message");
+
+    // Using 'name <email>' or <email> or 'email' for the from, sender and recipients.
+    // The 'name' section of cc and bcc is ignored.
+
+    // Multiple recipents can be added but only the first one of sender and from can be added.
     msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
 
-    String bodyText = "Hello everyone.";
-    msg.text.body(bodyText);
-    msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "</div></body></html>");
+    // Text wrapping
+    msg.text.textFlow(true);
+
+    // Set the static body content from flle
+    msg.text.body("/static.txt", fileCb);
+
+    // Set the static body content from blob
+    // msg.text.body(static_text1, strlen(static_text1));
 
     // Set message timestamp (change this with current time)
     // See https://bit.ly/4jy8oU1
     msg.timestamp = 1746013620;
 
-    addFileAttachment(msg, "orange.png", "image/png", "orange.png", fileCb, "/orange.png", "base64");
-    addFileAttachment(msg, "blue.png", "image/png", "blue.png", fileCb, "/blue.png", "base64");
     smtp.send(msg);
 }
 

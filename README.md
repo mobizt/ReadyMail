@@ -42,7 +42,9 @@ The following example code is for ESP32 using it's ESP32 core `WiFi.h` and `WiFi
 
 The `ENABLE_SMTP` macro is required for using `SMTPClient` and `SMTPMessage` classes. The `ENABLE_DEBUG` macro is for allowing the processing information debugging.
 
-You may wonder that when you change the SMTP port to something like 25 or 587, the error `Connection timed out` is occurred even the network connection and internet are ok. For the reason, plese see [Ports and Clients Selection](#ports-and-clients-selection) section.
+Sending the large html or text message is availble, see the [StaticText.ino](/examples/Sending/StaticText/StaticText.ino) example.
+
+For the error `Connection timed out`, plese see [Ports and Clients Selection](#ports-and-clients-selection) section for details.
 
 ```cpp
 #include <Arduino.h>
@@ -664,6 +666,8 @@ The issue that is from the commit [48072ee](https://github.com/espressif/arduino
 Independent of networks, library uses `Client::connected()` to check the server status.
 
 The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15e71a6afd21f9723a0777fa2f38d4c647279933/libraries/NetworkClientSecure/src/ssl_client.cpp#L455) where the write's `fdset` does not assign to the `lwIP::select()`. The result is it will get stuck at this line until the timeout is occurred.
+
+[Update on 5/14/2025] This [PR](https://github.com/espressif/arduino-esp32/pull/11356) may fix this issue and the work around can be removed in the next library updates. 
 
 # License #
 

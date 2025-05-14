@@ -258,6 +258,13 @@ namespace ReadyMailSMTP
         xenc_binary
     };
 
+    enum smtp_msg_body_data_sources
+    {
+        smtp_msg_body_data_string,
+        smtp_msg_body_data_static,
+        smtp_msg_body_data_file
+    };
+
     struct smtp_attach_file_config
     {
         String path;
@@ -350,8 +357,29 @@ namespace ReadyMailSMTP
         smtp_message_body_t &body(const String &body)
         {
             content = body;
+            data_source = smtp_msg_body_data_string;
             return *this;
         }
+
+        /* Set the static body */
+        smtp_message_body_t &body(const char *body, size_t size)
+        {
+            static_content = body;
+            static_size = size;
+            data_source = smtp_msg_body_data_static;
+            return *this;
+        }
+
+#if defined(ENABLE_FS)
+        /* Set the body from file */
+        smtp_message_body_t &body(const String &filename, FileCallback callback)
+        {
+            this->filename = filename.startsWith("/") ? filename : "/" + filename;
+            this->cb = callback;
+            data_source = smtp_msg_body_data_file;
+            return *this;
+        }
+#endif
 
         /* Set the character set */
         smtp_message_body_t &charset(const String &charset)
@@ -403,11 +431,20 @@ namespace ReadyMailSMTP
 
     private:
         String cid;
-        int data_index = 0, data_size = 0;
-        String enc_text;
+        int data_index = 0, data_size = 0, mode = -1;
+        float progress = 0, last_progress = 0;
+        uint32_t static_size = 0;
+        smtp_msg_body_data_sources data_source;
         smtp_content_xenc xenc = xenc_none;
         String content, charSet = "UTF-8", content_type = "text/html", transfer_encoding = "7bit";
+        const char *static_content = nullptr;
         bool flowed = false;
+        String softbreak_buf;
+#if defined(ENABLE_FS)
+        String filename;
+        FileCallback cb = NULL;
+#endif
+        std::vector<int> softbreak_index;
         embed_message_body_t embed;
     };
 

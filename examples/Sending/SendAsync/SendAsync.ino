@@ -36,7 +36,7 @@ unsigned long ms = 0;
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
-        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress);
+        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress.value);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }
