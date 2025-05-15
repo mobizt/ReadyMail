@@ -51,7 +51,9 @@ namespace ReadyMailSMTP
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
+#if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_header_sender, "Sending E-mail...");
+#endif
 
                 smtp_ctx->options.notify = notify;
 
@@ -92,8 +94,10 @@ namespace ReadyMailSMTP
 
         bool sendCmd(const String &cmd)
         {
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_send_command, "Sending command...");
             setDebugState(smtp_state_send_command, cmd);
+#endif
             smtp_ctx->cmd_ctx.resp.text.remove(0, smtp_ctx->cmd_ctx.resp.text.length());
             smtp_ctx->cmd_ctx.cmd = cmd;
             setState(smtp_state_send_command, smtp_server_status_code_220);
@@ -102,8 +106,10 @@ namespace ReadyMailSMTP
 
         bool sendData(const String &data)
         {
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_send_data, "Sending data...");
             setDebugState(smtp_state_send_data, data);
+#endif
             setState(smtp_state_send_data, smtp_server_status_code_0);
             return sendBuffer(data);
         }
@@ -139,8 +145,9 @@ namespace ReadyMailSMTP
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
+#if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_header_sender, "Sending envelope...");
-
+#endif
                 String sender;
                 for (size_t i = 0; i < msg.headers.size(); i++)
                 {
@@ -241,8 +248,9 @@ namespace ReadyMailSMTP
             switch (msg.send_state)
             {
             case smtp_send_state_body_data:
-
+#if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_header_recipient, "Sending headers...");
+#endif
                 if (!sendBuffer(msg.header))
                     return false;
 
@@ -510,7 +518,9 @@ namespace ReadyMailSMTP
 
             if ((html && msg.html.data_size == 0) || (!html && msg.text.data_size == 0))
             {
+#if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_body, "Sending text/" + String((html ? "html" : "plain")) + " body...");
+#endif
                 String buf, ct_prop;
                 bool embed = (html && msg.html.embed.enable) || (!html && msg.text.embed.enable);
                 bool embed_inline = embed && ((html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline));
@@ -674,9 +684,10 @@ namespace ReadyMailSMTP
                         default:
                             break;
                         }
-
+#if defined(ENABLE_DEBUG)
                         if (str.length())
                             setDebugState(smtp_state_send_body, str);
+#endif
 
                         updateUploadStatus(cAttach(msg));
 
@@ -854,7 +865,9 @@ namespace ReadyMailSMTP
                     case smtp_state_connect_command:
                     case smtp_state_send_command:
                     case smtp_state_send_data:
+#if defined(ENABLE_DEBUG)
                         setDebug((cState() == smtp_state_connect_command ? "The server is connected successfully\n" : (cState() == smtp_state_send_command ? "The command is sent successfully\n" : "The data is sent successfully\n")));
+#endif
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
                         smtp_ctx->options.processing = false;
@@ -893,7 +906,9 @@ namespace ReadyMailSMTP
                         cCode() = function_return_exit;
                         smtp_ctx->options.processing = false;
                         smtp_ctx->status->isComplete = true;
+#if defined(ENABLE_DEBUG)
                         setDebug("The E-mail is sent successfully\n");
+#endif
                         break;
 
                     case smtp_state_terminated:
@@ -1003,6 +1018,7 @@ namespace ReadyMailSMTP
                     msg.rfc822[i].parent = &msg;
             }
         }
+        
         void setSendState(SMTPMessage &msg, smtp_send_state state) { msg.send_state = state; }
 
         bool initSendState(SMTPMessage &msg)
@@ -1070,7 +1086,9 @@ namespace ReadyMailSMTP
 
         bool sendMultipartHeaderImpl(const String &boundary, const String &mime, const String &parent_boundary)
         {
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_send_body, "Sending multipart content (" + mime + ")...");
+#endif
             String buf;
             buf.reserve(128);
             if (parent_boundary.length())

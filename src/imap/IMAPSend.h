@@ -61,34 +61,44 @@ namespace ReadyMailIMAP
             switch (cState())
             {
             case imap_state_send_command:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The command is sent successfully\n");
+#endif
                 exitState(cCode(), imap_ctx->options.processing);
                 break;
 
             case imap_state_logout:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The client is loged out successfully\n");
+#endif
                 deAuthenticate();
                 exitState(cCode(), imap_ctx->options.processing);
                 break;
 
             case imap_state_list:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The mailboxes are listed successfully\n");
+#endif
                 exitState(cCode(), imap_ctx->options.processing);
                 imap_ctx->options.mailboxes_updated = false;
                 break;
 
             case imap_state_examine:
             case imap_state_select:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The \"" + imap_ctx->current_mailbox + "\" is selected successfully\n");
+#endif
                 exitState(cCode(), imap_ctx->options.processing);
                 break;
 
             case imap_state_search:
+#if defined(ENABLE_DEBUG)
                 if (imap_ctx->cb_data.msgNums.size())
                     rd_print_to(buf, 100, "The \"%s\" is searched successfully, found %d messages\n", imap_ctx->current_mailbox.c_str(), imap_ctx->cb_data.msgFound);
                 else
                     rd_print_to(buf, 100, "The \"%s\" is searched successfully, no messages found\n", imap_ctx->current_mailbox.c_str());
                 setDebug(imap_ctx, buf);
+#endif
                 messagesVec().clear();
                 cMsgIndex() = 0;
                 if (imap_ctx->cb.data)
@@ -107,7 +117,9 @@ namespace ReadyMailIMAP
                 break;
 
             case imap_state_fetch_envelope:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The message " + getFetchString() + " envelope is fetched successfully\n");
+#endif
                 if (imap_ctx->options.searching)
                     fetchSearchEnvelope();
                 else
@@ -117,8 +129,9 @@ namespace ReadyMailIMAP
                         sendFetch(imap_fetch_body_part);
                     else
                     {
+#if defined(ENABLE_DEBUG)
                         setDebug(imap_ctx, "The message " + getFetchString() + " is fetched successfully\n");
-
+#endif
                         if (!imap_ctx->options.searching)
                         {
                             exitState(cCode(), imap_ctx->options.processing);
@@ -132,17 +145,19 @@ namespace ReadyMailIMAP
 
             case imap_state_fetch_body_part:
 
+#if defined(ENABLE_DEBUG)
                 if (cMsg().files[cFileIndex()].fetch)
                     setDebug(imap_ctx, "The message body[" + cMsg().files[cFileIndex()].section + "] is fetched successfully\n");
-
+#endif
                 cFileIndex()++;
                 if (cMsg().fetch_count > 0)
                     cMsg().fetch_count--;
 
                 if (cFileIndex() == (int)cMsg().files.size() || (imap_ctx->options.searching && cMsg().fetch_count == 0))
                 {
+#if defined(ENABLE_DEBUG)
                     setDebug(imap_ctx, "The message " + getFetchString() + " is fetched successfully\n");
-
+#endif
                     if (!imap_ctx->options.searching)
                     {
                         exitState(cCode(), imap_ctx->options.processing);
@@ -166,16 +181,22 @@ namespace ReadyMailIMAP
             case imap_state_append_last:
                 cMsgIndex() = 0;
                 releaseSMTP();
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The message is appended to selected mailbox successfully\n");
+#endif
                 exitState(cCode(), imap_ctx->options.processing);
                 break;
 #endif
             case imap_state_idle:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The mailbox idling is started successfully\n");
+#endif
                 break;
 
             case imap_state_done:
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The mailbox idling is stopped successfully\n");
+#endif
                 exitState(cCode(), imap_ctx->options.idling);
                 imap_ctx->options.processing = false;
                 break;
@@ -183,7 +204,9 @@ namespace ReadyMailIMAP
             case imap_state_close:
                 deAuthenticate();
                 exitState(cCode(), imap_ctx->options.processing);
+#if defined(ENABLE_DEBUG)
                 setDebug(imap_ctx, "The \"" + imap_ctx->current_mailbox + "\" is closed successfully\n");
+#endif
                 imap_ctx->options.mailbox_selected = false;
                 imap_ctx->current_mailbox.remove(0, imap_ctx->current_mailbox.length());
                 break;
@@ -226,10 +249,10 @@ namespace ReadyMailIMAP
             if (mode == imap_fetch_envelope)
             {
                 state = imap_state_fetch_envelope;
-
+#if defined(ENABLE_DEBUG)
                 if (imap_ctx->options.searching)
                     setDebugState(state, "Fetching message " + getFetchString() + " envelope...");
-
+#endif
                 // Fetching full for ENVELOPE and BODY to count attachment.
                 rd_print_to(buf, 200, " %sFETCH %d FULL", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number);
             }
@@ -239,7 +262,9 @@ namespace ReadyMailIMAP
 
                 if (cFileIndex() < (int)cMsg().files.size() && cMsg().files[cFileIndex()].fetch)
                 {
+#if defined(ENABLE_DEBUG)
                     setDebugState(state, "Fetching message body[" + cMsg().files[cFileIndex()].section + "]...");
+#endif
                     rd_print_to(buf, 200, " %sFETCH %d BODY%s[%s]", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.read_only_mode ? ".PEEK" : "", cMsg().files[cFileIndex()].section.c_str());
                 }
             }
@@ -277,9 +302,9 @@ namespace ReadyMailIMAP
                 return true;
 
             err_timer.stop();
-
+#if defined(ENABLE_DEBUG)
             setDebugState(imap_state_idle, "Starting the mailbox idling...");
-
+#endif
             res->idle_timer.feed(imap_ctx->options.timeout.idle / 1000);
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "IDLE"))
                 return false;
@@ -293,8 +318,9 @@ namespace ReadyMailIMAP
         {
             if (imap_ctx->options.processing)
                 return true;
-
+#if defined(ENABLE_DEBUG)
             setDebugState(imap_state_done, "Stopping the mailbox idling...");
+#endif
             imap_ctx->options.processing = true;
 
             if (!tcpSend(true, 1, "DONE"))

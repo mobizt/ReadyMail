@@ -83,21 +83,15 @@ namespace ReadyMailSMTP
             else
                 return smtp_ctx->client ? smtp_ctx->client->write(data, len) : 0;
         }
-
+#if defined(ENABLE_DEBUG)
         void setDebugState(smtp_state state, const String &msg)
         {
             tState() = state;
-
-#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(msg);
-#else
-            (void)msg;
-#endif
         }
-
+        
         void setDebug(const String &info, bool core = false, const String &tag = "[core]")
         {
-#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             if (smtp_ctx->status)
             {
                 int i = 0, j = 0;
@@ -116,12 +110,8 @@ namespace ReadyMailSMTP
                     i = j;
                 }
             }
-#else
-            (void)info;
-            (void)core;
-            (void)tag;
-#endif
         }
+#endif
 
         bool setError(const char *func, int code, const String &msg = "", bool close = true)
         {

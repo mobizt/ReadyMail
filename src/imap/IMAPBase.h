@@ -11,9 +11,9 @@ namespace ReadyMailIMAP
         friend class IMAPClient;
 
     public:
+#if defined(ENABLE_DEBUG)
         static void setDebug(imap_context *imap_ctx, const String &info, bool core = false)
         {
-#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             if (imap_ctx->status)
             {
                 int i = 0, j = 0;
@@ -32,13 +32,8 @@ namespace ReadyMailIMAP
                     i = j;
                 }
             }
-#else
-            (void)info;
-            (void)core;
-            (void)imap_ctx;
-#endif
         }
-
+#endif
     protected:
         imap_context *imap_ctx = nullptr;
         ReadyTimer err_timer;
@@ -141,17 +136,15 @@ namespace ReadyMailIMAP
             ret = function_return_exit;
             flag = false;
         }
-
+        
+#if defined(ENABLE_DEBUG)
         void setDebugState(imap_state state, const String &msg)
         {
             err_timer.stop();
             tState() = state;
-#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(imap_ctx, msg);
-#else
-            (void)msg;
-#endif
         }
+#endif
 
         bool serverConnected()
         {

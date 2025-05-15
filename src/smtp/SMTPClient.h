@@ -49,9 +49,9 @@ namespace ReadyMailSMTP
 
             if (smtp_ctx.options.processing)
                 return true;
-
+#if defined(ENABLE_DEBUG)
             conn.setDebugState(smtp_state_authentication, "Authenticating...");
-
+#endif
             if (!isConnected())
                 return conn.setError(__func__, TCP_CLIENT_ERROR_NOT_CONNECTED, "", false);
 
@@ -155,7 +155,9 @@ namespace ReadyMailSMTP
             smtp_ctx.cmd_ctx.cb = commandcallback;
             smtp_ctx.resp_cb = responseCallback;
             smtp_ctx.cmd_ctx.resp.text.remove(0, smtp_ctx.cmd_ctx.resp.text.length());
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(smtp_state_connect_command, "Connecting to \"" + host + "\" via port " + String(port) + "...");
+#endif
             sender.serverStatus() = smtp_ctx.client->connect(host.c_str(), port);
             if (!sender.serverStatus())
                 return false;

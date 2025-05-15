@@ -31,7 +31,9 @@ namespace ReadyMailSMTP
                 stop(true);
 
             authenticating = true;
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
+#endif
             smtp_ctx->options.processing = true;
             serverStatus() = smtp_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
@@ -177,7 +179,9 @@ namespace ReadyMailSMTP
                         smtp_ctx->server_status->server_greeting_ack = true;
                         ret = function_return_exit;
                         smtp_ctx->options.processing = false;
+#if defined(ENABLE_DEBUG)
                         setDebug("Service is ready\n");
+#endif
                     }
                 }
                 break;
@@ -216,7 +220,9 @@ namespace ReadyMailSMTP
                     ret = function_return_exit;
                     smtp_ctx->options.processing = false;
                     clearCreds();
+#if defined(ENABLE_DEBUG)
                     setDebug("The client is authenticated successfully\n");
+#endif
                 }
                 break;
 
@@ -233,7 +239,9 @@ namespace ReadyMailSMTP
         }
         void sendGreeting(const String &helo, bool esmtp)
         {
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_greeting, "Sending greeting...");
+#endif
             res->auth_caps[smtp_auth_cap_login] = false;
             tcpSend(true, 2, helo.c_str(), domain.c_str());
             setState(smtp_state_greeting, smtp_server_status_code_250);
@@ -243,7 +251,9 @@ namespace ReadyMailSMTP
         {
             if (!serverStatus() || smtp_ctx->server_status->secured)
                 return;
+#if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_start_tls, "Starting TLS...");
+#endif
             tcpSend(true, 1, "STARTTLS");
             setState(smtp_state_start_tls, smtp_server_status_code_250);
         }
@@ -251,7 +261,9 @@ namespace ReadyMailSMTP
         {
             if ((tls_cb || smtp_ctx->options.use_auto_client) && !smtp_ctx->server_status->secured)
             {
+#if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_start_tls, "Performing TLS handshake...");
+#endif
 #if defined(ENABLE_READYCLIENT)
                 if (smtp_ctx->auto_client && smtp_ctx->options.use_auto_client)
                     smtp_ctx->server_status->secured = smtp_ctx->auto_client->connectSSL();
@@ -265,7 +277,9 @@ namespace ReadyMailSMTP
                 if (smtp_ctx->server_status->secured)
                 {
                     cState() = smtp_state_start_tls_ack;
+#if defined(ENABLE_DEBUG)
                     setDebug("TLS handshake done");
+#endif
                 }
                 else
                     setError(__func__, TCP_CLIENT_ERROR_TLS_HANDSHAKE);

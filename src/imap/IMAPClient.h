@@ -160,7 +160,9 @@ namespace ReadyMailIMAP
          */
         bool logout(bool await = true)
         {
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_logout, "Logging out...");
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -201,10 +203,10 @@ namespace ReadyMailIMAP
             imap_ctx.cb.command_response.command.remove(0, imap_ctx.cb.command_response.command.length());
             imap_ctx.cb.command_response.errorCode = 0;
             imap_ctx.cb.command_response.isComplete = false;
-
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_send_command, "Sending command...");
             sender.setDebugState(imap_state_send_command, cmd);
-
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -267,7 +269,9 @@ namespace ReadyMailIMAP
          */
         bool list(bool await = true)
         {
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_list, "Listing mailboxes...");
+#endif
             if (!ready(__func__, false))
                 return false;
 
@@ -296,9 +300,9 @@ namespace ReadyMailIMAP
         bool select(const String &mailbox, bool readOnly = true, bool await = true)
         {
             validateMailboxesChange();
-
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(readOnly ? imap_state_examine : imap_state_select, "Selecting \"" + mailbox + "\"...");
-
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -325,11 +329,12 @@ namespace ReadyMailIMAP
          */
         bool close(bool await = true)
         {
+#if defined(ENABLE_DEBUG)
             if (imap_ctx.current_mailbox.length() > 0)
                 sender.setDebugState(imap_state_close, "Closing \"" + imap_ctx.current_mailbox + "\"...");
             else
                 sender.setDebugState(imap_state_close, "Closing mailbox...");
-
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -362,7 +367,9 @@ namespace ReadyMailIMAP
          */
         bool append(SMTPMessage &msg, const String &flags, const String &date, bool lastAppend, bool await = true)
         {
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_append, "Appending message...");
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -493,11 +500,12 @@ namespace ReadyMailIMAP
          */
         bool search(const String &criteria, uint32_t searchLimit, bool recentSort, IMAPDataCallback dataCallback, bool await = true)
         {
+#if defined(ENABLE_DEBUG)
             if (imap_ctx.current_mailbox.length() > 0)
                 sender.setDebugState(imap_state_search, "Searching \"" + imap_ctx.current_mailbox + "\"...");
             else
                 sender.setDebugState(imap_state_search, "Searching mailbox...");
-
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 
@@ -628,10 +636,10 @@ namespace ReadyMailIMAP
 
             if (imap_ctx.options.processing)
                 return true;
-
+#if defined(ENABLE_DEBUG)
             if (!isAuthenticated())
                 sender.setDebugState(imap_state_authentication, "Authenticating...");
-
+#endif
             if (!conn.isIdleState("authenticate"))
                 return false;
 
@@ -656,8 +664,9 @@ namespace ReadyMailIMAP
         {
             imap_ctx.options.fetch_number = number;
             imap_ctx.options.uid_fetch = uidFetch;
+#if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_fetch_envelope, "Fetching message " + sender.getFetchString() + " envelope...");
-
+#endif
             if (!conn.isIdleState(__func__))
                 return false;
 

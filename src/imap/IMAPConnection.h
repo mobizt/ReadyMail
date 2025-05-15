@@ -48,7 +48,9 @@ namespace ReadyMailIMAP
 
             authenticating = true;
             res->begin(imap_ctx);
+#if defined(ENABLE_DEBUG)
             setDebugState(imap_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
+#endif
             serverStatus() = imap_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
             {
@@ -224,7 +226,9 @@ namespace ReadyMailIMAP
                     {
                         imap_ctx->server_status->server_greeting_ack = true;
                         exitState(ret, imap_ctx->options.processing);
+#if defined(ENABLE_DEBUG)
                         setDebugState(imap_state_greeting, "Service is ready\n");
+#endif
                     }
                 }
                 break;
@@ -264,7 +268,9 @@ namespace ReadyMailIMAP
                 {
                     imap_ctx->server_status->authenticated = true;
                     exitState(ret, imap_ctx->options.processing);
+#if defined(ENABLE_DEBUG)
                     setDebugState(imap_state_auth_plain, "The client is authenticated successfully\n");
+#endif
                 }
                 break;
 
@@ -289,7 +295,9 @@ namespace ReadyMailIMAP
         {
             if (!serverStatus() || imap_ctx->server_status->secured)
                 return;
+#if defined(ENABLE_DEBUG)
             setDebugState(imap_state_start_tls, "Starting TLS...");
+#endif
             tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "STARTTLS");
             setState(imap_state_start_tls);
         }
@@ -302,7 +310,9 @@ namespace ReadyMailIMAP
         {
             if ((tls_cb || imap_ctx->options.use_auto_client) && !imap_ctx->server_status->secured)
             {
+#if defined(ENABLE_DEBUG)
                 setDebugState(imap_state_start_tls, "Performing TLS handshake...");
+#endif
 #if defined(ENABLE_READYCLIENT)
                 if (imap_ctx->auto_client && imap_ctx->options.use_auto_client)
                     imap_ctx->server_status->secured = imap_ctx->auto_client->connectSSL();
@@ -316,7 +326,9 @@ namespace ReadyMailIMAP
                 if (imap_ctx->server_status->secured)
                 {
                     setState(imap_state_start_tls_ack);
+#if defined(ENABLE_DEBUG)
                     setDebugState(imap_state_start_tls_ack, "TLS handshake done");
+#endif
                 }
                 else
                 {
