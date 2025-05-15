@@ -507,7 +507,7 @@ namespace ReadyMailSMTP
     {
         char text[12];
         bool multi; // multi fields
-        bool enc;   // needs encode
+        bool enc;   // needs encoding
         int8_t sub_type;
     };
 

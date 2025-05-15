@@ -444,7 +444,7 @@ The network client works only with plain text connection. Some SSL clients suppo
 
 Back to our ports and clients selection, the following sections showed how to select proper ports and Clients based on the protocols.
 
-Anyway, this library supports port changing at run time, see [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) and [AutoClient.ino](/examples/Network/AutoClient/AutoClient.ino) for how to.
+Anyway, this library also support port changing at run time, see [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) and [AutoClient.ino](/examples/Network/AutoClient/AutoClient.ino) for how to.
 
 The `ReadyClient` used in [AutoClient.ino](/examples/Network/AutoClient/AutoClient.ino) example is the SSL client wrapper class that allows user to assign the predefined ports and protocols which is easier than the method that is used in [AutoPort.ino](/examples/Network/AutoPort/AutoPort.ino) example. 
 
@@ -675,13 +675,13 @@ The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15
 
 When you are using `ESP_SSLClient` in some devices e.g. Renesas devices (Arduino® `UNO R4 WiFi`) and SAMD devices (Arduino MKR WiFi 1010, Arduino MKR 1000 WIFI) etc., it will get stuck in TLS handshake process due to memory allocation failure.
 
-If your mail server supports SSL fragmentation e.g. Gmail, you should set `ESP_SSLClient`'s IO buffer size properly that is suitable for your device memory otherwise use the core SSL client instead.
+If your mail server supports SSL fragmentation e.g. Gmail, you should set the size for receive and transmit buffers that is suitable for your device.
 
-Setting the receive and transmit buffer size which starts from 1024 i.e. `ESP_SSLClient::setBufferSizes(1024, 1024)` is enough for Gmail. 
+For Gmail usage, setting 1024 bytes for both buffers i.e. `ESP_SSLClient::setBufferSizes(1024, 1024)` is enough. 
 
 In addition, please don't forget to set the network client with `ESP_SSLClient::setClient()` and also `ESP_SSLClient::setInsecure()` when the server SSL certificate was not assigned for verification.
 
-Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
+Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body that requires more memory in the process, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
 
 
 # License #
