@@ -32,6 +32,10 @@ namespace ReadyMailIMAP
                     i = j;
                 }
             }
+#else
+            (void)info;
+            (void)core;
+            (void)imap_ctx;
 #endif
         }
 
@@ -144,6 +148,8 @@ namespace ReadyMailIMAP
             tState() = state;
 #if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(imap_ctx, msg);
+#else
+            (void)msg;
 #endif
         }
 
@@ -272,6 +278,8 @@ namespace ReadyMailIMAP
                     break;
                 }
             }
+#else
+            (void)code;
 #endif
             return msg;
         }

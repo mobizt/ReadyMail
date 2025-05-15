@@ -68,7 +68,7 @@ void dataCb(IMAPCallbackData &data)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
 
         // Headers data
-        for (int i = 0; i < data.headerCount(); i++)
+        for (size_t i = 0; i < data.headerCount(); i++)
             ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
 
         // Files data

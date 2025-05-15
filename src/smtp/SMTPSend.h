@@ -208,8 +208,7 @@ namespace ReadyMailSMTP
 
             if (smtp_ctx->options.accumulate || smtp_ctx->options.imap_mode)
             {
-                if (msg_ptr)
-                    startData(*msg_ptr);
+                startData();
                 return true;
             }
 
@@ -415,7 +414,7 @@ namespace ReadyMailSMTP
             return true;
         }
 
-        bool startData(SMTPMessage &msg)
+        bool startData()
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
@@ -517,62 +516,16 @@ namespace ReadyMailSMTP
                 bool embed_inline = embed && ((html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline));
                 rd_print_to(ct_prop, 250, "; charset=\"%s\";%s%s", html ? msg.html.charSet.c_str() : msg.text.charSet.c_str(), html ? "" : (msg.text.flowed ? " format=\"flowed\"; delsp=\"yes\";" : ""), msg.html.embed.enable ? (html ? " Name=\"msg.html\";" : " Name=\"msg.txt\";") : "");
 
-                String enc;
-                if ((html && msg.html.transfer_encoding == "base64") || (!html && msg.text.transfer_encoding == "base64"))
-                    enc = "base64";
-
                 if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                {
-                    if (html)
-                        msg.html.data_size = msg.html.static_size;
-                    else
-                        msg.text.data_size = msg.text.static_size;
-                    if (enc.length() == 0)
-                        enc = html ? (rd_is_non_ascii((const char *)msg.html.static_content) ? "quoted-printable" : msg.html.transfer_encoding) : (rd_is_non_ascii((const char *)msg.text.static_content) ? "quoted-printable" : msg.text.transfer_encoding);
-                }
-                else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_file)
-                {
+                    msg.beginStaticSrc(html);
 #if defined(ENABLE_FS)
-                    FileCallback cb = (html ? msg.html.cb : msg.text.cb);
-                    if (cb)
-                    {
-                        if (msg.file && msg.file_opened)
-                            msg.file.close();
-
-                        // open file read
-                        cb(msg.file, (html ? msg.html.filename.c_str() : msg.text.filename.c_str()), readymail_file_mode_open_read);
-                        if (msg.file)
-                        {
-                            if (html)
-                                msg.html.data_size = msg.file.size();
-                            else
-                                msg.text.data_size = msg.file.size();
-                            msg.file_opened = true;
-                            if (enc.length() == 0)
-                            {
-                                enc = rd_is_non_ascii_file(msg.file) ? "quoted-printable" : (html ? msg.html.transfer_encoding : msg.text.transfer_encoding);
-                                cb(msg.file, (html ? msg.html.filename.c_str() : msg.text.filename.c_str()), readymail_file_mode_open_read);
-                            }
-                        }
-                    }
+                else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_file)
+                    msg.beginFileSrc(html);
 #endif
-                }
                 else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_string)
-                {
-                    if (enc.length() == 0)
-                        enc = html ? (rd_is_non_ascii(msg.html.content.c_str()) ? "quoted-printable" : msg.html.transfer_encoding) : (rd_is_non_ascii(msg.text.content.c_str()) ? "quoted-printable" : msg.text.transfer_encoding);
-                    if (html)
-                        msg.html.data_size = msg.html.content.length();
-                    else
-                        msg.text.data_size = msg.text.content.length();
-                }
+                    msg.beginStringSrc(html);
 
-                if (html)
-                    msg.html.mode = (enc == "base64") ? 0 : (enc == "quoted-printable" ? 1 : -1);
-                else
-                    msg.text.mode = (enc == "base64") ? 0 : (enc == "quoted-printable" ? 1 : -1);
-
-                setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, html ? msg.html.content_type.c_str() : msg.text.content_type.c_str(), ct_prop, enc, embed ? (embed_inline ? "inline" : "attachment") : "", html ? msg.html.embed.filename : msg.text.embed.filename, 0, html ? msg.html.embed.filename : msg.text.embed.filename, embed_inline ? getRandomUID() : "");
+                setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, html ? msg.html.content_type.c_str() : msg.text.content_type.c_str(), ct_prop, msg.getEnc(html ? msg.html.xenc : msg.text.xenc), embed ? (embed_inline ? "inline" : "attachment") : "", html ? msg.html.embed.filename : msg.text.embed.filename, 0, html ? msg.html.embed.filename : msg.text.embed.filename, embed_inline ? getRandomUID() : "");
 
                 if (!sendBuffer(buf))
                     return false;
@@ -590,13 +543,13 @@ namespace ReadyMailSMTP
 
                     if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
                         updateUploadStatus(html ? "msg.html" : "msg.txt", html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
-                    line = rd_qb_encode_chunk(body, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.mode : msg.text.mode, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
+                    line = rd_qb_encode_chunk(body, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
                 }
                 else
                 {
 #if defined(ENABLE_FS)
                     updateUploadStatus(html ? msg.html.filename : msg.text.filename, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
-                    line = rd_qb_encode_file(msg.file, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.mode : msg.text.mode, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
+                    line = rd_qb_encode_file(msg.file, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
 #endif
                 }
 
@@ -622,7 +575,7 @@ namespace ReadyMailSMTP
                 else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
                     updateUploadStatus(html ? "msg.html" : "msg.txt", html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
 
-                if (!close_boundary && (html ? msg.html.mode : msg.text.mode) == 1 && !sendBuffer("\r\n"))
+                if (!close_boundary && (html ? msg.html.xenc : msg.text.xenc) == xenc_qp && !sendBuffer("\r\n"))
                     return false;
 
                 if (close_boundary && !sendEndBoundary(msg, content_type_index))
@@ -916,8 +869,8 @@ namespace ReadyMailSMTP
                     case smtp_state_send_header_recipient:
                         if (msg_ptr && !msg_ptr->send_recipient_complete)
                             sendRecipient(*msg_ptr);
-                        else if (msg_ptr)
-                            startData(*msg_ptr);
+                        else
+                            startData();
                         break;
 
                     case smtp_state_wait_data:
@@ -995,24 +948,14 @@ namespace ReadyMailSMTP
 
         void setXEnc(SMTPMessage &msg)
         {
-            if (msg.text.content.length() && msg.text.transfer_encoding.length())
-                setXEnc(msg.text.xenc, msg.text.transfer_encoding);
+            if (msg.text.transfer_encoding.length())
+                msg.setXEnc(msg.text.xenc, msg.text.transfer_encoding);
 
-            if (msg.html.content.length() && msg.html.transfer_encoding.length())
-                setXEnc(msg.html.xenc, msg.html.transfer_encoding);
+            if (msg.html.transfer_encoding.length())
+                msg.setXEnc(msg.html.xenc, msg.html.transfer_encoding);
 
             for (size_t i = 0; i < msg.attachments.size(); i++)
-                setXEnc(msg.attachments[i].xenc, msg.attachments[i].transfer_encoding);
-        }
-
-        void setXEnc(smtp_content_xenc &xenc, const String &enc)
-        {
-            if (strcmp(enc.c_str(), smtp_transfer_encoding_t::enc_binary) == 0)
-                xenc = xenc_binary;
-            else if (strcmp(enc.c_str(), smtp_transfer_encoding_t::enc_8bit) == 0)
-                xenc = xenc_8bit;
-            else if (strcmp(enc.c_str(), smtp_transfer_encoding_t::enc_7bit) == 0)
-                xenc = xenc_7bit;
+                msg.setXEnc(msg.attachments[i].xenc, msg.attachments[i].transfer_encoding);
         }
 
         void setMIMEList(SMTPMessage &msg)

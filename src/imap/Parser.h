@@ -101,7 +101,7 @@ namespace ReadyMailIMAP
             section = nullptr;
         }
 
-        String nextToken(const String &line, int &i, int beginIndex, int lastIndex)
+        String nextToken(const String &line, int &i, int lastIndex)
         {
             int pos1 = -1, pos2 = -1;
             while (i <= lastIndex)
@@ -194,7 +194,7 @@ namespace ReadyMailIMAP
             }
             else if (cfile.transfer_encoding == imap_transfer_encoding_7bit)
             {
-                char *buf = rd_decode_7bit_utf8(res.c_str());
+                char *buf = rd_decode_7bit_utf8((const unsigned char *)res.c_str());
                 decoded_len = strlen(buf);
                 decoded = (uint8_t *)buf;
             }
@@ -223,7 +223,7 @@ namespace ReadyMailIMAP
                 else if (cfile.char_encoding == imap_char_encoding_scheme_tis_620 || cfile.char_encoding == imap_char_encoding_scheme_iso8859_11 || cfile.char_encoding == imap_char_encoding_scheme_windows_874)
                 {
                     char *buf = (char *)allocate((decoded_len + 1) * 3);
-                    rd_decode_tis620_utf8(buf, (const char *)decoded, decoded_len);
+                    rd_decode_tis620_utf8(buf, (const unsigned char *)decoded, decoded_len);
                     decoded_len = strlen(buf);
                     rd_release((void *)decoded);
                     decoded = (uint8_t *)buf;
@@ -402,7 +402,7 @@ namespace ReadyMailIMAP
             String token, buf;
             while (i < (int)str.length())
             {
-                token = nextToken(str, i, 0, str.length());
+                token = nextToken(str, i, str.length());
                 if (token.length())
                 {
                     String e = enc.length() ? enc : getEnc(token);
@@ -436,7 +436,7 @@ namespace ReadyMailIMAP
             {
                 size_t len2 = strlen(buf);
                 char *out = (char *)allocate((len2 + 1) * 3);
-                rd_decode_tis620_utf8(out, buf, len2);
+                rd_decode_tis620_utf8(out, (const unsigned char *)buf, len2);
                 rd_release((void *)buf);
                 buf = out;
             }
@@ -462,7 +462,7 @@ namespace ReadyMailIMAP
             int i = beginIndex;
             while (i <= lastIndex)
             {
-                token = nextToken(line, i, beginIndex, lastIndex);
+                token = nextToken(line, i, lastIndex);
                 if (pos == count)
                     break;
                 count++;
@@ -504,7 +504,7 @@ namespace ReadyMailIMAP
 
             while (i <= lastIndex)
             {
-                String token = nextToken(line, i, beginIndex, lastIndex);
+                String token = nextToken(line, i, lastIndex);
                 if (token.length())
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
@@ -612,7 +612,7 @@ namespace ReadyMailIMAP
                 int i = beginIndex;
                 while (i <= lastIndex)
                 {
-                    token = nextToken(line, i, beginIndex, lastIndex);
+                    token = nextToken(line, i, lastIndex);
                     for (int i = imap_auth_cap_plain; i < imap_auth_cap_max_type; i++)
                     {
                         if (strcmp(token.c_str(), imap_auth_cap_token[i].text) == 0)
@@ -659,13 +659,13 @@ namespace ReadyMailIMAP
                     getBoundary(line, "FLAGS (", ")", beginIndex, lastIndex);
                     int i = beginIndex, count = 0;
                     while (i <= lastIndex)
-                        imap_ctx->idle_status += (count++ > 0 ? ", " : "") + nextToken(line, i, beginIndex, lastIndex);
+                        imap_ctx->idle_status += (count++ > 0 ? ", " : "") + nextToken(line, i, lastIndex);
                     imap_ctx->idle_status += "] " + getToken(line, 0, "* ", "FETCH");
                 }
             }
         }
 
-        void parseSearch(const String &line, imap_context *imap_ctx, std::vector<uint32_t> &imap_msg_num, MailboxInfo &mailbox_info)
+        void parseSearch(const String &line, imap_context *imap_ctx, std::vector<uint32_t> &imap_msg_num)
         {
             if (line.indexOf(imap_ctx->tag) > -1)
             {
@@ -681,7 +681,7 @@ namespace ReadyMailIMAP
             uint32_t msg_num = 0;
             while (i <= lastIndex)
             {
-                token = nextToken(line, i, beginIndex, lastIndex);
+                token = nextToken(line, i, lastIndex);
 
                 if (token.length() == 0)
                     break;
@@ -706,7 +706,7 @@ namespace ReadyMailIMAP
             int i = beginIndex;
             while (i <= lastIndex)
             {
-                buf[count] = nextToken(line, i, beginIndex, lastIndex);
+                buf[count] = nextToken(line, i, lastIndex);
                 if (buf[count][0] == '(' && buf[count][buf[count].length() - 1] == ')')
                     buf[count] = buf[count].substring(1, buf[count].length() - 1);
                 count++;
@@ -744,9 +744,9 @@ namespace ReadyMailIMAP
             while (i <= lastIndex)
             {
                 if (permanent)
-                    mailbox_info.permanentFlags.push_back(nextToken(line, i, beginIndex, lastIndex));
+                    mailbox_info.permanentFlags.push_back(nextToken(line, i, lastIndex));
                 else
-                    mailbox_info.flags.push_back(nextToken(line, i, beginIndex, lastIndex));
+                    mailbox_info.flags.push_back(nextToken(line, i, lastIndex));
             }
         }
 
@@ -759,7 +759,7 @@ namespace ReadyMailIMAP
             String addr_struct[4];
             while (i <= lastIndex)
             {
-                String token = nextToken(line, i, beginIndex, lastIndex);
+                String token = nextToken(line, i, lastIndex);
                 if (token.length())
                 {
                     if (token[0] == '(' && token[token.length() - 1] == ')')
@@ -852,7 +852,9 @@ namespace ReadyMailIMAP
                 else if (cstate == imap_state_fetch_body_part)
                 {
                     imap_ctx->cb_data.eventType = imap_data_event_fetch_body;
+#if defined(ENABLE_FS)
                     openFile(imap_ctx, cfile);
+#endif
                 }
             }
             else if (cstate == imap_state_fetch_body_part)
@@ -891,7 +893,9 @@ namespace ReadyMailIMAP
                     cfile.progress.value = 100.0f;
                     cfile.progress.last_value = -1;
                     storeDecodedData(nullptr, 0, true, cfile, imap_ctx);
+#if defined(ENABLE_FS)
                     closeFile(imap_ctx);
+#endif
                 }
             }
         }
@@ -916,9 +920,10 @@ namespace ReadyMailIMAP
             return name;
         }
 
+#if defined(ENABLE_FS)
         void openFile(imap_context *imap_ctx, imap_file_ctx &cfile)
         {
-#if defined(ENABLE_FS)
+
             cfile.filepath.remove(0, cfile.filepath.length());
             rd_print_to(cfile.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, cfile.info.filename.c_str());
 
@@ -957,16 +962,16 @@ namespace ReadyMailIMAP
                     imap_ctx->cb.file(imap_ctx->file, path.c_str(), readymail_file_mode_open_write);
                 }
             }
-#endif
         }
 
         void closeFile(imap_context *imap_ctx)
         {
-#if defined(ENABLE_FS)
+
             if (imap_ctx->file)
                 imap_ctx->file.close();
-#endif
         }
+
+#endif
 
         void getFileInfo(imap_context *imap_ctx, std::vector<part_ctx> &parts, imap_msg_ctx &cmsg)
         {

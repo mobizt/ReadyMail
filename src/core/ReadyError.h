@@ -3,10 +3,10 @@
 #include <Arduino.h>
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
+#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
 static String rd_err(int code)
 {
     String msg;
-#if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
     switch (code)
     {
     case TCP_CLIENT_ERROR_CONNECTION:
@@ -39,8 +39,8 @@ static String rd_err(int code)
     default:
         break;
     }
-#endif
     return msg;
 }
+#endif
 #endif
 #endif

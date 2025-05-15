@@ -541,6 +541,9 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_FS)
             imap_ctx.cb.file = fileCallback;
             imap_ctx.cb.download_path = downloadFolder;
+#else
+            (void)fileCallback;
+            (void)downloadFolder;
 #endif
             imap_ctx.cb.data = dataCallback;
             return fetchImpl(uid, true, await, bodySizeLimit);
@@ -564,6 +567,9 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_FS)
             imap_ctx.cb.file = fileCallback;
             imap_ctx.cb.download_path = downloadFolder;
+#else
+            (void)fileCallback;
+            (void)downloadFolder;
 #endif
             imap_ctx.cb.data = dataCallback;
             return fetchImpl(number, false, await, bodySizeLimit);

@@ -148,11 +148,12 @@ static char *rd_base64_encode(const unsigned char *raw, int len)
     return encoded;
 }
 
+#if defined(ENABLE_SMTP)
 static void rd_get_softbreak_index(const char *src, int index, int max_len, std::vector<int> &softbreak_index)
 {
     int last_index = softbreak_index.size() ? softbreak_index[softbreak_index.size() - 1] + 1 : index;
     int i = last_index + max_len;
-    if (i < strlen(src))
+    if (i < (int)strlen(src))
     {
         while (i >= last_index)
         {
@@ -173,9 +174,9 @@ static void rd_add_softbreak(String &buf, int index, std::vector<int> &softbreak
         if ((index == softbreak_index[i]))
         {
             softbreak_index.erase(softbreak_index.begin() + i);
-            if (buf.length() + 2 <= line_max_len)
+            if ((int)buf.length() + 2 <= line_max_len)
                 buf += "\r\n"; // to complete soft break
-            else if (buf.length() + 1 <= line_max_len)
+            else if ((int)buf.length() + 1 <= line_max_len)
             {
                 buf += "\r";
                 softbreak_buf = "\n";
@@ -234,7 +235,7 @@ static String rd_qp_encode_chunk(const char *src, int &index, bool flowed, int m
         char c = src[i];
         char c1 = (i < len - 1) ? src[i + 1] : 0;
 
-        if (sbuf.length() >= max_len - 3 && c != 10 && c != 13)
+        if ((int)sbuf.length() >= max_len - 3 && c != 10 && c != 13)
         {
             sbuf += "=\r\n";
             goto out;
@@ -323,74 +324,6 @@ out:
 }
 #endif
 
-static int rd_decode_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
-
-static void rd_decode_qp_utf8(const char *src, char *out)
-{
-    const char *tmp = "0123456789ABCDEF";
-    int idx = 0;
-    while (*src)
-    {
-        if (*src != '=')
-            out[idx++] = *src++;
-        else if (*(src + 1) == '\r' && *(src + 2) == '\n')
-            src += 3;
-        else if (*(src + 1) == '\n')
-            src += 2;
-        else if (!strchr(tmp, *(src + 1)))
-            out[idx++] = *src++;
-        else if (!strchr(tmp, *(src + 2)))
-            out[idx++] = *src++;
-        else
-        {
-            out[idx++] = rd_decode_char(src);
-            src += 3;
-        }
-    }
-}
-
-static char *rd_decode_7bit_utf8(const char *src)
-{
-    String s;
-
-    // only non NULL and 7-bit ASCII are allowed
-    // rfc2045 section 2.7
-    size_t len = src ? strlen(src) : 0;
-
-    for (size_t i = 0; i < len; i++)
-    {
-        if (src[i] > 0 && src[i] < 128 && i < 998)
-            s += src[i];
-    }
-
-    // some special chars can't send in 7bit unless encoded as queoted printable string
-    char *decoded = (char *)malloc(s.length() + 10);
-    memset(decoded, 0, s.length() + 10);
-    rd_decode_qp_utf8(s.c_str(), decoded);
-    return decoded;
-}
-
-static char *rd_decode_8bit_utf8(const char *src)
-{
-    String s;
-
-    // only non NULL and less than 998 octet length are allowed
-    // rfc2045 section 2.8
-    size_t len = src ? strlen(src) : 0;
-
-    for (size_t i = 0; i < len; i++)
-    {
-        if (src[i] > 0 && i < 998)
-            s += src[i];
-    }
-
-    char *decoded = (char *)malloc(s.length() + 1);
-    memset(decoded, 0, s.length() + 1);
-    strcpy(decoded, s.c_str());
-    s.remove(0, s.length());
-    return decoded;
-}
-
 static bool rd_is_non_ascii(const char *str)
 {
     while (*str)
@@ -424,7 +357,7 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
     buf.reserve(100);
     line.reserve(100);
     int len = strlen(src), sindex = 0;
-    if (mode == 1)
+    if (mode == 2 /* xenc_qp */)
         line = rd_qp_encode_chunk(src, index, flowed, max_len, softbreak_buf, softbreak_index);
     else
     {
@@ -439,21 +372,20 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
 
         for (int i = index; i < len; i++)
         {
-            if (buf.length() < (mode == 0 ? 57 : max_len))
+            if ((int)buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
             {
                 buf += src[i];
                 if (flowed)
-                    rd_add_softbreak(buf, i, softbreak_index, softbreak_buf, (mode == 0 ? 57 : max_len));
+                    rd_add_softbreak(buf, i, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len));
                 continue;
             }
-
             sindex = i;
             break;
         }
 
         if (buf.length())
         {
-            if (mode == 0)
+            if (mode == 3 /* xenc_base64 */)
             {
                 char *enc = rd_base64_encode((const unsigned char *)buf.c_str(), buf.length());
                 line = enc;
@@ -465,9 +397,6 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
             index = sindex > 0 ? sindex : len;
         }
     }
-
-out:
-
     return line;
 }
 
@@ -478,7 +407,7 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
     buf.reserve(100);
     line.reserve(100);
     int sindex = 0;
-    if (mode == 1)
+    if (mode == 2 /* xenc_qp */)
         line = rd_qp_encode_file(fs, len, index, flowed, max_len, softbreak_buf, softbreak_index);
     else
     {
@@ -494,11 +423,11 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
         fs.seek(index);
         while (fs.available())
         {
-            if (buf.length() < (mode == 0 ? 57 : max_len))
+            if (buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
             {
                 buf += (char)fs.read();
                 if (flowed)
-                    rd_add_softbreak(buf, index + sindex, softbreak_index, softbreak_buf, (mode == 0 ? 57 : max_len));
+                    rd_add_softbreak(buf, index + sindex, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len));
 
                 sindex++;
                 continue;
@@ -508,7 +437,7 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
 
         if (buf.length())
         {
-            if (mode == 0)
+            if (mode == 3 /* xenc_base64 */)
             {
                 char *enc = rd_base64_encode((const unsigned char *)buf.c_str(), buf.length());
                 line = enc;
@@ -523,6 +452,8 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
 
     return line;
 }
+#endif
+
 #endif
 
 String rd_enc_oauth(const String &email, const String &accessToken)
@@ -558,48 +489,7 @@ String rd_enc_plain(const String &email, const String &password)
     return out;
 }
 
-static int rd_decode_latin1_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
-{
-    unsigned char *outstart = out;
-    const unsigned char *base = in;
-    const unsigned char *processed = in;
-    unsigned char *outend = out + *outlen;
-    const unsigned char *inend;
-    unsigned int c;
-    int bits;
-
-    inend = in + (*inlen);
-    while ((in < inend) && (out - outstart + 5 < *outlen))
-    {
-        c = *in++;
-
-        /* assertion: c is a single UTF-4 value */
-        if (out >= outend)
-            break;
-        if (c < 0x80)
-        {
-            *out++ = c;
-            bits = -6;
-        }
-        else
-        {
-            *out++ = ((c >> 6) & 0x1F) | 0xC0;
-            bits = 0;
-        }
-
-        for (; bits >= 0; bits -= 6)
-        {
-            if (out >= outend)
-                break;
-            *out++ = ((c >> bits) & 0x3F) | 0x80;
-        }
-        processed = (const unsigned char *)in;
-    }
-    *outlen = out - outstart;
-    *inlen = processed - base;
-    return (0);
-}
-
+#if defined(ENABLE_IMAP)
 static int rd_encode_unicode_utf8(char *out, uint32_t utf)
 {
     if (utf <= 0x7F)
@@ -647,7 +537,7 @@ static int rd_encode_unicode_utf8(char *out, uint32_t utf)
     }
 }
 
-static void rd_decode_tis620_utf8(char *out, const char *in, size_t len)
+static void rd_decode_tis620_utf8(char *out, const unsigned char *in, size_t len)
 {
     // output is the 3-byte value UTF-8
     int j = 0;
@@ -666,5 +556,116 @@ static void rd_decode_tis620_utf8(char *out, const char *in, size_t len)
         }
     }
 }
+
+static int rd_decode_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
+
+static void rd_decode_qp_utf8(const char *src, char *out)
+{
+    const char *tmp = "0123456789ABCDEF";
+    int idx = 0;
+    while (*src)
+    {
+        if (*src != '=')
+            out[idx++] = *src++;
+        else if (*(src + 1) == '\r' && *(src + 2) == '\n')
+            src += 3;
+        else if (*(src + 1) == '\n')
+            src += 2;
+        else if (!strchr(tmp, *(src + 1)))
+            out[idx++] = *src++;
+        else if (!strchr(tmp, *(src + 2)))
+            out[idx++] = *src++;
+        else
+        {
+            out[idx++] = rd_decode_char(src);
+            src += 3;
+        }
+    }
+}
+
+static char *rd_decode_7bit_utf8(const unsigned char *src)
+{
+    String s;
+
+    // only non NULL and 7-bit ASCII are allowed
+    // rfc2045 section 2.7
+    size_t len = src ? strlen((const char *)src) : 0;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        if (src[i] > 0 && src[i] < 128 && i < 998)
+            s += src[i];
+    }
+
+    // some special chars can't send in 7bit unless encoded as queoted printable string
+    char *decoded = (char *)malloc(s.length() + 10);
+    memset(decoded, 0, s.length() + 10);
+    rd_decode_qp_utf8(s.c_str(), decoded);
+    return decoded;
+}
+
+static char *rd_decode_8bit_utf8(const char *src)
+{
+    String s;
+
+    // only non NULL and less than 998 octet length are allowed
+    // rfc2045 section 2.8
+    size_t len = src ? strlen(src) : 0;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        if (src[i] > 0 && i < 998)
+            s += src[i];
+    }
+
+    char *decoded = (char *)malloc(s.length() + 1);
+    memset(decoded, 0, s.length() + 1);
+    strcpy(decoded, s.c_str());
+    s.remove(0, s.length());
+    return decoded;
+}
+
+static int rd_decode_latin1_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+{
+    unsigned char *outstart = out;
+    const unsigned char *base = in;
+    const unsigned char *processed = in;
+    unsigned char *outend = out + *outlen;
+    const unsigned char *inend;
+    unsigned int c;
+    int bits;
+
+    inend = in + (*inlen);
+    while ((in < inend) && (out - outstart + 5 < *outlen))
+    {
+        c = *in++;
+
+        /* assertion: c is a single UTF-4 value */
+        if (out >= outend)
+            break;
+        if (c < 0x80)
+        {
+            *out++ = c;
+            bits = -6;
+        }
+        else
+        {
+            *out++ = ((c >> 6) & 0x1F) | 0xC0;
+            bits = 0;
+        }
+
+        for (; bits >= 0; bits -= 6)
+        {
+            if (out >= outend)
+                break;
+            *out++ = ((c >> bits) & 0x3F) | 0x80;
+        }
+        processed = (const unsigned char *)in;
+    }
+    *outlen = out - outstart;
+    *inlen = processed - base;
+    return (0);
+}
+#endif
 #endif
 #endif

@@ -321,25 +321,6 @@ namespace ReadyMailSMTP
         int msg_uid = 0;
     };
 
-    struct smtp_transfer_encoding_t
-    {
-        /* The default 7-bit transfer encoding for US-ACII characters*/
-        static constexpr const char *enc_7bit = "7bit";
-
-        /* The quoted printable transfer encoding for non-US-ASCII characters*/
-        static constexpr const char *enc_qp = "quoted-printable";
-
-        /* The base64 encoded transfer encoding */
-        static constexpr const char *enc_base64 = "base64";
-
-        /* The 8-bit transfer encoding for extended-US-ASCII characters*/
-        static constexpr const char *enc_8bit = "8bit";
-
-        /* The binary transfer encoding for extended-US-ASCII characters with no line
-         * length limit*/
-        static constexpr const char *enc_binary = "binary";
-    };
-
     /* The option to embed this message content as a file */
     struct embed_message_body_t
     {
@@ -351,6 +332,7 @@ namespace ReadyMailSMTP
     struct smtp_message_body_t
     {
         friend class SMTPSend;
+        friend class SMTPMessage;
 
     public:
         /* Set the body */
@@ -431,7 +413,7 @@ namespace ReadyMailSMTP
 
     private:
         String cid;
-        int data_index = 0, data_size = 0, mode = -1;
+        int data_index = 0, data_size = 0;
         float progress = 0, last_progress = 0;
         uint32_t static_size = 0;
         smtp_msg_body_data_sources data_source;
@@ -446,6 +428,36 @@ namespace ReadyMailSMTP
 #endif
         std::vector<int> softbreak_index;
         embed_message_body_t embed;
+
+#if defined(ENABLE_FS)
+        void beginFileSrc(File &fs, bool &file_opened, String &enc)
+        {
+            // open file read
+            cb(fs, filename.c_str(), readymail_file_mode_open_read);
+            if (fs)
+            {
+                data_size = fs.size();
+                file_opened = true;
+                if (xenc != xenc_base64)
+                {
+                    enc = rd_is_non_ascii_file(fs) ? "quoted-printable" : transfer_encoding;
+                    cb(fs, filename.c_str(), readymail_file_mode_open_read);
+                }
+            }
+        }
+#endif
+        void beginStringSrc(String &enc)
+        {
+            if (xenc != xenc_base64)
+                enc =rd_is_non_ascii(content.c_str()) ? "quoted-printable" : transfer_encoding;
+            data_size = content.length();
+        }
+        void beginStaticSrc(String &enc)
+        {
+            data_size = static_size;
+            if (xenc != xenc_base64)
+                enc =rd_is_non_ascii((const char *)static_content) ? "quoted-printable" : transfer_encoding;
+        }
     };
 
     struct smtp_header_item

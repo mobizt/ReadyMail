@@ -387,7 +387,7 @@ void dataCallback(IMAPCallbackData data)
             ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
 
         // Headers data
-        for (int i = 0; i < data.headerCount(); i++)
+        for (size_t i = 0; i < data.headerCount(); i++)
             ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
 
         // Files data
@@ -637,6 +637,8 @@ imap.connect("imap host", 993, statusCallback);
 
 ```
 
+# Known Issues #
+
 ## ESP8266 Issues
 
 When `ESP8266` device and its `WiFiClientSecure` library are used, they need some adjustments before using otherwise the device may crash when starting the connection.
@@ -668,6 +670,19 @@ Independent of networks, library uses `Client::connected()` to check the server 
 The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15e71a6afd21f9723a0777fa2f38d4c647279933/libraries/NetworkClientSecure/src/ssl_client.cpp#L455) where the write's `fdset` does not assign to the `lwIP::select()`. The result is it will get stuck at this line until the timeout is occurred.
 
 [Update on 5/14/2025] This [PR](https://github.com/espressif/arduino-esp32/pull/11356) may fix this issue and the work around can be removed in the next library updates. 
+
+## ESP_SSLClient Issues
+
+When you are using `ESP_SSLClient` in some devices e.g. Renesas devices (Arduino® `UNO R4 WiFi`) and SAMD devices (Arduino MKR WiFi 1010, Arduino MKR 1000 WIFI) etc., it will get stuck in TLS handshake process due to memory allocation failure.
+
+If your mail server supports SSL fragmentation e.g. Gmail, you should set `ESP_SSLClient`'s IO buffer size properly that is suitable for your device memory otherwise use the core SSL client instead.
+
+Setting the receive and transmit buffer size which starts from 1024 i.e. `ESP_SSLClient::setBufferSizes(1024, 1024)` is enough for Gmail. 
+
+In addition, please don't forget to set the network client with `ESP_SSLClient::setClient()` and also `ESP_SSLClient::setInsecure()` when the server SSL certificate was not assigned for verification.
+
+Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
+
 
 # License #
 

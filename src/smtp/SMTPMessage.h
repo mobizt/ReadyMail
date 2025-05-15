@@ -358,6 +358,76 @@ namespace ReadyMailSMTP
       rfc822_idx = 0;
       attachments.resetIndex();
     }
+#if defined(ENABLE_FS)
+    void beginFileSrc(bool html)
+    {
+      String enc;
+      if (html)
+        this->html.beginFileSrc(file, file_opened, enc);
+      else
+        this->text.beginFileSrc(file, file_opened, enc);
+
+      if (enc.length())
+        setXEnc(html ? this->html.xenc : this->text.xenc, enc);
+    }
+#endif
+
+    void beginStringSrc(bool html)
+    {
+      String enc;
+      if (html)
+        this->html.beginStringSrc(enc);
+      else
+        this->text.beginStringSrc(enc);
+
+      if (enc.length())
+        setXEnc(html ? this->html.xenc : this->text.xenc, enc);
+    }
+
+    void beginStaticSrc(bool html)
+    {
+      String enc;
+      if (html)
+        this->html.beginStaticSrc(enc);
+      else
+        this->text.beginStaticSrc(enc);
+
+      if (enc.length())
+        setXEnc(html ? this->html.xenc : this->text.xenc, enc);
+    }
+
+    void setXEnc(smtp_content_xenc &xenc, const String &enc)
+    {
+      if (strcmp(enc.c_str(), "binary") == 0)
+        xenc = xenc_binary;
+      else if (strcmp(enc.c_str(), "8bit") == 0)
+        xenc = xenc_8bit;
+      else if (strcmp(enc.c_str(), "7bit") == 0)
+        xenc = xenc_7bit;
+      else if (strcmp(enc.c_str(), "base64") == 0)
+        xenc = xenc_base64;
+      else if (strcmp(enc.c_str(), "quoted-printable") == 0)
+        xenc = xenc_qp;
+    }
+
+    String getEnc(smtp_content_xenc xenc)
+    {
+      switch (xenc)
+      {
+      case xenc_binary:
+        return "binary";
+      case xenc_8bit:
+        return "8bit";
+      case xenc_7bit:
+        return "7bit";
+      case xenc_base64:
+        return "base64";
+      case xenc_qp:
+        return "quoted-printable";
+      default:
+        return "";
+      }
+    }
   };
 }
 #endif

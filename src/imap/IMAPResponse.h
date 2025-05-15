@@ -120,7 +120,7 @@ namespace ReadyMailIMAP
                     break;
 
                 case imap_state_search:
-                    parser.parseSearch(line, imap_ctx, msgNumVec(), mailbox_info);
+                    parser.parseSearch(line, imap_ctx, msgNumVec());
                     break;
 
                 case imap_state_fetch_envelope:

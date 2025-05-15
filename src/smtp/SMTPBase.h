@@ -87,8 +87,11 @@ namespace ReadyMailSMTP
         void setDebugState(smtp_state state, const String &msg)
         {
             tState() = state;
+
 #if defined(ENABLE_DEBUG) || defined(ENABLE_CORE_DEBUG)
             setDebug(msg);
+#else
+            (void)msg;
 #endif
         }
 
@@ -113,6 +116,10 @@ namespace ReadyMailSMTP
                     i = j;
                 }
             }
+#else
+            (void)info;
+            (void)core;
+            (void)tag;
 #endif
         }
 
@@ -356,6 +363,8 @@ namespace ReadyMailSMTP
                     break;
                 }
             }
+#else
+            (void)code;
 #endif
             return msg;
         }

@@ -51,7 +51,7 @@ namespace ReadyMailSMTP
             if (readLen > 0)
             {
                 response += line;
-                getResponseStatus(line, smtp_ctx->server_status->state_info.status_code, 0, *smtp_ctx->status);
+                getResponseStatus(line, smtp_ctx->server_status->state_info.status_code, *smtp_ctx->status);
 
                 if (cState() == smtp_state_connect_command || cState() == smtp_state_send_command)
                 {
@@ -185,7 +185,7 @@ namespace ReadyMailSMTP
 
         int tcpAvailable() { return smtp_ctx->client ? smtp_ctx->client->available() : 0; }
         int tcpRead() { return smtp_ctx->client ? smtp_ctx->client->read() : -1; }
-        void getResponseStatus(const String &resp, smtp_server_status_code statusCode, int beginPos, smtp_response_status_t &status)
+        void getResponseStatus(const String &resp, smtp_server_status_code statusCode, smtp_response_status_t &status)
         {
             if (statusCode > smtp_server_status_code_0)
             {
