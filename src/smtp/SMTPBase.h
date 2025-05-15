@@ -222,12 +222,12 @@ namespace ReadyMailSMTP
 
         time_t getTimestamp(const String &timeString, bool gmt = false)
         {
-#if defined(ESP8266) && defined(ESP32)
+#if defined(ESP8266) || defined(ESP32)
             struct tm timeinfo;
-            if (strstr(timeString, ",") != NULL)
-                strptime(timeString, "%a, %d %b %Y %H:%M:%S %z", &timeinfo);
+            if (strstr(timeString.c_str(), ",") != NULL)
+                strptime(timeString.c_str(), "%a, %d %b %Y %H:%M:%S %z", &timeinfo);
             else
-                strptime(timeString, "%d %b %Y %H:%M:%S %z", &timeinfo);
+                strptime(timeString.c_str(), "%d %b %Y %H:%M:%S %z", &timeinfo);
 
             time_t ts = mktime(&timeinfo);
             return ts;
