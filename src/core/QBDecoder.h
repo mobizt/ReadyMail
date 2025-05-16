@@ -1,11 +1,14 @@
-#pragma once
-
 #ifndef QB_DECODER_H
 #define QB_DECODER_H
 
 #include <Arduino.h>
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
+
+#if defined($cu)
+#undef $cu
+#endif
+#define $cu const unsigned char
 
 // Renesas devices
 #if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
@@ -14,6 +17,35 @@
 #else
 #define XMAILER_STRSEP strsep
 #endif
+
+// Re-interpret cast
+template <typename To, typename From>
+static To rd_cast(From frm)
+{
+  return reinterpret_cast<To>(frm);
+}
+
+static void rd_set(void *m, int size) { memset(m, 0, size); }
+
+template <typename T = void *>
+static T rd_mem(int len, bool set = false)
+{
+  T buf = rd_cast<T>(malloc(len));
+  if (set)
+    rd_set(buf, len);
+  return buf;
+}
+
+// we have to set null, pass the pointer instead
+static void rd_free(void *ptr)
+{
+    void **p = rd_cast<void **>(ptr);
+    if (*p)
+    {
+        free(*p);
+        *p = 0;
+    }
+}
 
 #define strfcpy(A, B, C) strncpy(A, B, C), *(A + (C) - 1) = 0
 
@@ -69,7 +101,7 @@ public:
   ~QBDecoder() {};
   void decode(char *d, const char *s, size_t dlen)
   {
-    const char *p, *q;
+    const char *q;
     size_t n;
     int found_encoded = 0;
 
@@ -77,6 +109,7 @@ public:
 
     while (*s && dlen > 0)
     {
+      const char *p;
       if ((p = strstr(s, "=?")) == NULL ||
           (q = strchr(p + 2, '?')) == NULL ||
           (q = strchr(q + 1, '?')) == NULL ||
@@ -126,7 +159,6 @@ private:
 
   void decodeWord(char *d, const char *s, size_t dlen)
   {
-
     char *p = safe_strdup(s);
     char *pp = p;
     char *end = p;
@@ -216,7 +248,7 @@ private:
       pp = end;
     }
 
-    free(p);
+    rd_free(&p);
 
     if (filter)
     {
@@ -238,7 +270,7 @@ private:
     if (!s || !*s)
       return 0;
     l = strlen(s) + 1;
-    p = (char *)malloc(l);
+    p = rd_mem<char *>(l);
     memcpy(p, s, l);
     return (p);
   }

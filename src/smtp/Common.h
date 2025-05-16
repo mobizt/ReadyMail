@@ -340,6 +340,7 @@ namespace ReadyMailSMTP
         {
             content = body;
             data_source = smtp_msg_body_data_string;
+            has_content = body.length() > 0;
             return *this;
         }
 
@@ -348,6 +349,7 @@ namespace ReadyMailSMTP
         {
             static_content = body;
             static_size = size;
+            has_content = size > 0;
             data_source = smtp_msg_body_data_static;
             return *this;
         }
@@ -358,6 +360,7 @@ namespace ReadyMailSMTP
         {
             this->filename = filename.startsWith("/") ? filename : "/" + filename;
             this->cb = callback;
+            has_content = true;
             data_source = smtp_msg_body_data_file;
             return *this;
         }
@@ -416,11 +419,11 @@ namespace ReadyMailSMTP
         int data_index = 0, data_size = 0;
         float progress = 0, last_progress = 0;
         uint32_t static_size = 0;
-        smtp_msg_body_data_sources data_source;
+        smtp_msg_body_data_sources data_source = smtp_msg_body_data_string;
         smtp_content_xenc xenc = xenc_none;
         String content, charSet = "UTF-8", content_type = "text/html", transfer_encoding = "7bit";
         const char *static_content = nullptr;
-        bool flowed = false;
+        bool flowed = false, header_sent = false, has_content = false, has_cid_content = false;
         String softbreak_buf;
 #if defined(ENABLE_FS)
         String filename;
@@ -433,30 +436,41 @@ namespace ReadyMailSMTP
         void beginFileSrc(File &fs, bool &file_opened, String &enc)
         {
             // open file read
-            cb(fs, filename.c_str(), readymail_file_mode_open_read);
-            if (fs)
+            openFileRead(fs, file_opened);
+            if (file_opened)
             {
+                uint8_t v = rd_verify_string_file(fs);
+                has_cid_content = v > 1;
+
                 data_size = fs.size();
-                file_opened = true;
-                if (xenc != xenc_base64)
-                {
-                    enc = rd_is_non_ascii_file(fs) ? "quoted-printable" : transfer_encoding;
-                    cb(fs, filename.c_str(), readymail_file_mode_open_read);
-                }
+                if (xenc != xenc_base64 && xenc != xenc_qp)
+                    enc = v > 0 ? "quoted-printable" : transfer_encoding;
+                file_opened = false;
+                fs.close();
             }
+        }
+        void openFileRead(File &fs, bool &file_opened)
+        {
+            cb(fs, filename.c_str(), readymail_file_mode_open_read);
+            file_opened = fs ? true : false;
         }
 #endif
         void beginStringSrc(String &enc)
         {
-            if (xenc != xenc_base64)
-                enc =rd_is_non_ascii(content.c_str()) ? "quoted-printable" : transfer_encoding;
+            uint8_t v = rd_verify_string(content.c_str());
+            has_cid_content = v > 1;
+            if (xenc != xenc_base64 && xenc != xenc_qp)
+                enc = v > 0 ? "quoted-printable" : transfer_encoding;
             data_size = content.length();
         }
+
         void beginStaticSrc(String &enc)
         {
             data_size = static_size;
-            if (xenc != xenc_base64)
-                enc =rd_is_non_ascii((const char *)static_content) ? "quoted-printable" : transfer_encoding;
+            uint8_t v = rd_verify_string(rd_cast<const char *>(static_content));
+            has_cid_content = v > 1;
+            if (xenc != xenc_base64 && xenc != xenc_qp)
+                enc = v > 0 ? "quoted-printable" : transfer_encoding;
         }
     };
 

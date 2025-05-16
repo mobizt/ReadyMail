@@ -347,8 +347,6 @@ namespace ReadyMailIMAP
 
         bool isCondStoreSupported() { return imap_ctx->feature_caps[imap_read_cap_condstore]; }
 
-        bool isModseqSupported() { return isCondStoreSupported() && !res->mailbox_info.noModseq; }
-
         bool select(const String &mailbox, imap_mailbox_mode mode)
         {
             bool exists = false;
@@ -371,8 +369,7 @@ namespace ReadyMailIMAP
                     if (mailbox == (*imap_ctx->mailboxes)[i][2])
                     {
                         exists = true;
-                        if (imap_ctx->current_mailbox != mailbox)
-                            imap_ctx->current_mailbox = mailbox;
+                        imap_ctx->current_mailbox = mailbox;
                     }
                 }
             }
@@ -380,8 +377,7 @@ namespace ReadyMailIMAP
             if (!exists && imap_ctx->mailboxes->size()) // Skip mailbox checking if list is not executed.
                 return setError(imap_ctx, __func__, IMAP_ERROR_MAILBOX_NOT_EXISTS);
 
-            if (imap_ctx->current_mailbox != mailbox)
-                imap_ctx->current_mailbox = mailbox;
+            imap_ctx->current_mailbox = mailbox;
 
             res->mailbox_info.name = imap_ctx->current_mailbox;
 
@@ -424,13 +420,13 @@ namespace ReadyMailIMAP
             return true;
         }
 #if defined(ENABLE_IMAP_APPEND)
-        bool append(SMTPMessage &msg, const String &flags, const String &date, bool lastAppend)
+        bool append(const SMTPMessage &msg, const String &flags, const String &date, bool lastAppend)
         {
             String buf;
             releaseSMTP();
             imap_ctx->smtp = new SMTPClient(*imap_ctx->client);
             imap_ctx->msg = msg;
-            imap_ctx->smtp_ctx = reinterpret_cast<smtp_context *>(imap_ctx->smtp->contextAddr());
+            imap_ctx->smtp_ctx = rd_cast<smtp_context *>(imap_ctx->smtp->contextAddr());
             imap_ctx->smtp_ctx->client = imap_ctx->client;
             imap_ctx->smtp_ctx->server_status->connected = true;
             imap_ctx->smtp_ctx->options.accumulate = true;

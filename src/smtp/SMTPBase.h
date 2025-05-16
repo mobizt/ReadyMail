@@ -22,12 +22,12 @@ namespace ReadyMailSMTP
         }
         int indexOf(const char *str, const char *find)
         {
-            char *s = strstr(str, find);
+            const char *s = strstr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
         int indexOf(const char *str, char find)
         {
-            char *s = strchr(str, find);
+            const char *s = strchr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
         bool isValidEmail(const char *email)
@@ -71,9 +71,9 @@ namespace ReadyMailSMTP
                 setDebug(data, true, "[send]");
 #endif
             data += crlf ? "\r\n" : "";
-            return tcpSend((uint8_t *)data.c_str(), data.length()) == data.length();
+            return tcpSend(rd_cast<const uint8_t *>(data.c_str()), data.length()) == data.length();
         }
-        size_t tcpSend(uint8_t *data, size_t len)
+        size_t tcpSend(const uint8_t *data, size_t len)
         {
             if (smtp_ctx->options.accumulate)
             {
@@ -89,7 +89,7 @@ namespace ReadyMailSMTP
             tState() = state;
             setDebug(msg);
         }
-        
+
         void setDebug(const String &info, bool core = false, const String &tag = "[core]")
         {
             if (smtp_ctx->status)
@@ -298,7 +298,7 @@ namespace ReadyMailSMTP
 
         int split(const String &token, const char *sep, String *out, int len)
         {
-            char *p = (char *)malloc(token.length() + 1);
+            char *p = rd_mem<char *>(token.length() + 1);
             strcpy(p, token.c_str());
             char *pp = p;
             char *end = p;
@@ -314,8 +314,7 @@ namespace ReadyMailSMTP
                 }
                 pp = end;
             }
-            free(p);
-            p = nullptr;
+            rd_free(&p);
             return i;
         }
 

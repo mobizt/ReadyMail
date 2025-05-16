@@ -6,7 +6,7 @@
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
-static const unsigned char rd_base64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static $cu rd_b64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void __attribute__((used)) sys_yield()
 {
@@ -17,25 +17,19 @@ static void __attribute__((used)) sys_yield()
 #endif
 }
 
-static void rd_release(void *buf)
-{
-    free(buf);
-    buf = nullptr;
-}
-
 void rd_print_to(String &buff, int size, const char *format, ...)
 {
     size += strlen(format) + 10;
-    char *s = (char *)malloc(size);
+    char *s = rd_mem<char *>(size);
     va_list va;
     va_start(va, format);
     vsnprintf(s, size, format, va);
     va_end(va);
-    buff += (const char *)s;
-    rd_release((void *)s);
+    buff += rd_cast<const char *>(s);
+    rd_free(&s);
 }
 
-static unsigned char rd_base64_lookup(char c)
+static unsigned char rd_b64_lookup(char c)
 {
     if (c >= 'A' && c <= 'Z')
         return c - 'A';
@@ -50,20 +44,19 @@ static unsigned char rd_base64_lookup(char c)
     return -1;
 }
 
-static void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
+static void rd_a4_to_a3(unsigned char *a3, $cu *a4)
 {
     a3[0] = (a4[0] << 2) + ((a4[1] & 0x30) >> 4);
     a3[1] = ((a4[1] & 0xf) << 4) + ((a4[2] & 0x3c) >> 2);
     a3[2] = ((a4[2] & 0x3) << 6) + a4[3];
 }
 
-static uint8_t *rd_base64_decode_impl(const char *encoded, int &size)
+static uint8_t *rd_b64_dec_impl(const char *encoded, int &size)
 {
     int encoded_len = strlen(encoded);
     int decoded_len = (encoded_len * 3) / 4;
-    uint8_t *raw = (uint8_t *)malloc(decoded_len + 1);
-
-    int i = 0, j = 0;
+    uint8_t *raw = rd_mem<uint8_t *>(decoded_len + 1);
+    int i = 0;
     int raw_len = 0;
     unsigned char a3[3];
     unsigned char a4[4];
@@ -77,7 +70,7 @@ static uint8_t *rd_base64_decode_impl(const char *encoded, int &size)
         if (i == 4)
         {
             for (i = 0; i < 4; i++)
-                a4[i] = rd_base64_lookup(a4[i]);
+                a4[i] = rd_b64_lookup(a4[i]);
 
             rd_a4_to_a3(a3, a4);
             for (i = 0; i < 3; i++)
@@ -88,59 +81,59 @@ static uint8_t *rd_base64_decode_impl(const char *encoded, int &size)
 
     if (i)
     {
-        for (j = i; j < 4; j++)
+        for (int j = i; j < 4; j++)
             a4[j] = '\0';
 
-        for (j = 0; j < 4; j++)
-            a4[j] = rd_base64_lookup(a4[j]);
+        for (int j = 0; j < 4; j++)
+            a4[j] = rd_b64_lookup(a4[j]);
 
         rd_a4_to_a3(a3, a4);
 
-        for (j = 0; j < i - 1; j++)
+        for (int j = 0; j < i - 1; j++)
             raw[raw_len++] = a3[j];
     }
     size = raw_len;
     return raw;
 }
 
-static char *rd_base64_decode(const char *encoded)
+static char *rd_b64_dec(const char *encoded)
 {
     int len = 0;
-    char *raw = (char *)rd_base64_decode_impl(encoded, len);
+    char *raw = rd_cast<char *>(rd_b64_dec_impl(encoded, len));
     raw[len] = '\0';
     return raw;
 }
 
-static char *rd_base64_encode(const unsigned char *raw, int len)
+static char *rd_b64_enc($cu *raw, int len)
 {
     uint8_t count = 0;
     char buffer[3];
-    char *encoded = (char *)malloc(len * 4 / 3 + 4);
+    char *encoded = rd_mem<char *>(len * 4 / 3 + 4);
     int c = 0;
     for (int i = 0; i < len; i++)
     {
         buffer[count++] = raw[i];
         if (count == 3)
         {
-            encoded[c++] = rd_base64_map[buffer[0] >> 2];
-            encoded[c++] = rd_base64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            encoded[c++] = rd_base64_map[((buffer[1] & 0x0f) << 2) + (buffer[2] >> 6)];
-            encoded[c++] = rd_base64_map[buffer[2] & 0x3f];
+            encoded[c++] = rd_b64_map[buffer[0] >> 2];
+            encoded[c++] = rd_b64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
+            encoded[c++] = rd_b64_map[((buffer[1] & 0x0f) << 2) + (buffer[2] >> 6)];
+            encoded[c++] = rd_b64_map[buffer[2] & 0x3f];
             count = 0;
         }
     }
     if (count > 0)
     {
-        encoded[c++] = rd_base64_map[buffer[0] >> 2];
+        encoded[c++] = rd_b64_map[buffer[0] >> 2];
         if (count == 1)
         {
-            encoded[c++] = rd_base64_map[(buffer[0] & 0x03) << 4];
+            encoded[c++] = rd_b64_map[(buffer[0] & 0x03) << 4];
             encoded[c++] = '=';
         }
         else if (count == 2)
         {
-            encoded[c++] = rd_base64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            encoded[c++] = rd_base64_map[(buffer[1] & 0x0f) << 2];
+            encoded[c++] = rd_b64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
+            encoded[c++] = rd_b64_map[(buffer[1] & 0x0f) << 2];
         }
         encoded[c++] = '=';
     }
@@ -219,7 +212,7 @@ static String rd_qp_encode_chunk(const char *src, int &index, bool flowed, int m
     String sbuf;
     int sindex = 0;
     int len = strlen(src);
-    char *out = (char *)malloc(10);
+    char *out = rd_mem<char *>(10);
 
     // Breaks the string at sp with soft linebreak for flowed text
     if (flowed)
@@ -261,7 +254,7 @@ static String rd_qp_encode_chunk(const char *src, int &index, bool flowed, int m
     }
 out:
     if (out)
-        rd_release(out);
+        rd_free(&out);
     index += sindex;
     return sbuf;
 }
@@ -272,7 +265,7 @@ static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int 
 
     String sbuf;
     int sindex = 0;
-    char *out = (char *)malloc(10);
+    char *out = rd_mem<char *>(10);
 
     // Breaks the string at sp with soft linebreak for flowed text
     if (flowed)
@@ -285,11 +278,11 @@ static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int 
 
     fs.seek(index);
 
-    int c = 0, c1 = 0;
+    int c1 = 0;
 
     while (fs.available() || c1 > 0)
     {
-        c = c1 == 0 ? fs.read() : c1;
+        int c = c1 == 0 ? fs.read() : c1;
         c1 = fs.available() ? fs.read() : 0;
 
         if (sbuf.length() >= max_len - 3 && c != 10 && c != 13)
@@ -318,36 +311,71 @@ static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int 
     }
 out:
     if (out)
-        rd_release(out);
+        rd_free(&out);
     index += sindex;
     return sbuf;
 }
 #endif
 
-static bool rd_is_non_ascii(const char *str)
+// > 0 requires base64 or quoted-printable encoding
+static uint8_t rd_verify_string(const char *str)
 {
+    uint8_t ret = 0;
+    char c[5];
+    for (int i = 0; i < 5; i++)
+        c[i] = 0;
+
     while (*str)
     {
-        if ((unsigned char)*str > 127)
-            return true;
+        unsigned char v = (unsigned char)*str;
+        if (v > 127)
+            ret |= 1;
+
+        c[3] = c[2];
+        c[2] = c[1];
+        c[1] = c[0];
+        c[0] = v;
+
+        if (c[3] == 'c' && c[2] == 'i' && c[1] == 'd' && c[0] == ':')
+            ret |= 2;
+
+        if (ret == 3)
+            break;
+
         str++;
     }
-    return false;
+    return ret;
 }
 
 #if defined(ENABLE_FS)
-static bool rd_is_non_ascii_file(File &fs)
+
+// > 0 requires base64 or quoted-printable encoding
+static uint8_t rd_verify_string_file(File &fs)
 {
+    uint8_t ret = 0;
+    char c[4];
+    for (int i = 0; i < 4; i++)
+        c[i] = 0;
+
     while (fs.available())
     {
-        if ((unsigned char)fs.read() > 127)
-        {
-            fs.close();
-            return true;
-        }
+        unsigned char v = (unsigned char)fs.read();
+        if (v > 127)
+            ret |= 1;
+
+        c[3] = c[2];
+        c[2] = c[1];
+        c[1] = c[0];
+        c[0] = v;
+
+        if (c[3] == 'c' && c[2] == 'i' && c[1] == 'd' && c[0] == ':')
+            ret |= 2;
+
+        if (ret == 3)
+            break;
     }
     fs.close();
-    return false;
+    return ret;
 }
 #endif
 
@@ -356,7 +384,6 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
     String line, buf;
     buf.reserve(100);
     line.reserve(100);
-    int len = strlen(src), sindex = 0;
     if (mode == 2 /* xenc_qp */)
         line = rd_qp_encode_chunk(src, index, flowed, max_len, softbreak_buf, softbreak_index);
     else
@@ -369,6 +396,8 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
                 buf += softbreak_buf;
             softbreak_buf.remove(0, softbreak_buf.length());
         }
+
+        int len = strlen(src), sindex = 0;
 
         for (int i = index; i < len; i++)
         {
@@ -387,9 +416,9 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
         {
             if (mode == 3 /* xenc_base64 */)
             {
-                char *enc = rd_base64_encode((const unsigned char *)buf.c_str(), buf.length());
+                char *enc = rd_b64_enc(rd_cast<$cu *>(buf.c_str()), buf.length());
                 line = enc;
-                rd_release((void *)enc);
+                rd_free(&enc);
             }
             else
                 line = buf;
@@ -406,7 +435,6 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
     String line, buf;
     buf.reserve(100);
     line.reserve(100);
-    int sindex = 0;
     if (mode == 2 /* xenc_qp */)
         line = rd_qp_encode_file(fs, len, index, flowed, max_len, softbreak_buf, softbreak_index);
     else
@@ -421,6 +449,7 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
         }
 
         fs.seek(index);
+        int sindex = 0;
         while (fs.available())
         {
             if (buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
@@ -439,10 +468,10 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
         {
             if (mode == 3 /* xenc_base64 */)
             {
-                char *enc = rd_base64_encode((const unsigned char *)buf.c_str(), buf.length());
+                char *enc = rd_b64_enc(rd_cast<$cu *>(buf.c_str()), buf.length());
                 line = enc;
                 line += "\r\n";
-                rd_release((void *)enc);
+                rd_free(&enc);
             }
             else
                 line = buf;
@@ -461,11 +490,11 @@ String rd_enc_oauth(const String &email, const String &accessToken)
     String out;
     String raw;
     rd_print_to(raw, email.length() + accessToken.length() + 30, "user=%s\1auth=Bearer %s\1\1", email.c_str(), accessToken.c_str());
-    char *enc = rd_base64_encode((const unsigned char *)raw.c_str(), raw.length());
+    char *enc = rd_b64_enc(rd_cast<$cu *>(raw.c_str()), raw.length());
     if (enc)
     {
         out = enc;
-        rd_release((void *)enc);
+        rd_free(&enc);
     }
     return out;
 }
@@ -475,17 +504,16 @@ String rd_enc_plain(const String &email, const String &password)
     // rfc4616
     String out;
     int len = email.length() + password.length() + 2;
-    uint8_t *buf = (uint8_t *)malloc(len);
-    memset(buf, 0, len);
+    uint8_t *buf = rd_mem<uint8_t *>(len, true);
     memcpy(buf + 1, email.c_str(), email.length());
     memcpy(buf + email.length() + 2, password.c_str(), password.length());
-    char *enc = rd_base64_encode(buf, len);
+    char *enc = rd_b64_enc(buf, len);
     if (enc)
     {
         out = enc;
-        rd_release((void *)enc);
+        rd_free(&enc);
     }
-    rd_release((void *)buf);
+    rd_free(&buf);
     return out;
 }
 
@@ -537,7 +565,7 @@ static int rd_encode_unicode_utf8(char *out, uint32_t utf)
     }
 }
 
-static void rd_decode_tis620_utf8(char *out, const unsigned char *in, size_t len)
+static void rd_dec_tis620_utf8(char *out, $cu *in, size_t len)
 {
     // output is the 3-byte value UTF-8
     int j = 0;
@@ -557,9 +585,9 @@ static void rd_decode_tis620_utf8(char *out, const unsigned char *in, size_t len
     }
 }
 
-static int rd_decode_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
+static int rd_dec_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
 
-static void rd_decode_qp_utf8(const char *src, char *out)
+static void rd_dec_qp_utf8(const char *src, char *out)
 {
     const char *tmp = "0123456789ABCDEF";
     int idx = 0;
@@ -577,19 +605,19 @@ static void rd_decode_qp_utf8(const char *src, char *out)
             out[idx++] = *src++;
         else
         {
-            out[idx++] = rd_decode_char(src);
+            out[idx++] = rd_dec_char(src);
             src += 3;
         }
     }
 }
 
-static char *rd_decode_7bit_utf8(const unsigned char *src)
+static char *rd_dec_7bit_utf8($cu *src)
 {
     String s;
 
     // only non NULL and 7-bit ASCII are allowed
     // rfc2045 section 2.7
-    size_t len = src ? strlen((const char *)src) : 0;
+    size_t len = src ? strlen(rd_cast<const char *>(src)) : 0;
 
     for (size_t i = 0; i < len; i++)
     {
@@ -598,47 +626,46 @@ static char *rd_decode_7bit_utf8(const unsigned char *src)
     }
 
     // some special chars can't send in 7bit unless encoded as queoted printable string
-    char *decoded = (char *)malloc(s.length() + 10);
-    memset(decoded, 0, s.length() + 10);
-    rd_decode_qp_utf8(s.c_str(), decoded);
+    char *decoded = rd_mem<char *>(s.length() + 10, true);
+    rd_dec_qp_utf8(s.c_str(), decoded);
     return decoded;
 }
 
-static char *rd_decode_8bit_utf8(const char *src)
+static char *rd_dec_8bit_utf8(const char *src)
 {
     String s;
 
     // only non NULL and less than 998 octet length are allowed
     // rfc2045 section 2.8
     size_t len = src ? strlen(src) : 0;
+    if (len > 998)
+        len = 998;
 
     for (size_t i = 0; i < len; i++)
     {
-        if (src[i] > 0 && i < 998)
+        if (src[i] > 0)
             s += src[i];
     }
 
-    char *decoded = (char *)malloc(s.length() + 1);
-    memset(decoded, 0, s.length() + 1);
+    char *decoded = rd_mem<char *>(s.length() + 1, true);
     strcpy(decoded, s.c_str());
     s.remove(0, s.length());
     return decoded;
 }
 
-static int rd_decode_latin1_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
+static int rd_dec_latin1_utf8(unsigned char *out, int *outlen, $cu *in, int *inlen)
 {
-    unsigned char *outstart = out;
-    const unsigned char *base = in;
-    const unsigned char *processed = in;
-    unsigned char *outend = out + *outlen;
-    const unsigned char *inend;
-    unsigned int c;
+    $cu *outstart = out;
+    $cu *base = in;
+    $cu *processed = in;
+    $cu *outend = out + *outlen;
+    $cu *inend;
     int bits;
 
     inend = in + (*inlen);
     while ((in < inend) && (out - outstart + 5 < *outlen))
     {
-        c = *in++;
+        unsigned int c = *in++;
 
         /* assertion: c is a single UTF-4 value */
         if (out >= outend)
@@ -660,7 +687,7 @@ static int rd_decode_latin1_utf8(unsigned char *out, int *outlen, const unsigned
                 break;
             *out++ = ((c >> bits) & 0x3F) | 0x80;
         }
-        processed = (const unsigned char *)in;
+        processed = rd_cast<$cu *>(in);
     }
     *outlen = out - outstart;
     *inlen = processed - base;

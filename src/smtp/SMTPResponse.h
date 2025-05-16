@@ -109,7 +109,7 @@ namespace ReadyMailSMTP
                     if (statusCode() == smtp_server_status_code_334)
                     {
                         // base64 encoded server challenge message
-                        char *decoded = rd_base64_decode((const char *)smtp_ctx->status->text.c_str());
+                        char *decoded = rd_b64_dec(rd_cast<const char *>(smtp_ctx->status->text.c_str()));
                         if (decoded)
                         {
                             if (cState() == smtp_state_auth_xoauth2 && indexOf(decoded, "{\"status\":") > -1)
@@ -120,7 +120,7 @@ namespace ReadyMailSMTP
                             else if ((cState() == smtp_state_auth_login && indexOf(decoded, "Username:") > -1) ||
                                      (cState() == smtp_state_login_user && indexOf(decoded, "Password:") > -1))
                                 setReturn(true, complete, ret);
-                            rd_release((void *)decoded);
+                            rd_free(&decoded);
                             decoded = nullptr;
                         }
                     }
@@ -253,7 +253,13 @@ namespace ReadyMailSMTP
         }
 
     public:
-        SMTPResponse() {}
+        SMTPResponse()
+        {
+            for (uint8_t i = 0; i < smtp_auth_cap_max_type; i++)
+                auth_caps[i] = 0;
+            for (uint8_t i = 0; i < smtp_send_cap_max_type; i++)
+                feature_caps[i] = 0;
+        }
     };
 }
 #endif

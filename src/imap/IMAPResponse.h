@@ -81,7 +81,7 @@ namespace ReadyMailIMAP
                     {
                         if (cState() == imap_state_auth_xoauth2)
                         {
-                            char *decoded = rd_base64_decode((const char *)imap_ctx->status->text.c_str());
+                            char *decoded = rd_b64_dec(rd_cast<const char *>(imap_ctx->status->text.c_str()));
                             if (decoded)
                             {
                                 if (indexOf(decoded, "{\"status\":") > -1)
@@ -89,7 +89,7 @@ namespace ReadyMailIMAP
                                     cCode() = function_return_failure;
                                     setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION, decoded);
                                 }
-                                rd_release((void *)decoded);
+                                rd_free(&decoded);
                                 decoded = nullptr;
                             }
                         }

@@ -240,6 +240,7 @@ namespace ReadyMailIMAP
 
     enum imap_data_callback_event
     {
+        imap_data_event_undefined,
         imap_data_event_search,
         imap_data_event_fetch_envelope,
         imap_data_event_fetch_body
@@ -378,7 +379,7 @@ namespace ReadyMailIMAP
     private:
         friend class IMAPParser;
         String section, filepath;
-        uint32_t octet_count, total_read = 0, decoded_len = 0 /* The sum of the decoded octet */;
+        uint32_t octet_count = 0, total_read = 0, decoded_len = 0 /* The sum of the decoded octet */;
         imap_transfer_encoding_scheme transfer_encoding = imap_transfer_encoding_undefined;
         imap_char_encoding_scheme char_encoding = imap_char_encoding_scheme_default;
         bool text_part = false, last_octet = false /* last octet bytes ')\r\n' found */;
@@ -515,7 +516,7 @@ namespace ReadyMailIMAP
         int *msgIndex = nullptr;
         int msgFound = 0;
         std::vector<uint32_t> msgNums;
-        imap_data_callback_event eventType;
+        imap_data_callback_event eventType = imap_data_event_undefined;
 
         std::vector<imap_file_ctx> *files = nullptr;
         std::vector<std::pair<String, String>> *headers = nullptr;

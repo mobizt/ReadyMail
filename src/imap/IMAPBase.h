@@ -46,12 +46,12 @@ namespace ReadyMailIMAP
         }
         int indexOf(const char *str, const char *find)
         {
-            char *s = strstr(str, find);
+            const char *s = strstr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
         int indexOf(const char *str, char find)
         {
-            char *s = strchr(str, find);
+            const char *s = strchr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
         void clear(String &s) { s.remove(0, s.length()); }
@@ -68,9 +68,9 @@ namespace ReadyMailIMAP
             setDebug(imap_ctx, data, true);
 #endif
             data += crlf ? "\r\n" : "";
-            return tcpSend((uint8_t *)data.c_str(), data.length()) == data.length();
+            return tcpSend(rd_cast<const uint8_t *>(data.c_str()), data.length()) == data.length();
         }
-        size_t tcpSend(uint8_t *data, size_t len) { return imap_ctx->client ? imap_ctx->client->write(data, len) : 0; }
+        size_t tcpSend(const uint8_t *data, size_t len) { return imap_ctx->client ? imap_ctx->client->write(data, len) : 0; }
 
         bool setError(imap_context *imap_ctx, const char *func, int code, const String &msg = "")
         {
@@ -136,7 +136,7 @@ namespace ReadyMailIMAP
             ret = function_return_exit;
             flag = false;
         }
-        
+
 #if defined(ENABLE_DEBUG)
         void setDebugState(imap_state state, const String &msg)
         {

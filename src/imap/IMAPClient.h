@@ -36,7 +36,7 @@ namespace ReadyMailIMAP
          * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
          * The SSL client using in scenario 2 and 3 should support protocol upgrades.
          */
-        IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
+        explicit IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
             imap_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
@@ -55,7 +55,7 @@ namespace ReadyMailIMAP
          * @param client The ReadyClient class object.
          *
          */
-        IMAPClient(ReadyClient &client)
+        explicit IMAPClient(ReadyClient &client)
         {
             server_status.start_tls = false;
             imap_ctx.auto_client = &client;
@@ -365,7 +365,7 @@ namespace ReadyMailIMAP
          *
          * The name of folder/mailbox select here should be existed.
          */
-        bool append(SMTPMessage &msg, const String &flags, const String &date, bool lastAppend, bool await = true)
+        bool append(const SMTPMessage &msg, const String &flags, const String &date, bool lastAppend, bool await = true)
         {
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_append, "Appending message...");

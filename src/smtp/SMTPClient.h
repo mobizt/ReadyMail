@@ -80,7 +80,7 @@ namespace ReadyMailSMTP
          * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
          * The SSL client using in scenario 2 and 3 should support protocol upgrades.
          */
-        SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
+        explicit SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
             smtp_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
@@ -97,7 +97,7 @@ namespace ReadyMailSMTP
          * @param client The ReadyClient class object.
          *
          */
-        SMTPClient(ReadyClient &client)
+        explicit SMTPClient(ReadyClient &client)
         {
             server_status.start_tls = false;
             smtp_ctx.auto_client = &client;
@@ -302,7 +302,7 @@ namespace ReadyMailSMTP
         SMTPCommandResponse commandResponse() { return smtp_ctx.cmd_ctx.resp; }
 
         // Private used by other classes.
-        uint32_t contextAddr() { return reinterpret_cast<uint32_t>(&smtp_ctx); }
+        uint32_t contextAddr() { return rd_cast<uint32_t>(&smtp_ctx); }
     };
 }
 #endif

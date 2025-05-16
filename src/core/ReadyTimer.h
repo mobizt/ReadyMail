@@ -65,7 +65,7 @@ public:
     uint8_t feedCount() const { return feed_count; }
 
     bool isRunning() const { return enable; };
-    
+
     bool ready()
     {
         loop();

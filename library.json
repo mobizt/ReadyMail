@@ -1,6 +1,6 @@
 {
   "name": "ReadyMail",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "keywords": "communication, email, imap, smtp, esp32, esp8266, samd, arduino",
   "description": "The fast and lightweight async Email client library for Arduino.",
   "repository": {

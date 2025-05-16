@@ -281,11 +281,11 @@ namespace ReadyMailIMAP
 
         void authLogin(bool user)
         {
-            char *enc = rd_base64_encode((const unsigned char *)(user ? email.c_str() : password.c_str()), user ? email.length() : password.length());
+            char *enc = rd_b64_enc(rd_cast<$cu *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
             if (enc)
             {
                 tcpSend(true, 1, enc);
-                rd_release((void *)enc);
+                rd_free(&enc);
             }
             // expected server challenge response
             setState(user ? imap_state_login_user : imap_state_login_psw);

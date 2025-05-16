@@ -13,7 +13,7 @@ namespace ReadyMailSMTP
   private:
     String mime, boundary;
 
-    content_type_data(const String &mime)
+    explicit content_type_data(const String &mime)
     {
       this->mime = mime;
       if (mime == "alternative" || mime == "related" || mime == "mixed" || mime == "parallel")
@@ -23,7 +23,7 @@ namespace ReadyMailSMTP
     String getMIMEBoundary(int len)
     {
       String tmp = boundary_map;
-      char *buf = (char *)malloc(len + 1);
+      char *buf = rd_mem<char *>(len + 1);
       if (len > 2)
       {
         --len;
@@ -37,8 +37,7 @@ namespace ReadyMailSMTP
         buf[len] = '\0';
       }
       String s = buf;
-      free(buf);
-      buf = nullptr;
+      rd_free(&buf);
       return s;
     }
   };
@@ -50,7 +49,7 @@ namespace ReadyMailSMTP
 
   private:
     std::vector<smtp_header_item> el;
-    smtp_header_item hdr;
+    smtp_header_item default_hdr;
 
     void push_back(smtp_header_item hdr) { el.push_back(hdr); }
 
@@ -58,7 +57,7 @@ namespace ReadyMailSMTP
     {
       if (index < (int)size())
         return el[index];
-      return hdr;
+      return default_hdr;
     }
 
     int findHeaders(rfc822_header_types type)
@@ -113,9 +112,9 @@ namespace ReadyMailSMTP
     void encodeWord(const String &str, String &out)
     {
       String buf;
-      char *enc = rd_base64_encode((const unsigned char *)str.c_str(), str.length());
+      char *enc = rd_b64_enc(rd_cast<$cu *>(str.c_str()), str.length());
       rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
-      rd_release((void *)enc);
+      rd_free(&enc);
       if (out.length())
         out += "\r\n ";
       out += buf;
@@ -369,6 +368,14 @@ namespace ReadyMailSMTP
 
       if (enc.length())
         setXEnc(html ? this->html.xenc : this->text.xenc, enc);
+    }
+
+    void openFileRead(bool html)
+    {
+      if (html)
+        this->html.openFileRead(file, file_opened);
+      else
+        this->text.openFileRead(file, file_opened);
     }
 #endif
 
