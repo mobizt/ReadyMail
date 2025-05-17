@@ -417,11 +417,11 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
             {
                 char *enc = rd_b64_enc(rd_cast<$cu *>(buf.c_str()), buf.length());
                 line = enc;
-                line += "\r\n";
                 rd_free(&enc);
             }
             else
                 line = buf;
+
             if (mode != 1 /* xenc_7bit */)
                 line += "\r\n";
 

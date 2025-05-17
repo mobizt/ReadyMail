@@ -97,11 +97,15 @@ void setup()
 
     // Set the content, content transfer encoding or charset
     msg.text.body(bodyText);
-    msg.text.transferEncoding("base64");
+
+    // content transfer encoding e.g. 7bit, base64, quoted-printable
+    // 7bit is default for ascii text and quoted-printable is default set for non-ascii text.
+    // msg.text.transferEncoding("base64");
 
     bodyText.replace("\r\n", "<br>\r\n");
     msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "</div></body></html>");
-    msg.html.transferEncoding("base64");
+
+    // msg.html.transferEncoding("base64");
 
     // With embedFile function, the html message will send as attachment.
     if (EMBED_MESSAGE)
