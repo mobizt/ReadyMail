@@ -6,6 +6,82 @@
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
+enum src_data_type
+{
+    src_data_string,
+    src_data_static,
+    src_data_file
+};
+
+struct src_data_ctx
+{
+public:
+    const char *str = nullptr;
+#if defined(ENABLE_FS)
+    File fs;
+#endif
+    src_data_type type = src_data_string;
+    bool valid = false, cid = false, nonascii = false;
+    char c = 0;
+    int index = 0;
+    bool available()
+    {
+        if (type <= src_data_static)
+            return index < size();
+#if defined(ENABLE_FS)
+        else if (fs)
+            return fs.available();
+#endif
+        return false;
+    }
+    size_t size()
+    {
+        if (type <= src_data_static)
+            return strlen(str);
+#if defined(ENABLE_FS)
+        else if (fs)
+            return fs.size();
+#endif
+        return false;
+    }
+
+    char read()
+    {
+        if (available())
+        {
+            if (type <= src_data_static)
+            {
+                c = str[index];
+                index++;
+            }
+#if defined(ENABLE_FS)
+            else if (fs)
+                c = fs.read();
+#endif
+            return c;
+        }
+        return 0;
+    }
+
+    void close()
+    {
+#if defined(ENABLE_FS)
+        if (type == src_data_file && fs)
+            fs.close();
+#endif
+    }
+
+    void seek(int index)
+    {
+        if (type <= src_data_static)
+            this->index = index;
+#if defined(ENABLE_FS)
+        else if (fs)
+            fs.seek(index);
+#endif
+    }
+};
+
 static $cu rd_b64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void __attribute__((used)) sys_yield()
@@ -142,25 +218,8 @@ static char *rd_b64_enc($cu *raw, int len)
 }
 
 #if defined(ENABLE_SMTP)
-static void rd_get_softbreak_index(const char *src, int index, int max_len, std::vector<int> &softbreak_index)
-{
-    int last_index = softbreak_index.size() ? softbreak_index[softbreak_index.size() - 1] + 1 : index;
-    int i = last_index + max_len;
-    if (i < (int)strlen(src))
-    {
-        while (i >= last_index)
-        {
-            if (src[i] == ' ' && i + 2 <= last_index + max_len)
-            {
-                softbreak_index.push_back(i);
-                break;
-            }
-            i--;
-        }
-    }
-}
 
-static void rd_add_softbreak(String &buf, int index, std::vector<int> &softbreak_index, String &softbreak_buf, int line_max_len)
+static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index, String &softbreak_buf, int line_max_len)
 {
     for (size_t i = 0; i < softbreak_index.size(); i++)
     {
@@ -176,93 +235,65 @@ static void rd_add_softbreak(String &buf, int index, std::vector<int> &softbreak
             }
             else
                 softbreak_buf = "\r\n";
-
-            break;
+            return true;
+        }
+        else if (index == -1 * softbreak_index[i])
+        {
+            softbreak_index.erase(softbreak_index.begin() + i);
+            return true;
         }
     }
+    return false;
 }
 
-#if defined(ENABLE_FS)
-
-static void rd_get_softbreak_index_file(File &fs, int index, int max_len, std::vector<int> &softbreak_index)
+static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int> &softbreak_index)
 {
-
     int last_index = softbreak_index.size() ? softbreak_index[softbreak_index.size() - 1] + 1 : index;
+
+    // conver index to positive
+    if (last_index < 0)
+        last_index = -1 * last_index;
+
     int i = last_index + max_len;
-    if (i < fs.size())
+    if (i < src.size())
     {
-        while (fs.available() && i >= last_index)
+        src.seek(index);
+        bool softbreak = false;
+        bool hardbreak = false;
+        int sbPos = 0;
+        char c1 = 0;
+        while (src.available() && i >= last_index)
         {
-            fs.seek(i);
-            char c = fs.read();
+            src.seek(i);
+            char c = src.read();
             if (c == ' ' && i + 2 <= last_index + max_len)
             {
-                softbreak_index.push_back(i);
+                if (!softbreak)
+                {
+                    softbreak = true;
+                    sbPos = i;
+                }
+            }
+
+            // hard break? store keep index as the negative index
+            if (!hardbreak && c1 == '\n')
+            {
+                sbPos = -1 * (i + 2);
+                hardbreak = true;
                 break;
             }
+
+            c1 = c;
             i--;
         }
+
+        if (softbreak || hardbreak)
+            softbreak_index.push_back(sbPos);
     }
 }
-#endif
 
-static String rd_qp_encode_chunk(const char *src, int &index, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
+static String rd_qp_encode_chunk(src_data_ctx &src, int &index, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
 {
-
-    String sbuf;
-    int sindex = 0;
-    int len = strlen(src);
-    char *out = rd_mem<char *>(10);
-
-    // Breaks the string at sp with soft linebreak for flowed text
-    if (flowed)
-    {
-        rd_get_softbreak_index(src, index, max_len, softbreak_index);
-        if (softbreak_buf.length())
-            sbuf += softbreak_buf;
-        softbreak_buf.remove(0, softbreak_buf.length());
-    }
-
-    for (int i = index; i < len; i++)
-    {
-        char c = src[i];
-        char c1 = (i < len - 1) ? src[i + 1] : 0;
-
-        if ((int)sbuf.length() >= max_len - 3 && c != 10 && c != 13)
-        {
-            sbuf += "=\r\n";
-            goto out;
-        }
-
-        if (c == 10 || c == 13)
-            sbuf += c;
-        else if (c < 32 || c == 61 || c > 126)
-        {
-            memset(out, 0, 10);
-            sprintf(out, "=%02X", (unsigned char)c);
-            sbuf += out;
-        }
-        else if (c != 32 || (c1 != 10 && c1 != 13))
-            sbuf += c;
-        else
-            sbuf += "=20";
-
-        if (flowed)
-            rd_add_softbreak(sbuf, i, softbreak_index, softbreak_buf, max_len - 3);
-
-        sindex++;
-    }
-out:
-    if (out)
-        rd_free(&out);
-    index += sindex;
-    return sbuf;
-}
-
-#if defined(ENABLE_FS)
-static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
-{
-
     String sbuf;
     int sindex = 0;
     char *out = rd_mem<char *>(10);
@@ -270,21 +301,18 @@ static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int 
     // Breaks the string at sp with soft linebreak for flowed text
     if (flowed)
     {
-        rd_get_softbreak_index_file(fs, index, max_len, softbreak_index);
+        rd_get_sb(src, index, max_len, softbreak_index);
         if (softbreak_buf.length())
             sbuf += softbreak_buf;
         softbreak_buf.remove(0, softbreak_buf.length());
     }
 
-    fs.seek(index);
-
+    src.seek(index);
     int c1 = 0;
-
-    while (fs.available() || c1 > 0)
+    while (src.available() || c1 > 0)
     {
-        int c = c1 == 0 ? fs.read() : c1;
-        c1 = fs.available() ? fs.read() : 0;
-
+        int c = c1 == 0 ? src.read() : c1;
+        c1 = src.available() ? src.read() : 0;
         if (sbuf.length() >= max_len - 3 && c != 10 && c != 13)
         {
             sbuf += "=\r\n";
@@ -304,9 +332,11 @@ static String rd_qp_encode_file(File &fs, int len, int &index, bool flowed, int 
         else
             sbuf += "=20";
 
-        if (flowed)
-            rd_add_softbreak(sbuf, index + sindex, softbreak_index, softbreak_buf, max_len - 3);
-
+        if (flowed && rd_add_sb(sbuf, index + sindex, softbreak_index, softbreak_buf, max_len - 3))
+        {
+            sindex++; // skip space after soft break
+            break;
+        }
         sindex++;
     }
 out:
@@ -315,53 +345,18 @@ out:
     index += sindex;
     return sbuf;
 }
-#endif
 
-// > 0 requires base64 or quoted-printable encoding
-static uint8_t rd_verify_string(const char *str)
+static void rd_src_check(src_data_ctx &src)
 {
-    uint8_t ret = 0;
-    char c[5];
-    for (int i = 0; i < 5; i++)
-        c[i] = 0;
-
-    while (*str)
-    {
-        unsigned char v = (unsigned char)*str;
-        if (v > 127)
-            ret |= 1;
-
-        c[3] = c[2];
-        c[2] = c[1];
-        c[1] = c[0];
-        c[0] = v;
-
-        if (c[3] == 'c' && c[2] == 'i' && c[1] == 'd' && c[0] == ':')
-            ret |= 2;
-
-        if (ret == 3)
-            break;
-
-        str++;
-    }
-    return ret;
-}
-
-#if defined(ENABLE_FS)
-
-// > 0 requires base64 or quoted-printable encoding
-static uint8_t rd_verify_string_file(File &fs)
-{
-    uint8_t ret = 0;
     char c[4];
     for (int i = 0; i < 4; i++)
         c[i] = 0;
 
-    while (fs.available())
+    while (src.available())
     {
-        unsigned char v = (unsigned char)fs.read();
+        unsigned char v = (unsigned char)src.read();
         if (v > 127)
-            ret |= 1;
+            src.nonascii = true;
 
         c[3] = c[2];
         c[2] = c[1];
@@ -369,21 +364,20 @@ static uint8_t rd_verify_string_file(File &fs)
         c[0] = v;
 
         if (c[3] == 'c' && c[2] == 'i' && c[1] == 'd' && c[0] == ':')
-            ret |= 2;
+            src.cid = true;
 
-        if (ret == 3)
+        if (src.cid && src.nonascii)
             break;
     }
-    fs.close();
-    return ret;
+    src.close();
 }
-#endif
 
-static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
+static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
 {
     String line, buf;
     buf.reserve(100);
     line.reserve(100);
+    int len = src.size();
     if (mode == 2 /* xenc_qp */)
         line = rd_qp_encode_chunk(src, index, flowed, max_len, softbreak_buf, softbreak_index);
     else
@@ -391,74 +385,27 @@ static String rd_qb_encode_chunk(const char *src, int &index, int mode, bool flo
         // Breaks the string at sp with soft linebreak for flowed text
         if (flowed)
         {
-            rd_get_softbreak_index(src, index, max_len, softbreak_index);
+            rd_get_sb(src, index, max_len, softbreak_index);
             if (softbreak_buf.length())
                 buf += softbreak_buf;
             softbreak_buf.remove(0, softbreak_buf.length());
         }
 
-        int len = strlen(src), sindex = 0;
-
-        for (int i = index; i < len; i++)
-        {
-            if ((int)buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
-            {
-                buf += src[i];
-                if (flowed)
-                    rd_add_softbreak(buf, i, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len));
-                continue;
-            }
-            sindex = i;
-            break;
-        }
-
-        if (buf.length())
-        {
-            if (mode == 3 /* xenc_base64 */)
-            {
-                char *enc = rd_b64_enc(rd_cast<$cu *>(buf.c_str()), buf.length());
-                line = enc;
-                rd_free(&enc);
-            }
-            else
-                line = buf;
-            line += "\r\n";
-            index = sindex > 0 ? sindex : len;
-        }
-    }
-    return line;
-}
-
-#if defined(ENABLE_FS)
-static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
-{
-    String line, buf;
-    buf.reserve(100);
-    line.reserve(100);
-    if (mode == 2 /* xenc_qp */)
-        line = rd_qp_encode_file(fs, len, index, flowed, max_len, softbreak_buf, softbreak_index);
-    else
-    {
-        // Breaks the string at sp with soft linebreak for flowed text
-        if (flowed)
-        {
-            rd_get_softbreak_index_file(fs, index, max_len, softbreak_index);
-            if (softbreak_buf.length())
-                buf += softbreak_buf;
-            softbreak_buf.remove(0, softbreak_buf.length());
-        }
-
-        fs.seek(index);
+        src.seek(index);
         int sindex = 0;
-        while (fs.available())
+        while (src.available())
         {
             if (buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
             {
-                buf += (char)fs.read();
-                if (flowed)
-                    rd_add_softbreak(buf, index + sindex, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len));
-
-                sindex++;
+                buf += src.read();
+                if (flowed && rd_add_sb(buf, index + sindex, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len)))
+                {
+                    sindex++; // skip space after soft break
+                    if (mode != 3 /* xenc_base64 */)
+                        break;
+                }
+                else
+                    sindex++;
                 continue;
             }
             break;
@@ -475,13 +422,14 @@ static String rd_qb_encode_file(File &fs, int len, int &index, int mode, bool fl
             }
             else
                 line = buf;
+            if (mode != 1 /* xenc_7bit */)
+                line += "\r\n";
+
             index = sindex > 0 ? index + sindex : len;
         }
     }
-
     return line;
 }
-#endif
 
 #endif
 

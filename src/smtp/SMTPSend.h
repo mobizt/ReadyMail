@@ -528,9 +528,8 @@ namespace ReadyMailSMTP
                 bool embed = (html && msg.html.embed.enable) || (!html && msg.text.embed.enable);
                 bool embed_inline = embed && ((html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline));
                 rd_print_to(ct_prop, 250, "; charset=\"%s\";%s%s", html ? msg.html.charSet.c_str() : msg.text.charSet.c_str(), html ? "" : (msg.text.flowed ? " format=\"flowed\"; delsp=\"yes\";" : ""), msg.html.embed.enable ? (html ? " Name=\"msg.html\";" : " Name=\"msg.txt\";") : "");
-
 #if defined(ENABLE_FS)
-                if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_file)
+                if ((html ? msg.html.src.type : msg.text.src.type) == src_data_file)
                     msg.openFileRead(html);
 #endif
                 setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, html ? msg.html.content_type.c_str() : msg.text.content_type.c_str(), ct_prop, msg.getEnc(html ? msg.html.xenc : msg.text.xenc), embed ? (embed_inline ? "inline" : "attachment") : "", html ? msg.html.embed.filename : msg.text.embed.filename, 0, html ? msg.html.embed.filename : msg.text.embed.filename, embed_inline ? getRandomUID() : "");
@@ -540,26 +539,14 @@ namespace ReadyMailSMTP
             }
             else if ((html && msg.html.data_index < msg.html.data_size) || (!html && msg.text.data_index < msg.text.data_size))
             {
-                String line;
-                if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_string || (html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                {
-                    const char *body = nullptr;
-                    if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                        body = (html ? msg.html.static_content : msg.text.static_content);
-                    else
-                        body = (html ? msg.html.content.c_str() : msg.text.content.c_str());
-
-                    if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                        updateUploadStatus(html ? "msg.html" : "msg.txt", html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
-                    line = rd_qb_encode_chunk(body, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
-                }
-                else
-                {
 #if defined(ENABLE_FS)
-                    updateUploadStatus(html ? msg.html.filename : msg.text.filename, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
-                    line = rd_qb_encode_file(msg.file, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
+                String filename = html ? (msg.html.src.type == src_data_file ? msg.html.filename : "msg.html") : (msg.text.src.type == src_data_file ? msg.text.filename : "msg.txt");
+#else
+                String filename = html ? (msg.html.src.type <= src_data_static ? "msg.html" : "") : (msg.text.src.type <= src_data_static ? "msg.txt" : "");
 #endif
-                }
+                if ((html ? msg.html.src.type : msg.text.src.type) >= src_data_static)
+                    updateUploadStatus(filename, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
+                String line = rd_qb_encode_chunk(html ? msg.html.src : msg.text.src, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
 
                 if (line.length() && !sendBuffer(line))
                     return false;
@@ -567,24 +554,27 @@ namespace ReadyMailSMTP
 
             if ((html && msg.html.data_index == msg.html.data_size) || (!html && msg.text.data_index == msg.text.data_size))
             {
-                if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_file)
+#if defined(ENABLE_FS)
+                String filename = html ? (msg.html.src.type == src_data_file ? msg.html.filename : "msg.html") : (msg.text.src.type == src_data_file ? msg.text.filename : "msg.txt");
+#else
+                String filename = html ? (msg.html.src.type <= src_data_static ? "msg.html" : "") : (msg.text.src.type <= src_data_static ? "msg.txt" : "");
+#endif
+                if ((html ? msg.html.src.type : msg.text.src.type) >= src_data_static)
+                    updateUploadStatus(filename, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
+
+                if ((html ? msg.html.src.type : msg.text.src.type) == src_data_file)
                 {
 #if defined(ENABLE_FS)
-                    updateUploadStatus(html ? msg.html.filename : msg.text.filename, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
-                    FileCallback cb = (html ? msg.html.cb : msg.text.cb);
-                    if (cb)
-                    {
-                        if (msg.file && msg.file_opened)
-                            msg.file.close();
-                        msg.file_opened = false;
-                    }
+                    if (msg.file && msg.file_opened)
+                        msg.file.close();
+                    msg.file_opened = false;
 #endif
                 }
-                else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                    updateUploadStatus(html ? "msg.html" : "msg.txt", html ? msg.html.data_index : msg.text.data_index, html ? msg.html.data_size : msg.text.data_size, html ? msg.html.progress : msg.text.progress, html ? msg.html.last_progress : msg.text.last_progress);
 
-                if (!close_boundary && (html ? msg.html.xenc : msg.text.xenc) == xenc_qp && !sendBuffer("\r\n"))
-                    return false;
+                if (html)
+                    msg.html.softbreak_index.clear();
+                else
+                    msg.text.softbreak_index.clear();
 
                 if (close_boundary && !sendEndBoundary(msg, content_type_index))
                     return false;
@@ -958,18 +948,6 @@ namespace ReadyMailSMTP
                 msg.setXEnc(msg.attachments[i].xenc, msg.attachments[i].transfer_encoding);
         }
 
-        void beginContent(SMTPMessage &msg, bool html)
-        {
-            if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_static)
-                msg.beginStaticSrc(html);
-#if defined(ENABLE_FS)
-            else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_file)
-                msg.beginFileSrc(html);
-#endif
-            else if ((html ? msg.html.data_source : msg.text.data_source) == smtp_msg_body_data_string)
-                msg.beginStringSrc(html);
-        }
-
         void setMIMEList(SMTPMessage &msg)
         {
             msg.resetIndex();
@@ -981,14 +959,14 @@ namespace ReadyMailSMTP
             msg.html.data_index = 0;
             msg.html.data_size = 0;
 
-            if (msg.text.has_content)
-                beginContent(msg, false);
+            if (msg.text.src.valid)
+                msg.beginSource(false);
 
-            if (msg.html.has_content)
-                beginContent(msg, true);
+            if (msg.html.src.valid)
+                msg.beginSource(true);
 
             // If no html version or no content id, treat inline image as a attachment
-            if (msg.attachments.exists(attach_type_inline) && (!msg.html.has_content || !msg.html.has_cid_content))
+            if (msg.attachments.exists(attach_type_inline) && (!msg.html.src.valid || !msg.html.src.cid))
                 msg.attachments.inlineToAttachment();
 
             if (!msg.attachments.exists(attach_type_attachment) && !msg.attachments.exists(attach_type_parallel) && msg.rfc822.size() == 0)

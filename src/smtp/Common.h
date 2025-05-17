@@ -258,13 +258,6 @@ namespace ReadyMailSMTP
         xenc_binary
     };
 
-    enum smtp_msg_body_data_sources
-    {
-        smtp_msg_body_data_string,
-        smtp_msg_body_data_static,
-        smtp_msg_body_data_file
-    };
-
     struct smtp_attach_file_config
     {
         String path;
@@ -339,8 +332,9 @@ namespace ReadyMailSMTP
         smtp_message_body_t &body(const String &body)
         {
             content = body;
-            data_source = smtp_msg_body_data_string;
-            has_content = body.length() > 0;
+            src.type = src_data_string;
+            src.str = content.c_str();
+            src.valid = body.length() > 0;
             return *this;
         }
 
@@ -349,8 +343,9 @@ namespace ReadyMailSMTP
         {
             static_content = body;
             static_size = size;
-            has_content = size > 0;
-            data_source = smtp_msg_body_data_static;
+            src.type = src_data_static;
+            src.str = static_content;
+            src.valid = size > 0;
             return *this;
         }
 
@@ -360,8 +355,9 @@ namespace ReadyMailSMTP
         {
             this->filename = filename.startsWith("/") ? filename : "/" + filename;
             this->cb = callback;
-            has_content = true;
-            data_source = smtp_msg_body_data_file;
+            src.type = src_data_file;
+            src.str = nullptr;
+            src.valid = cb;
             return *this;
         }
 #endif
@@ -419,59 +415,58 @@ namespace ReadyMailSMTP
         int data_index = 0, data_size = 0;
         float progress = 0, last_progress = 0;
         uint32_t static_size = 0;
-        smtp_msg_body_data_sources data_source = smtp_msg_body_data_string;
         smtp_content_xenc xenc = xenc_none;
         String content, charSet = "UTF-8", content_type = "text/html", transfer_encoding = "7bit";
         const char *static_content = nullptr;
-        bool flowed = false, header_sent = false, has_content = false, has_cid_content = false;
+        bool flowed = false, header_sent = false;
         String softbreak_buf;
 #if defined(ENABLE_FS)
         String filename;
         FileCallback cb = NULL;
 #endif
+        src_data_ctx src;
         std::vector<int> softbreak_index;
         embed_message_body_t embed;
 
 #if defined(ENABLE_FS)
-        void beginFileSrc(File &fs, bool &file_opened, String &enc)
-        {
-            // open file read
-            openFileRead(fs, file_opened);
-            if (file_opened)
-            {
-                uint8_t v = rd_verify_string_file(fs);
-                has_cid_content = v > 1;
-
-                data_size = fs.size();
-                if (xenc != xenc_base64 && xenc != xenc_qp)
-                    enc = v > 0 ? "quoted-printable" : transfer_encoding;
-                file_opened = false;
-                fs.close();
-            }
-        }
         void openFileRead(File &fs, bool &file_opened)
         {
             cb(fs, filename.c_str(), readymail_file_mode_open_read);
             file_opened = fs ? true : false;
+            src.fs = fs;
+        }
+        void beginSource(String &enc, File &fs, bool &file_opened)
+        {
+            if (src.type == src_data_file)
+            {
+                // open file read
+                openFileRead(fs, file_opened);
+                if (file_opened)
+                {
+                    data_size = fs.size();
+                    rd_src_check(src);
+                    file_opened = false;
+                    fs.close();
+                }
+            }
+            else
+            {
+                rd_src_check(src);
+                data_size = src.type == src_data_static ? static_size : content.length();
+            }
+
+            if (xenc != xenc_base64 && xenc != xenc_qp)
+                enc = (src.nonascii || src.cid) ? "quoted-printable" : transfer_encoding;
+        }
+#else
+        void beginSource(String &enc)
+        {
+            rd_src_check(src);
+            data_size = src.type == src_data_static ? static_size : content.length();
+            if (xenc != xenc_base64 && xenc != xenc_qp)
+                enc = (src.nonascii || src.cid) ? "quoted-printable" : transfer_encoding;
         }
 #endif
-        void beginStringSrc(String &enc)
-        {
-            uint8_t v = rd_verify_string(content.c_str());
-            has_cid_content = v > 1;
-            if (xenc != xenc_base64 && xenc != xenc_qp)
-                enc = v > 0 ? "quoted-printable" : transfer_encoding;
-            data_size = content.length();
-        }
-
-        void beginStaticSrc(String &enc)
-        {
-            data_size = static_size;
-            uint8_t v = rd_verify_string(rd_cast<const char *>(static_content));
-            has_cid_content = v > 1;
-            if (xenc != xenc_base64 && xenc != xenc_qp)
-                enc = v > 0 ? "quoted-printable" : transfer_encoding;
-        }
     };
 
     struct smtp_header_item

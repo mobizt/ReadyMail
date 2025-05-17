@@ -358,19 +358,7 @@ namespace ReadyMailSMTP
       attachments.resetIndex();
     }
 #if defined(ENABLE_FS)
-    void beginFileSrc(bool html)
-    {
-      String enc;
-      if (html)
-        this->html.beginFileSrc(file, file_opened, enc);
-      else
-        this->text.beginFileSrc(file, file_opened, enc);
-
-      if (enc.length())
-        setXEnc(html ? this->html.xenc : this->text.xenc, enc);
-    }
-
-    void openFileRead(bool html)
+       void openFileRead(bool html)
     {
       if (html)
         this->html.openFileRead(file, file_opened);
@@ -379,25 +367,20 @@ namespace ReadyMailSMTP
     }
 #endif
 
-    void beginStringSrc(bool html)
+    void beginSource(bool html)
     {
       String enc;
+#if defined(ENABLE_FS)
       if (html)
-        this->html.beginStringSrc(enc);
+        this->html.beginSource(enc, file, file_opened);
       else
-        this->text.beginStringSrc(enc);
-
-      if (enc.length())
-        setXEnc(html ? this->html.xenc : this->text.xenc, enc);
-    }
-
-    void beginStaticSrc(bool html)
-    {
-      String enc;
+        this->text.beginSource(enc, file, file_opened);
+#else
       if (html)
-        this->html.beginStaticSrc(enc);
+        this->html.beginSource(enc);
       else
-        this->text.beginStaticSrc(enc);
+        this->text.beginSource(enc);
+#endif
 
       if (enc.length())
         setXEnc(html ? this->html.xenc : this->text.xenc, enc);
