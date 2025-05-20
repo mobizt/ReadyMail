@@ -286,7 +286,29 @@ namespace ReadyMailSMTP
             return ts;
 #endif
         }
-
+#if !defined(ESP8266) && !defined(ESP32)
+        int split(const String &token, const char *sep, String *out, int len)
+        {
+            char *p = rd_mem<char *>(token.length() + 1);
+            strcpy(p, token.c_str());
+            char *pp = p;
+            char *end = p;
+            int i = 0;
+            while (pp != NULL)
+            {
+                rd_strsep(&end, sep);
+                if (strlen(pp) > 0)
+                {
+                    if (out && i < len)
+                        out[i] = pp;
+                    i++;
+                }
+                pp = end;
+            }
+            rd_free(&p);
+            return i;
+        }
+#endif
         String errMsg(int code)
         {
             String msg;
