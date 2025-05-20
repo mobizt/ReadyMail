@@ -5,6 +5,11 @@
 #if defined(ENABLE_FS)
 #include <FS.h>
 #endif
+
+#if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
+#define READYMAIL_USE_STRSEP_IMPL
+#endif
+
 #include <array>
 #include <vector>
 #include <algorithm>
@@ -40,12 +45,7 @@
 
 #endif
 
-#if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
-#define READYMAIL_STRSEP strsepImpl
-#define READYMAIL_USE_STRSEP_IMPL
-#else
-#define READYMAIL_STRSEP strsep
-#endif
+
 
 #define MAX_LINE_LEN 76
 
