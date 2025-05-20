@@ -222,7 +222,7 @@ The `SMTPCommandResponse::errorCode` value can be used for error checking if its
 
 The `SMTPCommandResponse::statusCode` value provides the SMTP server response code.
 
-The [Command.ino](/examples/Sending/Command/Command.ino) example showed how to use `SMTPClient::sendCommand()` to more with flags, message and folder or mailbox.
+The [Command.ino](/examples/Sending/Command/Command.ino) example showed how to use `SMTPClient::sendCommand()` to work with flags, message and folder or mailbox.
 
 
 ## Email Reading
