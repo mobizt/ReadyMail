@@ -16,21 +16,30 @@ namespace ReadyMailIMAP
         {
             if (imap_ctx->status)
             {
-                int i = 0, j = 0;
-                while (j < (int)info.length())
+                char *p = rd_mem<char *>(info.length() + 1);
+                strcpy(p, info.c_str());
+                char *pp = p;
+                char *end = p;
+                while (pp != NULL)
                 {
-                    while (info[j] != '\r' && info[j] != '\n' && j < (int)info.length())
-                        j++;
-
-                    imap_ctx->status->text = (core ? "[core] " : " ");
-                    imap_ctx->status->text += info.substring(i, j);
-                    if (info[j] == '\n' && j == (int)info.length() - 1)
-                        imap_ctx->status->text += "\n";
-
-                    print(imap_ctx);
-                    j += 2;
-                    i = j;
+                    rd_strsep(&end, "\r\n");
+                    if (strlen(pp) > 0)
+                    {
+                        if (strlen(pp) == 1 && pp[0] == 32)
+                        {
+                            pp = end;
+                            continue;
+                        }
+                        else
+                        {
+                            imap_ctx->status->text = (core ? "[core] " : " ");
+                            imap_ctx->status->text += pp;
+                            print(imap_ctx);
+                        }
+                    }
+                    pp = end;
                 }
+                rd_free(&p);
             }
         }
 #endif

@@ -94,21 +94,30 @@ namespace ReadyMailSMTP
         {
             if (smtp_ctx->status)
             {
-                int i = 0, j = 0;
-                while (j < (int)info.length())
+                char *p = rd_mem<char *>(info.length() + 1);
+                strcpy(p, info.c_str());
+                char *pp = p;
+                char *end = p;
+                while (pp != NULL)
                 {
-                    while (info[j] != '\r' && info[j] != '\n' && j < (int)info.length())
-                        j++;
-
-                    smtp_ctx->status->text = (core ? tag + " " : " ");
-                    smtp_ctx->status->text += info.substring(i, j);
-                    if (info[j] == '\n' && j == (int)info.length() - 1)
-                        smtp_ctx->status->text += "\n";
-
-                    print();
-                    j += 2;
-                    i = j;
+                    rd_strsep(&end, "\r\n");
+                    if (strlen(pp) > 0)
+                    {
+                        if (strlen(pp) == 1 && pp[0] == 32)
+                        {
+                            pp = end;
+                            continue;
+                        }
+                        else
+                        {
+                            smtp_ctx->status->text = (core ? tag + " " : " ");
+                            smtp_ctx->status->text += pp;
+                            print();
+                        }
+                    }
+                    pp = end;
                 }
+                rd_free(&p);
             }
         }
 #endif
@@ -276,46 +285,6 @@ namespace ReadyMailSMTP
             }
             return ts;
 #endif
-        }
-
-#if defined(READYMAIL_USE_STRSEP_IMPL)
-        char *strsepImpl(char **stringp, const char *delim)
-        {
-            char *rv = *stringp;
-            if (rv)
-            {
-                *stringp += strcspn(*stringp, delim);
-                if (**stringp)
-                    *(*stringp)++ = '\0';
-                else
-                    *stringp = 0;
-            }
-            return rv;
-        }
-#else
-        char *strsepImpl(char **stringp, const char *delim) { return strsep(stringp, delim); }
-#endif
-
-        int split(const String &token, const char *sep, String *out, int len)
-        {
-            char *p = rd_mem<char *>(token.length() + 1);
-            strcpy(p, token.c_str());
-            char *pp = p;
-            char *end = p;
-            int i = 0;
-            while (pp != NULL)
-            {
-                strsepImpl(&end, sep);
-                if (strlen(pp) > 0)
-                {
-                    if (out && i < len)
-                        out[i] = pp;
-                    i++;
-                }
-                pp = end;
-            }
-            rd_free(&p);
-            return i;
         }
 
         String errMsg(int code)

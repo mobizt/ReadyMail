@@ -641,6 +641,25 @@ static int rd_dec_latin1_utf8(unsigned char *out, int *outlen, $cu *in, int *inl
     *inlen = processed - base;
     return (0);
 }
+
+#if defined(READYMAIL_USE_STRSEP_IMPL)
+char *rd_strsep(char **stringp, const char *delim)
+{
+    char *rv = *stringp;
+    if (rv)
+    {
+        *stringp += strcspn(*stringp, delim);
+        if (**stringp)
+            *(*stringp)++ = '\0';
+        else
+            *stringp = 0;
+    }
+    return rv;
+}
+#else
+char *rd_strsep(char **stringp, const char *delim) { return strsep(stringp, delim); }
+#endif
+
 #endif
 #endif
 #endif
