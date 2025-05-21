@@ -63,7 +63,7 @@ void textDecodingCb(const String &charset, const uint8_t *in, int inSize, uint8_
      *
      *  in - The encoded text
      *  inSize - The length of encoded text
-     *  out - The unencoded (converted) text
+     *  out - The buffer to save the unencoded (converted) text
      *  outSize - The length of unencoded text
      */
 }

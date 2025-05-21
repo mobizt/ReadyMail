@@ -32,7 +32,7 @@ const char gprsPass[] = "";
 
 // LilyGO TTGO T-A7670 development board (ESP32 with SIMCom A7670)
 #define SIM_MODEM_RST 5
-#define SIM_MODEM_RST_LOW false // active HIGH
+#define SIM_MODEM_RST_LOW true // active LOW
 #define SIM_MODEM_RST_DELAY 200
 #define SIM_MODEM_TX 26
 #define SIM_MODEM_RX 27
