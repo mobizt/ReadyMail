@@ -22,6 +22,19 @@ namespace ReadyMailIMAP
         std::vector<std::array<String, 3>> mailboxes;
 
         /** IMAPClient class constructor.
+         *  The IMAPClient::begin() is needed to start using the client.
+         *
+         */
+        IMAPClient()
+        {
+            imap_ctx.server_status = &server_status;
+            imap_ctx.status = &resp_status;
+            imap_ctx.mailboxes = &mailboxes;
+            conn.begin(&imap_ctx, NULL, &res);
+            sender.begin(&imap_ctx, &res, &conn);
+        }
+
+        /** IMAPClient class constructor.
          *
          * @param client The Arduino client e.g. network client or SSL client.
          * @param tlsCallback Optional. The TLSHandshakeCallback callback function for performing the SSL/TLS handshake.
@@ -36,7 +49,37 @@ namespace ReadyMailIMAP
          * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
          * The SSL client using in scenario 2 and 3 should support protocol upgrades.
          */
-        explicit IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
+        explicit IMAPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false) { begin(client, tlsCallback, startTLS); }
+
+#if defined(READYCLIENT_SSL_CLIENT)
+        /** SMTPClient class constructor.
+         *
+         * @param client The ReadyClient class object.
+         *
+         */
+        explicit IMAPClient(ReadyClient &client) { begin(client); }
+#endif
+
+        /** IMAPClient class deconstructor.
+         */
+        ~IMAPClient() { stop(); };
+
+        /** Start using IMAPClient.
+         *
+         * @param client The Arduino client e.g. network client or SSL client.
+         * @param tlsCallback Optional. The TLSHandshakeCallback callback function for performing the SSL/TLS handshake.
+         * @param startTLS Optional. The boolean option to enable STARTTLS protocol upgrades.
+         *
+         * There are few usage scenarios.
+         * 1. tlsCallback ❎ startTLS ❎, when no connection upgrade is required. The client can be any network client or SSL client.
+         * 2. tlsCallback ✅ startTLS ✅, when connection upgrade is required (from non-encrypion to TLS using STARTTLS protocol).
+         * 3. tlsCallback ✅ startTLS ❎, when connection upgrade is done without issuing the STARTTLS.
+         * This scenario is special usage when you start using the SSL client in plain text mode for some network task that does not require SSL,
+         * and start using it in encryption mode in this library by calling SMTPClient::connect().
+         * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
+         * The SSL client using in scenario 2 and 3 should support protocol upgrades.
+         */
+        void begin(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
             imap_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
@@ -50,12 +93,12 @@ namespace ReadyMailIMAP
         }
 
 #if defined(READYCLIENT_SSL_CLIENT)
-        /** SMTPClient class constructor.
+        /** Start using IMAPClient.
          *
          * @param client The ReadyClient class object.
          *
          */
-        explicit IMAPClient(ReadyClient &client)
+        void begin(ReadyClient &client)
         {
             server_status.start_tls = false;
             imap_ctx.auto_client = &client;
@@ -69,10 +112,6 @@ namespace ReadyMailIMAP
             sender.begin(&imap_ctx, &res, &conn);
         }
 #endif
-
-        /** IMAPClient class deconstructor.
-         */
-        ~IMAPClient() { stop(); };
 
         /** IMAP server connection.
          *
@@ -163,7 +202,8 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_logout, "Logging out...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             bool ret = sender.sendLogout();
@@ -207,7 +247,8 @@ namespace ReadyMailIMAP
             sender.setDebugState(imap_state_send_command, "Sending command...");
             sender.setDebugState(imap_state_send_command, cmd);
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, false))
@@ -272,7 +313,8 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_list, "Listing mailboxes...");
 #endif
-            if (!ready(__func__, false))
+
+            if (!conn.isInitialized() || !ready(__func__, false))
                 return false;
 
             bool ret = sender.list();
@@ -303,7 +345,8 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(readOnly ? imap_state_examine : imap_state_select, "Selecting \"" + mailbox + "\"...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, false))
@@ -335,7 +378,8 @@ namespace ReadyMailIMAP
             else
                 sender.setDebugState(imap_state_close, "Closing mailbox...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, true))
@@ -370,7 +414,8 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_append, "Appending message...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, true))
@@ -506,7 +551,8 @@ namespace ReadyMailIMAP
             else
                 sender.setDebugState(imap_state_search, "Searching mailbox...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, true))
@@ -640,7 +686,8 @@ namespace ReadyMailIMAP
             if (!isAuthenticated())
                 sender.setDebugState(imap_state_authentication, "Authenticating...");
 #endif
-            if (!conn.isIdleState("authenticate"))
+
+            if (!conn.isInitialized() || !conn.isIdleState("authenticate"))
                 return false;
 
             conn.storeCredentials(email, param, auth == readymail_auth_accesstoken);
@@ -667,7 +714,8 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(imap_state_fetch_envelope, "Fetching message " + sender.getFetchString() + " envelope...");
 #endif
-            if (!conn.isIdleState(__func__))
+
+            if (!conn.isInitialized() || !conn.isIdleState(__func__))
                 return false;
 
             if (!ready(__func__, true))
@@ -713,7 +761,7 @@ namespace ReadyMailIMAP
         {
             validateMailboxesChange();
 
-            if (!ready(__func__, true) || imap_ctx.options.processing)
+            if (!conn.isInitialized() || !ready(__func__, true) || imap_ctx.options.processing)
                 return false;
 
             if (!imap_ctx.feature_caps[imap_read_cap_idle])

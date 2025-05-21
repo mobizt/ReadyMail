@@ -307,6 +307,8 @@ namespace ReadyMailIMAP
 
     typedef void (*IMAPCustomComandCallback)(IMAPCommandResponse response);
 
+    typedef void (*IMAPTextDecodingCallback)(const String &charset, const uint8_t *in, int inSize, uint8_t *out, int &outSize);
+
     struct imap_timeout
     {
         unsigned long con = 1000 * 3, send = 1000 * 30, read = 1000 * 120;
@@ -375,6 +377,7 @@ namespace ReadyMailIMAP
         FileCallback fileCallback = NULL;
         String downloadFolder;
 #endif
+        IMAPTextDecodingCallback textEncCb = NULL;
 
     private:
         friend class IMAPParser;
@@ -481,6 +484,14 @@ namespace ReadyMailIMAP
             getFile(index).downloadFolder = downloadFolder;
         }
 #endif
+
+        /**
+         * Provides the text encoding callback at file index.
+         *
+         * @param index The index.
+         * @param callback The IMAPTextDecodingCallback callback function that performs the text encoding.
+         */
+        void setTextEncodingCallback(int index, IMAPTextDecodingCallback callback) { getFile(index).textEncCb = callback; }
 
         /**
          * Provides current message index from search result.

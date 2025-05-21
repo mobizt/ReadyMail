@@ -24,7 +24,7 @@ namespace ReadyMailSMTP
 
         bool connectImpl()
         {
-            if (!smtp_ctx->client || authenticating)
+            if (authenticating)
                 return false;
 
             if (serverConnected())
@@ -34,6 +34,10 @@ namespace ReadyMailSMTP
 #if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
 #endif
+
+            if (!isInitialized())
+                return false;
+
             smtp_ctx->options.processing = true;
             serverStatus() = smtp_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
@@ -306,6 +310,13 @@ namespace ReadyMailSMTP
             clear(access_token);
             clear(email);
             clear(password);
+        }
+
+        bool isInitialized()
+        {
+            if (!smtp_ctx->client)
+                return setError(__func__, TCP_CLIENT_ERROR_INITIALIZE);
+            return true;
         }
 
     public:

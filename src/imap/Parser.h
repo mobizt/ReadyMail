@@ -209,6 +209,7 @@ namespace ReadyMailIMAP
 
         uint8_t *decodeText(uint8_t *decoded, int &decoded_len, const imap_file_ctx &cfile)
         {
+            uint8_t *out = nullptr;
             if (cfile.text_part)
             {
                 if (cfile.char_encoding == imap_char_encoding_scheme_iso8859_1)
@@ -216,20 +217,18 @@ namespace ReadyMailIMAP
                     int len = (decoded_len + 1) * 2;
                     unsigned char *buf = rd_mem<unsigned char *>(len, true);
                     rd_dec_latin1_utf8(buf, &len, rd_cast<unsigned char *>(decoded), &decoded_len);
-                    rd_free(&decoded);
                     decoded_len = len;
-                    decoded = rd_cast<uint8_t *>(buf);
+                    out = rd_cast<uint8_t *>(buf);
                 }
                 else if (cfile.char_encoding == imap_char_encoding_scheme_tis_620 || cfile.char_encoding == imap_char_encoding_scheme_iso8859_11 || cfile.char_encoding == imap_char_encoding_scheme_windows_874)
                 {
                     char *buf = rd_mem<char *>((decoded_len + 1) * 3, true);
                     rd_dec_tis620_utf8(buf, rd_cast<$cu *>(decoded), decoded_len);
                     decoded_len = strlen(buf);
-                    rd_free(&decoded);
-                    decoded = rd_cast<uint8_t *>(buf);
+                    out = rd_cast<uint8_t *>(buf);
                 }
             }
-            return decoded;
+            return out;
         }
 
         String getField(part_ctx &cpart, imap_body_structure_non_multipart_fields field_type, int index = -1, bool key = false)
@@ -872,9 +871,28 @@ namespace ReadyMailIMAP
                         {
                             if (decoded_len)
                             {
-                                decoded = decodeText(decoded, decoded_len, cfile);
-                                updateDownloadStatus(decoded_len, cfile);
-                                storeDecodedData(decoded, decoded_len, false, cfile, imap_ctx);
+                                int out_len = 0;
+
+                                if (cfile.info.mime.startsWith("text/") && cfile.textEncCb)
+                                {
+                                    int len = (decoded_len + 1) * 4;
+                                    uint8_t *out = rd_mem<uint8_t *>(len, true);
+                                    cfile.textEncCb(cfile.info.charset, decoded, decoded_len, out, out_len);
+                                    if (out_len > 0)
+                                    {
+                                        updateDownloadStatus(decoded_len, cfile);
+                                        storeDecodedData(out, out_len, false, cfile, imap_ctx);
+                                    }
+                                    rd_free(&out);
+                                }
+
+                                if (out_len == 0)
+                                {
+                                    uint8_t *buf = decodeText(decoded, decoded_len, cfile);
+                                    updateDownloadStatus(decoded_len, cfile);
+                                    storeDecodedData(buf ? buf : decoded, decoded_len, false, cfile, imap_ctx);
+                                    rd_free(&buf);
+                                }
                             }
                             rd_free(&decoded);
                         }

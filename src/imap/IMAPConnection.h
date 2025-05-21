@@ -40,7 +40,7 @@ namespace ReadyMailIMAP
 
         bool connectImpl()
         {
-            if (!imap_ctx->client || authenticating)
+            if (authenticating)
                 return false;
 
             if (serverConnected())
@@ -51,6 +51,9 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_DEBUG)
             setDebugState(imap_state_initial_state, "Connecting to \"" + host + "\" via port " + String(port) + "...");
 #endif
+            if (!isInitialized())
+                return false;
+
             serverStatus() = imap_ctx->client->connect(host.c_str(), port);
             if (!serverStatus())
             {
@@ -132,6 +135,13 @@ namespace ReadyMailIMAP
             }
             else
                 return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+            return true;
+        }
+
+        bool isInitialized()
+        {
+            if (!imap_ctx->client)
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_INITIALIZE);
             return true;
         }
 

@@ -9,6 +9,9 @@ static String rd_err(int code)
     String msg;
     switch (code)
     {
+    case TCP_CLIENT_ERROR_INITIALIZE:
+        msg = "Client is not yet initialized";
+        break;
     case TCP_CLIENT_ERROR_CONNECTION:
         msg = "Connection failed";
         break;

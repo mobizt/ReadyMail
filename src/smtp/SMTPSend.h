@@ -55,6 +55,9 @@ namespace ReadyMailSMTP
                 setDebugState(smtp_state_send_header_sender, "Sending E-mail...");
 #endif
 
+                if (conn && !conn->isInitialized())
+                    return false;
+
                 smtp_ctx->options.notify = notify;
 
                 if (conn && !conn->isConnected())

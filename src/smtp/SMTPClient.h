@@ -52,6 +52,9 @@ namespace ReadyMailSMTP
 #if defined(ENABLE_DEBUG)
             conn.setDebugState(smtp_state_authentication, "Authenticating...");
 #endif
+            if (!conn.isInitialized())
+                return false;
+
             if (!isConnected())
                 return conn.setError(__func__, TCP_CLIENT_ERROR_NOT_CONNECTED, "", false);
 
@@ -65,6 +68,17 @@ namespace ReadyMailSMTP
         }
 
     public:
+        /** SMTPClient class constructor.
+         *  The SMTPClient::begin() is needed to start using the client.
+         */
+        SMTPClient()
+        {
+            smtp_ctx.server_status = &server_status;
+            smtp_ctx.status = &resp_status;
+            conn.begin(&smtp_ctx, NULL, &res);
+            sender.begin(&smtp_ctx, &res, &conn);
+        }
+
         /** SMTPClient class constructor.
          *
          * @param client The Arduino client e.g. network client or SSL client.
@@ -80,7 +94,37 @@ namespace ReadyMailSMTP
          * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
          * The SSL client using in scenario 2 and 3 should support protocol upgrades.
          */
-        explicit SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
+        explicit SMTPClient(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false) { begin(client, tlsCallback, startTLS); }
+
+#if defined(READYCLIENT_SSL_CLIENT)
+        /** SMTPClient class constructor.
+         *
+         * @param client The ReadyClient class object.
+         *
+         */
+        explicit SMTPClient(ReadyClient &client) { begin(client); }
+#endif
+
+        /** SMTPClient class deconstructor.
+         */
+        ~SMTPClient() { stop(); };
+
+        /** Start using SMTPClient.
+         *
+         * @param client The Arduino client e.g. network client or SSL client.
+         * @param tlsCallback Optional. The TLSHandshakeCallback callback function for performing the SSL/TLS handshake.
+         * @param startTLS Optional. The boolean option to enable STARTTLS protocol upgrades.
+         *
+         * There are few usage scenarios.
+         * 1. tlsCallback ❎ startTLS ❎, when no connection upgrade is required. The client can be any network client or SSL client.
+         * 2. tlsCallback ✅ startTLS ✅, when connection upgrade is required (from non-encrypion to TLS using STARTTLS protocol).
+         * 3. tlsCallback ✅ startTLS ❎, when connection upgrade is done without issuing the STARTTLS.
+         * This scenario is special usage when you start using the SSL client in plain text mode for some network task that does not require SSL,
+         * and start using it in encryption mode in this library by calling SMTPClient::connect().
+         * 4. tlsCallback ❎ startTLS ✅, the same as scenario 1.
+         * The SSL client using in scenario 2 and 3 should support protocol upgrades.
+         */
+        void begin(Client &client, TLSHandshakeCallback tlsCallback = NULL, bool startTLS = false)
         {
             smtp_ctx.options.use_auto_client = false;
             server_status.start_tls = startTLS;
@@ -92,12 +136,12 @@ namespace ReadyMailSMTP
         }
 
 #if defined(READYCLIENT_SSL_CLIENT)
-        /** SMTPClient class constructor.
+        /** Start using SMTPClient.
          *
          * @param client The ReadyClient class object.
          *
          */
-        explicit SMTPClient(ReadyClient &client)
+        void begin(ReadyClient &client)
         {
             server_status.start_tls = false;
             smtp_ctx.auto_client = &client;
@@ -110,15 +154,24 @@ namespace ReadyMailSMTP
         }
 #endif
 
-        /** SMTPClient class deconstructor.
+        /** SMTP server connection.
+         *
+         * @param host The SMTP server host name to connect.
+         * @param port The SMTP port to connect.
+         * @param responseCallback Optional. The SMTPResponseCallback callback function that provides the instant status for the processing states for debugging.
+         * @param ssl Optional. The boolean option to enable SSL connection (using in secure mode).
+         * @param await Optional. The boolean option for using in await or blocking mode.
+         * For async mode, set this parameter with false and calling the SMTPClient::loop() in the loop
+         * to handle the async processes.
+         * @return boolean status of processing states.
          */
-        ~SMTPClient() { stop(); };
+        bool connect(const String &host, uint16_t port, SMTPResponseCallback responseCallback = NULL, bool ssl = true, bool await = true) { return connect(host, port, "" /* use loopback IP */, responseCallback, ssl, await); }
 
         /** SMTP server connection.
          *
          * @param host The SMTP server host name to connect.
          * @param port The SMTP port to connect.
-         * @param domain The host/domain or IP for client identity.
+         * @param domain The host/domain or IP for client identity. Leave this empty to use loopback IP (127.0.0.1).
          * @param responseCallback Optional. The SMTPResponseCallback callback function that provides the instant status for the processing states for debugging.
          * @param ssl Optional. The boolean option to enable SSL connection (using in secure mode).
          * @param await Optional. The boolean option for using in await or blocking mode.
@@ -158,6 +211,9 @@ namespace ReadyMailSMTP
 #if defined(ENABLE_DEBUG)
             sender.setDebugState(smtp_state_connect_command, "Connecting to \"" + host + "\" via port " + String(port) + "...");
 #endif
+            if (!conn.isInitialized())
+                return false;
+
             sender.serverStatus() = smtp_ctx.client->connect(host.c_str(), port);
             if (!sender.serverStatus())
                 return false;
@@ -206,7 +262,7 @@ namespace ReadyMailSMTP
         bool send(SMTPMessage &message, const String &notify = "", bool await = true)
         {
             amsg.clear();
-            if (!await)
+            if (!await) // In async mode, use local (copy) message instead.
                 amsg = message;
             bool ret = sender.send(await ? message : amsg, notify);
             if (ret && await)

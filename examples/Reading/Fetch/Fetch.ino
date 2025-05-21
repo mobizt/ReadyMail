@@ -57,6 +57,17 @@ void showMailboxInfo(MailboxInfo info)
     ReadyMail.printf("\n");
 }
 
+void textDecodingCb(const String &charset, const uint8_t *in, int inSize, uint8_t *out, int &outSize)
+{
+    /** Custom text body decoding based on the character set
+     *
+     *  in - The encoded text
+     *  inSize - The length of encoded text
+     *  out - The unencoded (converted) text
+     *  outSize - The length of unencoded text
+     */
+}
+
 // For more information, see https://bit.ly/3GObULu
 void dataCb(IMAPCallbackData &data)
 {
@@ -82,6 +93,10 @@ void dataCb(IMAPCallbackData &data)
 
             // To download if the fetch option is set.
             // data.setFileCallback(i, filecb, "/downloads");
+
+            // To decode the text body based on the character set.
+            // if (data.fileInfo(i).charset.length())
+            //    data.setTextEncodingCallback(i, textDecodingCb);
             ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
         }
     }
