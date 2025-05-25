@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Suwatchai K. <suwatchai@outlook.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #pragma once
 
 #ifndef READY_CLIENT_H

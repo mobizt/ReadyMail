@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Suwatchai K. <suwatchai@outlook.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef READY_UTILS_H
 #define READY_UTILS_H
 #include <Arduino.h>

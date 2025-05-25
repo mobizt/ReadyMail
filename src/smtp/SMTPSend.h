@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Suwatchai K. <suwatchai@outlook.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef SMTP_SEND_H
 #define SMTP_SEND_H
 #if defined(ENABLE_SMTP)

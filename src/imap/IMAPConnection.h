@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Suwatchai K. <suwatchai@outlook.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef IMAP_CONNECTION_H
 #define IMAP_CONNECTION_H
 #if defined(ENABLE_IMAP)
