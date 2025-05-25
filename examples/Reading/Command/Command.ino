@@ -37,7 +37,8 @@ void imapCb(IMAPStatus status)
 void cmdCb(IMAPCommandResponse response)
 {
     if (response.isComplete)
-        ReadyMail.printf("ReadyMail[cmd][%d] %s\n", imap.status().state, response.errorCode < 0 ? "error" : "success");
+        ReadyMail.printf("ReadyMail[cmd][%d] %s\n", imap.status().state,
+                         response.errorCode < 0 ? "error" : "success");
     else
         ReadyMail.printf("ReadyMail[cmd][%d] %s\n", imap.status().state, response.text.c_str());
 }
@@ -75,7 +76,9 @@ void setup()
     imap.list();
 
     for (int i = 0; i < imap.mailboxes.size(); i++)
-        ReadyMail.printf("Attributes: %s, Delimiter: %s, Name: %s\n%s", imap.mailboxes[i][0].c_str(), imap.mailboxes[i][1].c_str(), imap.mailboxes[i][2].c_str(), (i == imap.mailboxes.size() - 1 ? "\n" : ""));
+        ReadyMail.printf("Attributes: %s, Delimiter: %s, Name: %s\n%s",
+                         imap.mailboxes[i][0].c_str(), imap.mailboxes[i][1].c_str(),
+                         imap.mailboxes[i][2].c_str(), (i == imap.mailboxes.size() - 1 ? "\n" : ""));
 
     // Select INBOX mailbox.
     bool success = imap.select("INBOX", READ_ONLY_MODE);

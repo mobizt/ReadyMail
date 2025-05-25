@@ -186,7 +186,8 @@ void smtpStatusCallback(SMTPStatus status)
 
     // Showing the uploading info.
     if (status.progress.available) 
-        ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress.value);
+        ReadyMail.printf("State: %d, Uploading file %s, %d %% completed\n", status.state, 
+                         status.progress.filename.c_str(), status.progress.value);
      // otherwise, showing the process state info.
     else
         ReadyMail.printf("State: %d, %s\n", status.state, status.text.c_str());
@@ -267,7 +268,8 @@ auto dataCallback = [](IMAPCallbackData data)
     if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
          for (int i = 0; i < data.headerCount(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), 
+                             data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
     }
 };
 

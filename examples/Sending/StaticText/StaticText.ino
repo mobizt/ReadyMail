@@ -33,8 +33,19 @@ File myFile;
 #endif
 #define MY_FS SPIFFS
 
-const char *static_text1 = "A rabies-like disease spreads across the planet, transforming people into aggressive creatures. Manel takes refuge at home with his cat, using his wits to survive. Soon, they’ll have to leave for food, looking for safe places on land and sea. Apocalypse Z: The Beginning of the End is a story of survival, both physical and emotional, with action, tension, a rabid infection... and a grumpy cat.";
-const char *static_text2 = "Speak No Evil is a 2024 American psychological horror thriller film written and directed by James Watkins. A remake of the 2022 Danish-Dutch film of the same name, the film stars James McAvoy, Mackenzie Davis, Aisling Franciosi, Alix West Lefler, Dan Hough, and Scoot McNairy. Its plot follows an American family who are invited to stay at a remote farmhouse of a British couple for the weekend, and the hosts soon test the limits of their guests as the situation escalates. Jason Blum serves as a producer through his Blumhouse Productions banner. Speak No Evil premiered at the DGA Theater in New York City on September 9, 2024 and was released in the United States by Universal Pictures on September 13, 2024. The film received generally positive reviews from critics and grossed $77 million worldwide with a budget of $15 million.";
+const char *static_text1 = "A rabies-like disease spreads across the planet, transforming people into aggressive creatures. Manel takes refuge at "
+                           "home with his cat, using his wits to survive. Soon, they’ll have to leave for food, looking for safe places on land "
+                           "and sea. Apocalypse Z: The Beginning of the End is a story of survival, both physical and emotional, with action, "
+                           "tension, a rabid infection... and a grumpy cat.";
+                           
+const char *static_text2 = "Speak No Evil is a 2024 American psychological horror thriller film written and directed by James Watkins. A remake "
+                           "of the 2022 Danish-Dutch film of the same name, the film stars James McAvoy, Mackenzie Davis, Aisling Franciosi, Alix "
+                           "West Lefler, Dan Hough, and Scoot McNairy. Its plot follows an American family who are invited to stay at a remote "
+                           "farmhouse of a British couple for the weekend, and the hosts soon test the limits of their guests as the situation "
+                           "escalates. Jason Blum serves as a producer through his Blumhouse Productions banner. Speak No Evil premiered at the "
+                           "DGA Theater in New York City on September 9, 2024 and was released in the United States by Universal Pictures on "
+                           "September 13, 2024. The film received generally positive reviews from critics and grossed $77 million worldwide "
+                           "with a budget of $15 million.";
 
 void fileCb(File &file, const char *filename, readymail_file_operating_mode mode)
 {
@@ -75,7 +86,8 @@ void createTextFile()
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
-        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state, status.progress.filename.c_str(), status.progress.value);
+        ReadyMail.printf("ReadyMail[smtp][%d] Uploading file %s, %d %% completed\n", status.state,
+                         status.progress.filename.c_str(), status.progress.value);
     else
         ReadyMail.printf("ReadyMail[smtp][%d]%s\n", status.state, status.text.c_str());
 }

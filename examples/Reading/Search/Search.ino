@@ -41,11 +41,13 @@ void dataCb(IMAPCallbackData &data)
     {
         // Show additional search info
         if (data.event() == imap_data_event_search)
-            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1,
+                             data.messageNum(), data.messageAvailable(), data.messageFound());
 
         // Headers data
         for (size_t i = 0; i < data.headerCount(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(),
+                             data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
 
         // Files data
         for (size_t i = 0; i < data.fileCount(); i++)
@@ -58,7 +60,10 @@ void dataCb(IMAPCallbackData &data)
 
             // To download if the fetch option is set.
             // data.setFileCallback(i, filecb, "/downloads");
-            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n",
+                             data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(),
+                             data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize,
+                             data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
         }
     }
     else if (data.event() == imap_data_event_fetch_body)
@@ -122,7 +127,9 @@ void setup()
     imap.list();
 
     for (int i = 0; i < imap.mailboxes.size(); i++)
-        ReadyMail.printf("Attributes: %s, Delimiter: %s, Name: %s\n%s", imap.mailboxes[i][0].c_str(), imap.mailboxes[i][1].c_str(), imap.mailboxes[i][2].c_str(), (i == imap.mailboxes.size() - 1 ? "\n" : ""));
+        ReadyMail.printf("Attributes: %s, Delimiter: %s, Name: %s\n%s",
+                         imap.mailboxes[i][0].c_str(), imap.mailboxes[i][1].c_str(),
+                         imap.mailboxes[i][2].c_str(), (i == imap.mailboxes.size() - 1 ? "\n" : ""));
 
     // Select INBOX mailbox.
     imap.select("INBOX", READ_ONLY_MODE);

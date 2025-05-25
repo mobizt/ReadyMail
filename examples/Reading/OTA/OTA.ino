@@ -62,7 +62,10 @@ void dataCb(IMAPCallbackData &data)
 
             // To download if the fetch option is set.
             // data.setFileCallback(i, filecb, "/downloads");
-            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n",
+                             data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(),
+                             data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize,
+                             data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
         }
     }
     else if (data.event() == imap_data_event_fetch_body)
@@ -76,7 +79,8 @@ void dataCb(IMAPCallbackData &data)
                 otaErr = !Update.begin(data.fileInfo().fileSize);
 
                 if (data.fileProgress().available)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename,
+                                     data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
 
                 if (!otaErr)
                     otaErr = Update.write((uint8_t *)data.fileChunk().data, data.fileChunk().size) != data.fileChunk().size;
@@ -87,12 +91,14 @@ void dataCb(IMAPCallbackData &data)
                     otaErr = Update.write((uint8_t *)data.fileChunk().data, data.fileChunk().size) != data.fileChunk().size;
 
                 if (data.fileProgress().available)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename,
+                                     data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
             }
             else // Last chunk
             {
                 if (data.fileProgress().available)
-                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename, data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
+                    ReadyMail.printf("Downloading %s, %d of %d, %d %% completed\n", data.fileInfo().filename,
+                                     data.fileChunk().index + data.fileChunk().size, data.fileInfo().fileSize, data.fileProgress().value);
 
                 if (!otaErr)
                     otaErr = !Update.end(true);
