@@ -15,8 +15,6 @@ For fetching Email, this library provides the ready to use decoded data (headers
 This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices except for 8-bit `Atmel's AVR` devices.
 
 
-# Examples #
-
 ## Email Sending
 
 To send an Email message, user needs to defined the `SMTPClient` and `SMTPMessage` class objects.
@@ -638,9 +636,9 @@ imap.connect("imap host", 993, statusCallback);
 
 ```
 
-# Known Issues #
+## Known Issues
 
-## ESP8266 Issues
+**ESP8266 Issues**
 
 When `ESP8266` device and its `WiFiClientSecure` library are used, they need some adjustments before using otherwise the device may crash when starting the connection.
 
@@ -658,7 +656,7 @@ The library provides the wdt feed internally while operating in both sync and aw
 
 Please note that library itself does not make your device to crash, the memory leak, memory allocation failure due to available memory is low and dangling pointer when the network/SSL client that assigned to the `SMTPClient` and `IMAPClient` does not exist in its usage scope, are the major causes of the crashes.
 
-## ESP32 Issues
+**ESP32 Issues**
 
 This issue has occurred only in user code in ESP32 v3.x when using `NetworkClientSecure` in plain text mode.
 
@@ -672,7 +670,7 @@ The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15
 
 [Update on 5/14/2025] This [PR](https://github.com/espressif/arduino-esp32/pull/11356) may fix this issue and the work around can be removed in the next library updates. 
 
-## ESP_SSLClient Issues
+**ESP_SSLClient Issues**
 
 When you are using `ESP_SSLClient` in some devices e.g. Renesas devices (Arduino® `UNO R4 WiFi`) and SAMD devices (Arduino MKR WiFi 1010, Arduino MKR 1000 WIFI) etc., it will get stuck in TLS handshake process due to memory allocation failure.
 
@@ -684,7 +682,7 @@ In addition, please don't forget to set the network client with `ESP_SSLClient::
 
 Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body that requires more memory in the process, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
 
-# License #
+## License
 
 The code samples in this repository are licensed under the MIT License. 
 
