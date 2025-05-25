@@ -385,16 +385,21 @@ void dataCallback(IMAPCallbackData data)
     if (data.event() == imap_data_event_search || data.event() == imap_data_event_fetch_envelope)
     {
         if (data.event() == imap_data_event_search)
-            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1, data.messageNum(), data.messageAvailable(), data.messageFound());
+            ReadyMail.printf("Showing Search result %d (%d) of %d from %d\n\n", data.messageIndex() + 1,
+                             data.messageNum(), data.messageAvailable(), data.messageFound());
 
         // Headers data
         for (size_t i = 0; i < data.headerCount(); i++)
-            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(), data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
+            ReadyMail.printf("%s: %s\n%s", data.getHeader(i).first.c_str(),
+                             data.getHeader(i).second.c_str(), i == data.headerCount() - 1 ? "\n" : "");
 
         // Files data
         for (size_t i = 0; i < data.fileCount(); i++)
         {
-            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n", data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(), data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize, data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
+            ReadyMail.printf("name: %s, mime: %s, charset: %s, trans-enc: %s, size: %d, fetch: %s%s\n",
+                             data.fileInfo(i).filename.c_str(), data.fileInfo(i).mime.c_str(), data.fileInfo(i).charset.c_str(),
+                             data.fileInfo(i).transferEncoding.c_str(), data.fileInfo(i).fileSize,
+                             data.fetchOption(i) ? "yes" : "no", i == data.fileCount() - 1 ? "\n" : "");
         }
 
     }
@@ -402,7 +407,8 @@ void dataCallback(IMAPCallbackData data)
     {
         // Showing the progress of content fetching 
         if (data.fileProgress().available)
-            ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.fileInfo().filename, data.fileInfo().mime, data.fileProgress().value);
+            ReadyMail.printf("Downloading file %s, type %s, %d %%% completed", data.fileInfo().filename, 
+                             data.fileInfo().mime, data.fileProgress().value);
 
         ReadyMail.printf("Data Index: %d, Length: %d, Size: %d\n", data.fileChunk().index, data.fileChunk().size, data.fileInfo().fileSize);
         
