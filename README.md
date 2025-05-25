@@ -6,13 +6,14 @@
 
 The fast and lightweight async Email client library for Arduino.
 
-This Email client library supports Email sending, reading, searching and appending.
+This library seamlessly works in async and await modes. The chunk data is processed for decodings, encodings, parsing, uploading and downloading.
 
-This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices. 
+For sending Email, the typical inline images and attachments plus the RFC 822 messages are supported.
 
-The 8-bit `Atmel's AVR` MCUs are not supported.
+For fetching Email, this library provides the ready to use decoded data (headers, text body and attchments) for downloading and post processing.
 
-This library requires 52k program space (network library excluded) for only `SMTP` or `IMAP` feature and 82k for using both `SMTP` and `IMAP` features.
+This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices except for 8-bit `Atmel's AVR` devices.
+
 
 # Examples #
 
