@@ -799,7 +799,6 @@ namespace ReadyMailIMAP
             }
             if (depth == 0)
             {
-                imap_msg_ctx _cmsg;
                 std::vector<part_ctx> parts;
                 part_ctx part;
                 parseBodyStructure(line, "BODY (", ")", 0, 1, -1, parts, &part);
