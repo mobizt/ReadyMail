@@ -66,7 +66,7 @@ ssl_client.setInsecure();
 
 auto statusCallback = [](SMTPStatus status){ Serial.println(status.text); };
 
-smtp.connect("smtp host here", 465, "127.0.0.1", statusCallback);
+smtp.connect("smtp host here", 465, statusCallback);
 if (smtp.isConnected())
 {
     smtp.authenticate("sender email here", "sender email password here", readymail_auth_password);
@@ -120,9 +120,13 @@ Plese check the library's [examples](/examples/Sending/) for the changes.
 **Host/Domain or Public IP**
 
 User should provides the host name or you public IPv4 or IPv6 to the third parameter of `SMTPClient::connect()` function.
+
 This information is the part of `EHLO/HELO` SMTP command to identify the client system to prevent connection rejection.
 
-If host name or public IP is not available, ignore this or use the loopback address `127.0.0.1`. This library will set the loopback address `127.0.0.1` to the `EHLO/HELO` SMTP command for the case that user provides blank, invalid host and IP to this parameter.
+If host name or public IP is not available, ignore this or use the loopback address `127.0.0.1`. This library will set the loopback address `127.0.0.1` to the `EHLO/HELO` SMTP command for the case that user provides blank, invalid host and IP to this parameter or setting `SMTPResponseCallback` as the third parameter.
+
+Note that, for general use case, the domain/ip was ignored by setting `SMTPResponseCallback` as the third parameter of `SMTPClient::connect()` in all library SMTP examples and example codes that showed in this document.
+
 
 **Date Header**
 
@@ -471,7 +475,7 @@ WiFiClient basic_client; // Network client
 SMTPClient smtp(basic_client);
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
-smtp.connect("smtp host", 25, "127.0.0.1", statusCallback, false /* non-secure */);
+smtp.connect("smtp host", 25, statusCallback, false /* non-secure */);
 
 ```
 **IMAP Port 143**
@@ -515,7 +519,7 @@ ssl_client.setClient(&basic_client, false /* starts connection in plain text */)
 ssl_client.setInsecure();
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
-smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
+smtp.connect("smtp host", 587, statusCallback);
 
 ```
 
@@ -532,7 +536,7 @@ ssl_client.setInsecure();
 ssl_client.setPlainStart();
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text);};
-smtp.connect("smtp host", 587, "127.0.0.1", statusCallback);
+smtp.connect("smtp host", 587, statusCallback);
 
 ```
 
@@ -593,7 +597,7 @@ ssl_client.setClient(&basic_client);
 ssl_client.setInsecure();
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
-smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
+smtp.connect("smtp host", 465, statusCallback);
 
 ```
 
@@ -607,7 +611,7 @@ WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
 auto statusCallback = [](IMAPStatus status){ Serial.println(status.text); };
-smtp.connect("smtp host", 465, "127.0.0.1", statusCallback);
+smtp.connect("smtp host", 465, statusCallback);
 
 ```
 

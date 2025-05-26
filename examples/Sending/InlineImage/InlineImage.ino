@@ -13,7 +13,6 @@
 
 #define SMTP_HOST "_______"
 #define SMTP_PORT 465 // SSL or 587 for STARTTLS
-#define DOMAIN_OR_IP "127.0.0.1"
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 #define RECIPIENT_EMAIL "_______"
@@ -84,7 +83,7 @@ void setup()
 
     // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
-    smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb);
+    smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb);
     if (!smtp.isConnected())
         return;
 

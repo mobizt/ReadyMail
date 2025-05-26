@@ -25,8 +25,8 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.2.6"
-#define READYMAIL_TIMESTAMP 1747494775
+#define READYMAIL_VERSION "0.2.7"
+#define READYMAIL_TIMESTAMP 1748248112
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
 
 #if defined(READYMAIL_DEBUG_PORT)
@@ -156,7 +156,7 @@ public:
     String base64Encode(const String &str)
     {
         String buf;
-        char *enc = rd_b64_enc(rd_cast<$cu *>(str.c_str()), str.length());
+        char *enc = rd_b64_enc(rd_cast<const unsigned char *>(str.c_str()), str.length());
         if (enc)
         {
             buf = enc;

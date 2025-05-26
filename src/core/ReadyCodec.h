@@ -88,7 +88,7 @@ public:
     }
 };
 
-static $cu rd_b64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const unsigned char rd_b64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void __attribute__((used)) sys_yield()
 {
@@ -126,7 +126,7 @@ static unsigned char rd_b64_lookup(char c)
     return -1;
 }
 
-static void rd_a4_to_a3(unsigned char *a3, $cu *a4)
+static void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
 {
     a3[0] = (a4[0] << 2) + ((a4[1] & 0x30) >> 4);
     a3[1] = ((a4[1] & 0xf) << 4) + ((a4[2] & 0x3c) >> 2);
@@ -186,7 +186,7 @@ static char *rd_b64_dec(const char *encoded)
     return raw;
 }
 
-static char *rd_b64_enc($cu *raw, int len)
+static char *rd_b64_enc(const unsigned char *raw, int len)
 {
     uint8_t count = 0;
     char buffer[3];
@@ -421,7 +421,7 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
         {
             if (mode == 3 /* xenc_base64 */)
             {
-                char *enc = rd_b64_enc(rd_cast<$cu *>(buf.c_str()), buf.length());
+                char *enc = rd_b64_enc(rd_cast<const unsigned char *>(buf.c_str()), buf.length());
                 line = enc;
                 rd_free(&enc);
             }
@@ -444,7 +444,7 @@ String rd_enc_oauth(const String &email, const String &accessToken)
     String out;
     String raw;
     rd_print_to(raw, email.length() + accessToken.length() + 30, "user=%s\1auth=Bearer %s\1\1", email.c_str(), accessToken.c_str());
-    char *enc = rd_b64_enc(rd_cast<$cu *>(raw.c_str()), raw.length());
+    char *enc = rd_b64_enc(rd_cast<const unsigned char *>(raw.c_str()), raw.length());
     if (enc)
     {
         out = enc;
@@ -519,7 +519,7 @@ static int rd_encode_unicode_utf8(char *out, uint32_t utf)
     }
 }
 
-static void rd_dec_tis620_utf8(char *out, $cu *in, size_t len)
+static void rd_dec_tis620_utf8(char *out, const char *in, size_t len)
 {
     // output is the 3-byte value UTF-8
     int j = 0;
@@ -565,7 +565,7 @@ static void rd_dec_qp_utf8(const char *src, char *out)
     }
 }
 
-static char *rd_dec_7bit_utf8($cu *src)
+static char *rd_dec_7bit_utf8(const char *src)
 {
     String s;
 
@@ -607,13 +607,13 @@ static char *rd_dec_8bit_utf8(const char *src)
     return decoded;
 }
 
-static int rd_dec_latin1_utf8(unsigned char *out, int *outlen, $cu *in, int *inlen)
+static int rd_dec_latin1_utf8(unsigned char *out, int *outlen, const unsigned char *in, int *inlen)
 {
-    $cu *outstart = out;
-    $cu *base = in;
-    $cu *processed = in;
-    $cu *outend = out + *outlen;
-    $cu *inend;
+    unsigned char *outstart = out;
+    const unsigned char *base = in;
+    const unsigned char *processed = in;
+    unsigned char *outend = out + *outlen;
+    const unsigned char *inend;
     int bits;
 
     inend = in + (*inlen);
@@ -641,7 +641,7 @@ static int rd_dec_latin1_utf8(unsigned char *out, int *outlen, $cu *in, int *inl
                 break;
             *out++ = ((c >> bits) & 0x3F) | 0x80;
         }
-        processed = rd_cast<$cu *>(in);
+        processed = rd_cast<const unsigned char *>(in);
     }
     *outlen = out - outstart;
     *inlen = processed - base;

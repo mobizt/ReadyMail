@@ -13,7 +13,6 @@
 #include <ReadyMail.h>
 
 #define SMTP_HOST "_______"
-#define DOMAIN_OR_IP "127.0.0.1"
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 #define RECIPIENT_EMAIL "_______"
@@ -61,7 +60,7 @@ void sendEmail(int port)
 
   // Everytime you call connect(), the previouse session will stop.
   // If you want to reuse the session, just skipping the connect() and authenticate().
-  smtp.connect(SMTP_HOST, port, "127.0.0.1", smtpCb, ssl);
+  smtp.connect(SMTP_HOST, port, smtpCb, ssl);
   if (!smtp.isConnected())
     return;
 

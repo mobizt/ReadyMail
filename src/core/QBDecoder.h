@@ -11,11 +11,6 @@
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
-#if defined($cu)
-#undef $cu
-#endif
-#define $cu const unsigned char
-
 // Renesas devices
 #if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
 #define XMAILER_STRSEP strsepImpl

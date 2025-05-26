@@ -28,7 +28,6 @@
 #include <ReadyMail.h>
 
 #define SMTP_HOST "_______"
-#define DOMAIN_OR_IP "127.0.0.1"
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 #define RECIPIENT_EMAIL "_______"
@@ -59,7 +58,7 @@ void smtpCb(SMTPStatus status)
 void sendEmail(int port)
 {
 
-    smtp.connect(SMTP_HOST, port, "127.0.0.1", smtpCb);
+    smtp.connect(SMTP_HOST, port, smtpCb);
     if (!smtp.isConnected())
         return;
 

@@ -297,7 +297,7 @@ namespace ReadyMailIMAP
 
         void authLogin(bool user)
         {
-            char *enc = rd_b64_enc(rd_cast<$cu *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
+            char *enc = rd_b64_enc(rd_cast<const unsigned char *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
             if (enc)
             {
                 tcpSend(true, 1, enc);

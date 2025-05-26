@@ -118,7 +118,7 @@ namespace ReadyMailSMTP
     void encodeWord(const String &str, String &out)
     {
       String buf;
-      char *enc = rd_b64_enc(rd_cast<$cu *>(str.c_str()), str.length());
+      char *enc = rd_b64_enc(rd_cast<const unsigned char *>(str.c_str()), str.length());
       rd_print_to(buf, strlen(enc), "=?utf-8?B?%s?=", enc);
       rd_free(&enc);
       if (out.length())

@@ -40,7 +40,6 @@ const char gprsPass[] = "";
 
 #define SMTP_HOST "_______"
 #define SMTP_PORT 465
-#define DOMAIN_OR_IP "127.0.0.1"
 
 TinyGsm modem(SerialAT);
 TinyGsmClient basic_client(modem);
@@ -136,7 +135,7 @@ void setup()
 
     // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
-    smtp.connect(SMTP_HOST, SMTP_PORT, DOMAIN_OR_IP, smtpCb);
+    smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb);
     if (!smtp.isConnected())
         return;
 }

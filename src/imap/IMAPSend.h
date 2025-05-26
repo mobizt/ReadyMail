@@ -153,7 +153,7 @@ namespace ReadyMailIMAP
 
 #if defined(ENABLE_DEBUG)
                 if (cMsg().files[cFileIndex()].fetch)
-                    setDebug(imap_ctx, "The message body[" + cMsg().files[cFileIndex()].section + "] is fetched successfully\n");
+                    setDebug(imap_ctx, "The message body[" + cMsg().files[cFileIndex()].info.filename + "] is fetched successfully\n");
 #endif
                 cFileIndex()++;
                 if (cMsg().fetch_count > 0)
@@ -269,7 +269,7 @@ namespace ReadyMailIMAP
                 if (cFileIndex() < (int)cMsg().files.size() && cMsg().files[cFileIndex()].fetch)
                 {
 #if defined(ENABLE_DEBUG)
-                    setDebugState(state, "Fetching message body[" + cMsg().files[cFileIndex()].section + "]...");
+                    setDebugState(state, "Fetching message body[" + cMsg().files[cFileIndex()].info.filename + "]...");
 #endif
                     rd_print_to(buf, 200, " %sFETCH %d BODY%s[%s]", imap_ctx->options.uid_fetch ? "UID " : "", imap_ctx->options.fetch_number, imap_ctx->options.read_only_mode ? ".PEEK" : "", cMsg().files[cFileIndex()].section.c_str());
                 }

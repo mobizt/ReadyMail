@@ -52,7 +52,7 @@ namespace ReadyMailIMAP
             if (readLen > 0)
             {
 #if defined(ENABLE_CORE_DEBUG)
-                if (cState() != imap_state_search && cState() != imap_state_fetch_body_part && !imap_ctx->options.multiline)
+                if (cState() != imap_state_search && cState() != imap_state_fetch_envelope && cState() != imap_state_fetch_body_part && !imap_ctx->options.multiline)
                     setDebug(imap_ctx, line, true);
 #endif
 

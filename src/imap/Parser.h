@@ -200,7 +200,7 @@ namespace ReadyMailIMAP
             }
             else if (cfile.transfer_encoding == imap_transfer_encoding_7bit)
             {
-                char *buf = rd_dec_7bit_utf8(rd_cast<$cu *>(res.c_str()));
+                char *buf = rd_dec_7bit_utf8(res.c_str());
                 decoded_len = strlen(buf);
                 decoded = rd_cast<uint8_t *>(buf);
             }
@@ -229,7 +229,7 @@ namespace ReadyMailIMAP
                 else if (cfile.char_encoding == imap_char_encoding_scheme_tis_620 || cfile.char_encoding == imap_char_encoding_scheme_iso8859_11 || cfile.char_encoding == imap_char_encoding_scheme_windows_874)
                 {
                     char *buf = rd_mem<char *>((decoded_len + 1) * 3, true);
-                    rd_dec_tis620_utf8(buf, rd_cast<$cu *>(decoded), decoded_len);
+                    rd_dec_tis620_utf8(buf, rd_cast<const char *>(decoded), decoded_len);
                     decoded_len = strlen(buf);
                     out = rd_cast<uint8_t *>(buf);
                 }
@@ -442,7 +442,7 @@ namespace ReadyMailIMAP
             {
                 size_t len2 = strlen(buf);
                 char *out = rd_mem<char *>((len2 + 1) * 3, true);
-                rd_dec_tis620_utf8(out, rd_cast<$cu *>(buf), len2);
+                rd_dec_tis620_utf8(out, rd_cast<const char *>(buf), len2);
                 rd_free(&buf);
                 buf = out;
             }
@@ -826,6 +826,11 @@ namespace ReadyMailIMAP
                         return;
                     }
 
+#if defined(ENABLE_CORE_DEBUG)
+                    if (cstate != imap_state_fetch_body_part)
+                        IMAPBase::setDebug(imap_ctx, line, true);
+#endif
+
                     String header[imap_envelpe_max_type];
                     int i = imap_envelpe_date;
                     parseEnvelope(imap_ctx, cmsg, line, "ENVELOPE (", ")", 0, header, i);
@@ -926,7 +931,13 @@ namespace ReadyMailIMAP
 
         String getFileName(part_ctx &cpart)
         {
-            String name = getField(cpart, non_multipart_field_type) == "message" ? getName(cpart) : getFilename(cpart);
+            String name = getName(cpart);
+            if (name.length() == 0)
+                name = getFilename(cpart);
+
+            if (getField(cpart, non_multipart_field_type) == "message" && name.length() && name.indexOf(".eml") == -1)
+                name += ".eml";
+
             if (name.length() == 0)
             {
                 String part = cpart.section;
@@ -939,7 +950,6 @@ namespace ReadyMailIMAP
 #if defined(ENABLE_FS)
         void openFile(imap_context *imap_ctx, imap_file_ctx &cfile)
         {
-
             cfile.filepath.remove(0, cfile.filepath.length());
             rd_print_to(cfile.filepath, 200, "/%d/%s", imap_ctx->options.fetch_number, cfile.info.filename.c_str());
 
@@ -1033,6 +1043,8 @@ namespace ReadyMailIMAP
                         if (cfile.info.fileSize == 0)
                             cfile.info.fileSize = cfile.octet_count * 3 / 4;
                     }
+                    else if (getField(cpart, non_multipart_field_type) == "message")
+                        cfile.info.fileSize = cfile.octet_count;
 
                     if (imap_ctx->options.searching || cfile.info.fileSize > imap_ctx->options.part_size_limit || (cfile.info.fileSize == 0 && cfile.octet_count > imap_ctx->options.part_size_limit))
                         cfile.fetch = false;
