@@ -4,22 +4,22 @@
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/ReadyMail.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/ReadyMail.svg)
 
-The fast and lightweight async Email client library for Arduino.
+The fast and lightweight async email client library for Arduino.
 
 This library seamlessly works in async and await modes. The chunk data is processed for decodings, encodings, parsing, uploading and downloading.
 
-For sending Email, the typical inline images and attachments plus the RFC 822 messages are supported.
+For sending email, the typical inline images and attachments plus the RFC 822 messages are supported.
 
-For fetching Email, this library provides the ready to use decoded data (headers, text body and attchments) for downloading and post processing.
+For fetching email, this library provides the ready to use decoded data (headers, text body and attchments) for downloading and post processing.
 
 This library supports all 32-bit `Arduino` devices e.g. `STM32`, `SAMD`, `ESP32`, `ESP8266`, `Raspberry Pi RP2040`, and `Renesas` devices except for 8-bit `Atmel's AVR` devices.
 
 
-## Email Sending
+## Send Email
 
-To send an Email message, user needs to defined the `SMTPClient` and `SMTPMessage` class objects.
+To send an email message, user needs to defined the `SMTPClient` and `SMTPMessage` class objects.
 
-The one of SSL client if you are sending Email over SSL/TLS or basic network client should be set for the `SMTPClient` class constructor.
+The one of SSL client if you are sending email over SSL/TLS or basic network client should be set for the `SMTPClient` class constructor.
 
 Note that the SSL client or network client assigned to the `SMTPClient` class object should be lived in the `SMTPClient` class object usage scope otherwise the error can be occurred.
 
@@ -146,7 +146,7 @@ In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMe
 
 **Half Line-Break**
 
-Depending on server policy, some SMTP server may reject the Email sending when the Lf (line feed) was used for line break in the content instead of CrLf (Carriage return + Line feed). 
+Depending on server policy, some SMTP server may reject the email sending when the Lf (line feed) was used for line break in the content instead of CrLf (Carriage return + Line feed). 
 
 Then we recommend using CrLf instead of Lf in the content to avoid this issue.
 
@@ -229,9 +229,13 @@ The `SMTPCommandResponse::statusCode` value provides the SMTP server response co
 The [Command.ino](/examples/Sending/Command/Command.ino) example showed how to use `SMTPClient::sendCommand()` to work with flags, message and folder or mailbox.
 
 
-## Email Reading
+## Receive Email
 
-To receive or fetch the Email, only `IMAPClient` calss object is required.
+The IMAP protocol supports fetching, searching and idling. The idle and fetch functions can be used to get the incoming email alert.
+
+While serach function with keywords also provides the mean to get the specific messages that match the search criteria e.g. unread, new, and flagged messages.
+
+To search, receive or fetch the email, only `IMAPClient` calss object is required.
 
 The `IMAPDataCallback` and `FileCallback` functions can be assigned to the `IMAPClient::fetch` and `IMAPClient::fetchUID` functions.
 
@@ -292,7 +296,7 @@ if (imap.isConnected())
 
 The library provides the simple IMAP APIs for idling (mailbox polling), searching and fetching the messages. If additional works are needed e.g. setting and deleting flags, or creating, moving and deleting folder, or copying, moving and deleting mssage etc., those taks can be done through the `IMAPClient::sendCommand()`. 
 
-The [Command.ino](/examples/Reading/Command/Command.ino) example show how to do those works. The server responses from sending the command will be discussed in the [IMAP Custom Comand Processing Information](#imap-custom-comand-processing-information) section below.
+The [Command.ino](/examples/Reading/Command/Command.ino) example shows how to do those works. The server responses from sending the command will be discussed in the [IMAP Custom Comand Processing Information](#imap-custom-comand-processing-information) section below.
 
 
 ### IMAP Processing Information
