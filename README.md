@@ -698,6 +698,12 @@ In addition, please don't forget to set the network client with `ESP_SSLClient::
 
 Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body that requires more memory in the process, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
 
+**IMAP Response Parsing**
+
+The complete responses of the multi-lines, large IMAP's headers, envelope and body structures are required especially when decodings and nested list parsing. Parsing or decoding the partial/chunked responses may give the incorrect information. 
+
+The memory allocation for those responses buffer may fail in some limited memory devices.
+
 ## License
 
 The codes and examples in this repository are licensed under the MIT License. 
