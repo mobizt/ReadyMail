@@ -23,8 +23,9 @@ namespace ReadyMailSMTP
 {
 
     static const char boundary_map[65] = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+#if !defined(ESP8266) && !defined(ESP32)
     static const char *smtp_months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
+#endif
     enum smtp_function_return_code
     {
         function_return_undefined,
