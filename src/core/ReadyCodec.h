@@ -99,7 +99,7 @@ static void __attribute__((used)) sys_yield()
 #endif
 }
 
-void rd_print_to(String &buff, int size, const char *format, ...)
+static void rd_print_to(String &buff, int size, const char *format, ...)
 {
     size += strlen(format) + 10;
     char *s = rd_mem<char *>(size);
@@ -439,7 +439,7 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
 
 #endif
 
-String rd_enc_oauth(const String &email, const String &accessToken)
+static String rd_enc_oauth(const String &email, const String &accessToken)
 {
     String out;
     String raw;
@@ -453,7 +453,7 @@ String rd_enc_oauth(const String &email, const String &accessToken)
     return out;
 }
 
-String rd_enc_plain(const String &email, const String &password)
+static String rd_enc_plain(const String &email, const String &password)
 {
     // rfc4616
     String out;
@@ -473,7 +473,7 @@ String rd_enc_plain(const String &email, const String &password)
 
 
 #if defined(READYMAIL_USE_STRSEP_IMPL)
-char *rd_strsep(char **stringp, const char *delim)
+static char *rd_strsep(char **stringp, const char *delim)
 {
     char *rv = *stringp;
     if (rv)
@@ -487,7 +487,7 @@ char *rd_strsep(char **stringp, const char *delim)
     return rv;
 }
 #else
-char *rd_strsep(char **stringp, const char *delim) { return strsep(stringp, delim); }
+static char *rd_strsep(char **stringp, const char *delim) { return strsep(stringp, delim); }
 #endif
 
 #if defined(ENABLE_IMAP)
