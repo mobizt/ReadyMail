@@ -184,7 +184,7 @@ namespace ReadyMailIMAP
 
         void stopImpl(bool forceStop = false)
         {
-            if (forceStop && serverConnected())
+            if (forceStop || serverConnected())
                 imap_ctx->client->stop();
 
             serverStatus() = false;

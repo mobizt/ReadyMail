@@ -188,7 +188,7 @@ namespace ReadyMailSMTP
 
         void stopImpl(bool forceStop = false)
         {
-            if (forceStop && serverConnected())
+            if (forceStop || serverConnected())
                 smtp_ctx->client->stop();
 
             serverStatus() = false;

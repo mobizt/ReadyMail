@@ -207,6 +207,8 @@ namespace ReadyMailIMAP
 
         bool isConnected() { return serverConnected() && imap_ctx->server_status->server_greeting_ack; }
 
+        bool isProcessing() { return imap_ctx->options.processing; }
+
         bool checkCap()
         {
             tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "CAPABILITY");
@@ -284,6 +286,7 @@ namespace ReadyMailIMAP
                 {
                     imap_ctx->server_status->authenticated = true;
                     exitState(ret, imap_ctx->options.processing);
+                    cState() = imap_state_prompt;
 #if defined(ENABLE_DEBUG)
                     setDebugState(imap_state_auth_plain, "The client is authenticated successfully\n");
 #endif

@@ -117,10 +117,16 @@ void loop()
     // Requires in the loop for async mode usage
     smtp.loop();
 
+    if (smtp.isProcessing())
+        return;
+
+    if (!smtp.isConnected())
+        smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb, SSL_MODE, AWAIT_MODE);
+
     if (smtp.isConnected() && !smtp.isAuthenticated())
         smtp.authenticate(AUTHOR_EMAIL, AUTHOR_PASSWORD, readymail_auth_password, AWAIT_MODE);
 
-    if ((millis() - ms > 120 * 1000 || ms == 0) && smtp.isAuthenticated())
+    if ((millis() - ms > 20 * 1000 || ms == 0) && smtp.isAuthenticated())
     {
         ms = millis();
         sendMesssage();

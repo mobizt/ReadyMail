@@ -255,6 +255,11 @@ namespace ReadyMailSMTP
          */
         bool isConnected() { return conn.isConnected(); }
 
+        /** Provides server processing status.
+         * @return boolean status of server connection.
+         */
+        bool isProcessing() { return conn.isProcessing(); }
+
         /** Send Email.
          *
          * @param message The SMTPMessage class object. If the await parameter is false, the message will be coppied

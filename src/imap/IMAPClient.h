@@ -182,6 +182,11 @@ namespace ReadyMailIMAP
          */
         bool isConnected() { return conn.isConnected(); }
 
+        /** Provides server processing status.
+         * @return boolean status of server connection.
+         */
+        bool isProcessing() { return conn.isProcessing(); }
+
         /** IMAP server authentication.
          *
          * @param email The user Email to authenticate.

@@ -141,6 +141,8 @@ namespace ReadyMailSMTP
 
         bool isConnected() { return serverConnected() && smtp_ctx->server_status->server_greeting_ack; }
 
+        bool isProcessing() { return smtp_ctx->options.processing; }
+
         smtp_function_return_code loop()
         {
             if (cState() != smtp_state_prompt)
@@ -229,6 +231,7 @@ namespace ReadyMailSMTP
                     smtp_ctx->server_status->authenticated = true;
                     ret = function_return_exit;
                     smtp_ctx->options.processing = false;
+                    cState() = smtp_state_prompt;
                     clearCreds();
 #if defined(ENABLE_DEBUG)
                     setDebug("The client is authenticated successfully\n");
@@ -316,7 +319,7 @@ namespace ReadyMailSMTP
             }
             return auth();
         }
-        
+
         void clearCreds()
         {
             clear(access_token);
