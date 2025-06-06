@@ -94,6 +94,7 @@ Normally, the global defined `SMTPMessage` is required for async Email sending.
 Since v0.3.0, the internal `SMTPMessage` is required for async Email sending instead. To use internal `SMTPMessage` for async Email sending, the `SMTPMessage::getMessage()` is required for accessing the internal `SMTPMessage`. The following code is recommended for setting up the message.
 
 ```cpp
+// The internal message will be used for async Email sending.
 SMTPMessage &msg = smtp.getMessage();
 
 msg.headers.add(rfc822_subject, "Hello");
