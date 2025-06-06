@@ -247,6 +247,7 @@ namespace ReadyMailSMTP
             cState() = state;
             smtp_ctx->server_status->state_info.status_code = status_code;
         }
+
         void sendGreeting(const String &helo, bool esmtp)
         {
 #if defined(ENABLE_DEBUG)
@@ -257,6 +258,7 @@ namespace ReadyMailSMTP
             setState(smtp_state_greeting, smtp_server_status_code_250);
             smtp_ctx->server_status->state_info.esmtp = esmtp;
         }
+
         void startTLS()
         {
             if (!serverStatus() || smtp_ctx->server_status->secured)
@@ -267,6 +269,7 @@ namespace ReadyMailSMTP
             tcpSend(true, 1, "STARTTLS");
             setState(smtp_state_start_tls, smtp_server_status_code_250);
         }
+
         void tlsHandshake()
         {
             if ((tls_cb || smtp_ctx->options.use_auto_client) && !smtp_ctx->server_status->secured)
@@ -295,7 +298,9 @@ namespace ReadyMailSMTP
                     setError(__func__, TCP_CLIENT_ERROR_TLS_HANDSHAKE);
             }
         }
+
         bool isAuthenticated() { return smtp_ctx->server_status->authenticated; }
+
         bool auth(const String &email, const String &param, bool IsToken)
         {
             this->email = email;
@@ -311,6 +316,7 @@ namespace ReadyMailSMTP
             }
             return auth();
         }
+        
         void clearCreds()
         {
             clear(access_token);

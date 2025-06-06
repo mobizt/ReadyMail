@@ -67,7 +67,7 @@ void addBlobAttachment(SMTPMessage &msg, const String &filename, const String &m
 
 void sendMesssage()
 {
-    SMTPMessage msg;
+    SMTPMessage &msg = smtp.getMessage();
     msg.headers.add(rfc822_subject, "ReadyMail Hello message");
     msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");

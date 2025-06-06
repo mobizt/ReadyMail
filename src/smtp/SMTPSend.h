@@ -25,6 +25,7 @@ namespace ReadyMailSMTP
         SMTPResponse *res = nullptr;
         SMTPMessage *msg_ptr = nullptr;
         uint32_t root_msg_addr = 0;
+        SMTPMessage local_msg;
 
         void begin(smtp_context *smtp_ctx, SMTPResponse *res, SMTPConnection *conn)
         {
@@ -53,12 +54,12 @@ namespace ReadyMailSMTP
             return true;
         }
 
-        bool send(SMTPMessage &msg, const String &notify)
+        bool send(SMTPMessage &msg, const String &notify, bool await)
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
 #if defined(ENABLE_DEBUG)
-                setDebugState(smtp_state_send_header_sender, "Sending E-mail...");
+                setDebugState(smtp_state_send_header_sender, "Sending Email...");
 #endif
 
                 if (conn && !conn->isInitialized())
@@ -75,10 +76,10 @@ namespace ReadyMailSMTP
                 if (!checkEmail(msg))
                     return false;
             }
-            return sendImpl(msg);
+            return sendImpl(msg, await);
         }
 
-        bool sendImpl(SMTPMessage &msg)
+        bool sendImpl(SMTPMessage &msg, bool await)
         {
             smtp_ctx->options.processing = true;
             msg_ptr = &msg;
@@ -91,6 +92,9 @@ namespace ReadyMailSMTP
             clear(msg.buf);
             clear(msg.header);
             setXEnc(msg);
+
+            if (!await &&  local_msg.headers.size() == 0)
+                return setError(__func__, SMTP_ERROR_UNINITIALIZE_LOCAL_SMTP_MESSAGE);
 
             for (size_t i = 0; i < msg.headers.size(); i++)
             {
@@ -890,8 +894,9 @@ namespace ReadyMailSMTP
                         cCode() = function_return_exit;
                         smtp_ctx->options.processing = false;
                         smtp_ctx->status->isComplete = true;
+                        local_msg.clear();
 #if defined(ENABLE_DEBUG)
-                        setDebug("The E-mail is sent successfully\n");
+                        setDebug("The Email is sent successfully\n");
 #endif
                         break;
 

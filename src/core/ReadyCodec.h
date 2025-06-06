@@ -431,6 +431,9 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
             if (mode != 1 /* xenc_7bit */)
                 line += "\r\n";
 
+              //  Serial.println("=======");
+              //  Serial.println(sindex);
+
             index = sindex > 0 ? index + sindex : len;
         }
     }
@@ -470,7 +473,6 @@ static String rd_enc_plain(const String &email, const String &password)
     rd_free(&buf);
     return out;
 }
-
 
 #if defined(READYMAIL_USE_STRSEP_IMPL)
 static char *rd_strsep(char **stringp, const char *delim)
@@ -584,26 +586,30 @@ static void rd_dec_qp_utf8(const char *src, char *out)
     }
 }
 
+// 7-bit decoding per line
 static char *rd_dec_7bit_utf8(const char *src)
 {
-    String s;
+    String buf;
 
     // only non NULL and 7-bit ASCII are allowed
     // rfc2045 section 2.7
     size_t len = src ? strlen(rd_cast<const char *>(src)) : 0;
+    if (len > 998) // max 998 octets per line
+        len = 998;
 
     for (size_t i = 0; i < len; i++)
     {
-        if (src[i] > 0 && src[i] < 128 && i < 998)
-            s += src[i];
+        if (src[i] > 0 && src[i] < 128)
+            buf += src[i];
     }
 
     // some special chars can't send in 7bit unless encoded as queoted printable string
-    char *decoded = rd_mem<char *>(s.length() + 10, true);
-    rd_dec_qp_utf8(s.c_str(), decoded);
+    char *decoded = rd_mem<char *>(buf.length() + 10, true);
+    rd_dec_qp_utf8(buf.c_str(), decoded);
     return decoded;
 }
 
+// 8-bit decoding per line
 static char *rd_dec_8bit_utf8(const char *src)
 {
     String s;
@@ -611,10 +617,10 @@ static char *rd_dec_8bit_utf8(const char *src)
     // only non NULL and less than 998 octet length are allowed
     // rfc2045 section 2.8
     size_t len = src ? strlen(src) : 0;
-    if (len > 998)
+    if (len > 998) // max 998 octets per line
         len = 998;
 
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++) 
     {
         if (src[i] > 0)
             s += src[i];

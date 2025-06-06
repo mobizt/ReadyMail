@@ -87,6 +87,18 @@ if (smtp.isConnected())
 }
 ```
 
+### Changes from v0.3.0 and newer
+
+Normally, the global defined `SMTPMessage` is required for async Email sending.
+
+Since v0.3.0, the internal `SMTPMessage` is required for async Email sending instead. To use internal `SMTPMessage` for async Email sending, the `SMTPMessage::getMessage()` is required for accessing the internal `SMTPMessage`. The following code is recommended for setting up the message.
+
+```cpp
+SMTPMessage &msg = smtp.getMessage();
+
+msg.headers.add(rfc822_subject, "Hello");
+```
+
 ### Changes from v0.1.x to v0.2.0 and newer
 
 The `IMAPCallbackData` members are totally changed and cannot migrate from the old code. The `IMAPCallbackData::event()`, `imap_file_info`, `imap_file_chunk` and `imap_file_progress` are introduced.
@@ -700,7 +712,7 @@ Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetchi
 
 **IMAP Response Parsing**
 
-The complete responses of the multi-lines, large IMAP's headers, envelope and body structures are required especially when decodings and nested list parsing. Parsing or decoding the partial/chunked responses may give the incorrect information. 
+The complete responses of the multi-line, large IMAP's headers, envelope and body structures are required especially when decodings and nested list parsing. Parsing or decoding the partial/chunked responses may give the incorrect information. 
 
 The memory allocation for those responses buffer may fail in some limited memory devices.
 
@@ -716,4 +728,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-05-29 UTC.*
+*Last updated 2025-06-06 UTC.*

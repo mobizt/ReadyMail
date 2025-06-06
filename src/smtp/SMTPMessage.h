@@ -206,7 +206,10 @@ namespace ReadyMailSMTP
     NumString numString;
     std::vector<Attachment> el;
     Attachment att;
+    uint32_t parent_addr =0;
     int attachments_idx = 0, attachment_idx = 0, inline_idx = 0, parallel_idx = 0;
+
+    void setParent(uint32_t addr) { parent_addr = addr; }
 
     void push_back(Attachment att) { el.push_back(att); }
 
@@ -288,6 +291,7 @@ namespace ReadyMailSMTP
   class SMTPMessage
   {
     friend class smtp_message_body_t;
+    friend class SMTPClient;
 
   public:
     /** SMTPMessage class constructor
@@ -364,7 +368,7 @@ namespace ReadyMailSMTP
       attachments.resetIndex();
     }
 #if defined(ENABLE_FS)
-       void openFileRead(bool html)
+    void openFileRead(bool html)
     {
       if (html)
         this->html.openFileRead(file, file_opened);

@@ -18,6 +18,7 @@ using namespace ReadyMailCallbackNS;
 
 namespace ReadyMailSMTP
 {
+
     class SMTPClient
     {
         friend class IMAPSend;
@@ -29,7 +30,6 @@ namespace ReadyMailSMTP
         smtp_server_status_t server_status;
         smtp_response_status_t resp_status;
         smtp_context smtp_ctx;
-        SMTPMessage amsg;
 
         bool awaitLoop()
         {
@@ -41,7 +41,7 @@ namespace ReadyMailSMTP
                     code = sender.loop();
             }
             smtp_ctx.server_status->state_info.state = smtp_state_prompt;
-            amsg.clear();
+            sender.local_msg.clear();
             return code != function_return_failure;
         }
 
@@ -267,10 +267,7 @@ namespace ReadyMailSMTP
          */
         bool send(SMTPMessage &message, const String &notify = "", bool await = true)
         {
-            amsg.clear();
-            if (!await) // In async mode, use local (copy) message instead.
-                amsg = message;
-            bool ret = sender.send(await ? message : amsg, notify);
+            bool ret = sender.send(message, notify, await);
             if (ret && await)
                 return awaitLoop();
             return ret;
@@ -365,6 +362,8 @@ namespace ReadyMailSMTP
 
         // Private used by other classes.
         uint32_t contextAddr() { return rd_cast<uint32_t>(&smtp_ctx); }
+
+        SMTPMessage &getMessage() { return sender.local_msg; }
     };
 }
 #endif

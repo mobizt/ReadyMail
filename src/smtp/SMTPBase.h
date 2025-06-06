@@ -343,6 +343,9 @@ namespace ReadyMailSMTP
                 case SMTP_ERROR_PROCESSING:
                     msg = "The last process does not yet finished";
                     break;
+                case SMTP_ERROR_UNINITIALIZE_LOCAL_SMTP_MESSAGE:
+                    msg = "The internal message is required for async Email sending, use SMTPMessage &msg = smtp.getMessage();";
+                    break;
 #endif
                 default:
                     msg = "Unknown";
