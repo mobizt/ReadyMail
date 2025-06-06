@@ -238,6 +238,8 @@ namespace ReadyMailIMAP
                     exitState(ret, imap_ctx->options.processing);
                 else if (ret == function_return_success)
                 {
+                    imap_ctx->auth_caps[imap_auth_cap_login] = true;
+                    cState() = imap_state_prompt;
                     if (imap_ctx->ssl_mode && imap_ctx->auth_caps[imap_auth_cap_starttls] && imap_ctx->server_status->start_tls && (tls_cb || imap_ctx->options.use_auto_client) && !imap_ctx->server_status->secured)
                         startTLS();
                     else
