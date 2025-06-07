@@ -304,10 +304,10 @@ namespace ReadyMailSMTP
 
         bool isAuthenticated() { return smtp_ctx->server_status->authenticated; }
 
-        bool auth(const String &email, const String &param, bool IsToken)
+        bool auth(const String &email, const String &param, bool isToken)
         {
             this->email = email;
-            if (IsToken)
+            if (isToken)
             {
                 clear(password);
                 this->access_token = param;
