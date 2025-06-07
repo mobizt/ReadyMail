@@ -679,6 +679,13 @@ The `ESP8266` device itself, its Heap should be selected properly so that is eno
 
 By setting ESP8266 `MMU` options, from Arduino IDE, goto menu `Tools` > `MMU:` and select `16KB cache + 48 KB IRAM and 2nd Heap (shared)` (option 3).
 
+
+In PlatformIO in `VSCode` IDE, the build flag set in the platformio.ini should be.
+
+```ini
+build_flags = -D PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+```
+
 The power supply should be robusted that provides enough current with low ripple and noise. The cable should provide good power e.g. short lenght and low impedance.
 
 The library provides the wdt feed internally while operating in both sync and await modes.
@@ -729,4 +736,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-06-06 UTC.*
+*Last updated 2025-06-07 UTC.*
