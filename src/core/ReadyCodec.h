@@ -33,7 +33,7 @@ public:
     bool available()
     {
         if (type <= src_data_static)
-            return index < size();
+            return index < (int)size();
 #if defined(ENABLE_FS)
         else if (fs)
             return fs.available();
@@ -261,7 +261,7 @@ static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int
         last_index = -1 * last_index;
 
     int i = last_index + max_len;
-    if (i < src.size())
+    if (i < (int)src.size())
     {
         src.seek(index);
         bool softbreak = false;
@@ -319,7 +319,7 @@ static String rd_qp_encode_chunk(src_data_ctx &src, int &index, bool flowed, int
     {
         int c = c1 == 0 ? src.read() : c1;
         c1 = src.available() ? src.read() : 0;
-        if (sbuf.length() >= max_len - 3 && c != 10 && c != 13)
+        if ((int)sbuf.length() >= max_len - 3 && c != 10 && c != 13)
         {
             sbuf += "=\r\n";
             goto out;
@@ -401,7 +401,7 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
         int sindex = 0;
         while (src.available())
         {
-            if (buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
+            if ((int)buf.length() < (mode == 3 /* xenc_base64 */ ? 57 : max_len))
             {
                 buf += src.read();
                 if (flowed && rd_add_sb(buf, index + sindex, softbreak_index, softbreak_buf, (mode == 3 /* xenc_base64 */ ? 57 : max_len)))
@@ -431,8 +431,8 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
             if (mode != 1 /* xenc_7bit */)
                 line += "\r\n";
 
-              //  Serial.println("=======");
-              //  Serial.println(sindex);
+            //  Serial.println("=======");
+            //  Serial.println(sindex);
 
             index = sindex > 0 ? index + sindex : len;
         }
@@ -620,7 +620,7 @@ static char *rd_dec_8bit_utf8(const char *src)
     if (len > 998) // max 998 octets per line
         len = 998;
 
-    for (size_t i = 0; i < len; i++) 
+    for (size_t i = 0; i < len; i++)
     {
         if (src[i] > 0)
             s += src[i];

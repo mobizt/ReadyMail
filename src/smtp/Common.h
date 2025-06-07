@@ -410,9 +410,10 @@ namespace ReadyMailSMTP
         smtp_message_body_t &clear()
         {
             content.remove(0, content.length());
-            charSet.remove(0, charSet.length());
-            content_type.remove(0, content_type.length());
-            transfer_encoding.remove(0, transfer_encoding.length());
+            // Set to default values unless
+            // content_type shall not be not changed.
+            charSet = "UTF-8";
+            transfer_encoding = "7bit";
             embed.enable = false;
             flowed = false;
             return *this;

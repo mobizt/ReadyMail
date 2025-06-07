@@ -322,8 +322,7 @@ namespace ReadyMailSMTP
          */
         void stop()
         {
-            if (isConnected() && isAuthenticated())
-                logout(true);
+            smtp_ctx.status->isComplete = false;
             conn.stop();
         }
 

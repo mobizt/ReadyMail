@@ -129,6 +129,7 @@ namespace ReadyMailSMTP
             this->host = host;
             this->port = port;
             smtp_ctx->options.ssl_mode = ssl;
+            smtp_ctx->status->isComplete = false;
 
             if (serverConnected())
                 stop(true);

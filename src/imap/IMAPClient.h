@@ -165,12 +165,7 @@ namespace ReadyMailIMAP
 
         /** Stop the server connection and release the allocated resources.
          */
-        void stop()
-        {
-            if (isConnected() && isAuthenticated())
-                logout(true);
-            conn.stop();
-        }
+        void stop() { conn.stop(); }
 
         /** Provides the SMTP server authentication status.
          * @return boolean status of authentication.

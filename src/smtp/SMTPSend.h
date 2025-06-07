@@ -93,7 +93,7 @@ namespace ReadyMailSMTP
             clear(msg.header);
             setXEnc(msg);
 
-            if (!await &&  local_msg.headers.size() == 0)
+            if (!await && local_msg.headers.size() == 0)
                 return setError(__func__, SMTP_ERROR_UNINITIALIZE_LOCAL_SMTP_MESSAGE);
 
             for (size_t i = 0; i < msg.headers.size(); i++)
@@ -966,10 +966,11 @@ namespace ReadyMailSMTP
         {
             msg.resetIndex();
             msg.content_types.clear();
-
+            msg.text.header_sent = false;
             msg.text.data_index = 0;
             msg.text.data_size = 0;
 
+            msg.html.header_sent = false;
             msg.html.data_index = 0;
             msg.html.data_size = 0;
 
