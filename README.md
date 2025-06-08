@@ -132,7 +132,7 @@ Plese check the library's [examples](/examples/Sending/) for the changes.
 
 **Host/Domain or Public IP**
 
-User should provides the host name or you public IPv4 or IPv6 to the third parameter of `SMTPClient::connect()` function.
+User should provides the host name or his public IPv4 or IPv6 to the third parameter of `SMTPClient::connect()` function.
 
 This information is the part of `EHLO/HELO` SMTP command to identify the client system to prevent connection rejection.
 
