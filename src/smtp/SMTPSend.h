@@ -58,6 +58,7 @@ namespace ReadyMailSMTP
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
+                smtp_ctx->status->isComplete = false;
 #if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_header_sender, "Sending Email...");
 #endif
