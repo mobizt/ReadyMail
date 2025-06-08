@@ -73,7 +73,8 @@ namespace ReadyMailIMAP
         imap_state_id,
         imap_state_unselect,
         imap_state_copy,
-        imap_state_send_command
+        imap_state_send_command,
+        imap_state_stop
     };
 
     enum imap_mailbox_mode

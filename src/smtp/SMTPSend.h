@@ -58,7 +58,9 @@ namespace ReadyMailSMTP
         {
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
+                // Reset the isComplete status.
                 smtp_ctx->status->isComplete = false;
+
 #if defined(ENABLE_DEBUG)
                 setDebugState(smtp_state_send_header_sender, "Sending Email...");
 #endif
@@ -89,7 +91,6 @@ namespace ReadyMailSMTP
             msg.cc_index = 0;
             msg.bcc_index = 0;
             msg.send_recipient_complete = false;
-            smtp_ctx->status->isComplete = false;
             clear(msg.buf);
             clear(msg.header);
             setXEnc(msg);
@@ -103,7 +104,10 @@ namespace ReadyMailSMTP
                     rd_print_to(msg.header, 250, "%s: %s<%s>\r\n", rfc822_headers[msg.headers[i].type].text, msg.headers[i].name.c_str(), msg.headers[i].value.c_str());
             }
 
-            return startTransaction(msg);
+            if (!startTransaction(msg))
+                return setError(__func__, SMTP_ERROR_SEND_EMAIL);
+
+            return true;
         }
 
         bool sendCmd(const String &cmd)
@@ -268,22 +272,19 @@ namespace ReadyMailSMTP
 
                 setState(smtp_state_send_body, smtp_server_status_code_0);
                 msg.send_state++;
-                break;
+                return true;
 
             case smtp_send_state_body_header:
                 return sendHeader(msg);
-                break;
 
             case smtp_send_state_message_data:
                 setMIMEList(msg);
                 return initSendState(msg);
-                break;
 
             case smtp_send_state_body_type_1:
             case smtp_send_state_body_type_5_1:
             case smtp_send_state_body_type_5P_1:
                 return sendTextMessage(msg, 0 /* text or html */, msg.html.content.length() > 0, false);
-                break;
 
             case smtp_send_state_body_type_2:  // mixed
             case smtp_send_state_body_type_2P: // mixed
@@ -296,8 +297,7 @@ namespace ReadyMailSMTP
             case smtp_send_state_body_type_6:  // alternative
             case smtp_send_state_body_type_7:  // related
             case smtp_send_state_body_type_8:  // alternative
-                sendMultipartHeader(msg, -1, 0);
-                break;
+                return sendMultipartHeader(msg, -1, 0);
 
             case smtp_send_state_body_type_2_1:  // mixed, alternative
             case smtp_send_state_body_type_2P_1: // mixed, alternative
@@ -306,31 +306,25 @@ namespace ReadyMailSMTP
             case smtp_send_state_body_type_4_1:  // mixed, alternative
             case smtp_send_state_body_type_4P_1: // mixed, alternative
             case smtp_send_state_body_type_6_2:  // alternative, related
-                sendMultipartHeader(msg, 0, 1);
-                break;
+                return sendMultipartHeader(msg, 0, 1);
 
             case smtp_send_state_body_type_2_2:
             case smtp_send_state_body_type_2P_2:
             case smtp_send_state_body_type_4_2:
             case smtp_send_state_body_type_4P_2:
                 return sendTextMessage(msg, 1 /* alternative */, false, false);
-                break;
 
             case smtp_send_state_body_type_2_3:
             case smtp_send_state_body_type_2P_3:
-                sendMultipartHeader(msg, 1, 2); // alternative, related
-                break;
+                return sendMultipartHeader(msg, 1, 2); // alternative, related
 
             case smtp_send_state_body_type_2_4:
             case smtp_send_state_body_type_2P_4:
                 return sendTextMessage(msg, 2 /* related */, true, false);
-                break;
 
             case smtp_send_state_body_type_2_5:
             case smtp_send_state_body_type_2P_5:
-
                 return sendAttachment(msg, attach_type_inline, 2 /* related */, true /* close alternative */);
-                break;
 
             case smtp_send_state_body_type_2_6:
             case smtp_send_state_body_type_3_4:
@@ -354,66 +348,54 @@ namespace ReadyMailSMTP
                 break;
 
             case smtp_send_state_body_type_2P_6:
-                sendMultipartHeader(msg, 0, 3); // mixed, parallel
-                break;
+                return sendMultipartHeader(msg, 0, 3); // mixed, parallel
 
             case smtp_send_state_body_type_2P_7:
                 return sendAttachment(msg, attach_type_parallel, 3 /* parallel */, false);
-                break;
 
             case smtp_send_state_body_type_3_2:
             case smtp_send_state_body_type_3P_2:
             case smtp_send_state_body_type_6_3:
                 return sendTextMessage(msg, 1 /* related */, true, false);
-                break;
 
             case smtp_send_state_body_type_3_3:
             case smtp_send_state_body_type_3P_3:
                 return sendAttachment(msg, attach_type_inline, 1 /* related */, false);
-                break;
 
             case smtp_send_state_body_type_3P_4:
             case smtp_send_state_body_type_4P_4:
             case smtp_send_state_body_type_5P_2:
-                sendMultipartHeader(msg, 0, 2); // mixed, parallel
-                break;
+                return sendMultipartHeader(msg, 0, 2); // mixed, parallel
 
             case smtp_send_state_body_type_3P_5:
             case smtp_send_state_body_type_4P_5:
             case smtp_send_state_body_type_5P_3:
                 return sendAttachment(msg, attach_type_parallel, 2 /* parallel */, false);
-                break;
 
             case smtp_send_state_body_type_4_3:
             case smtp_send_state_body_type_4P_3:
                 return sendTextMessage(msg, 1 /* alternative */, true, true);
-                break;
 
             case smtp_send_state_body_type_6_1:
             case smtp_send_state_body_type_8_1:
                 return sendTextMessage(msg, 0 /* alternative */, false, false);
-                break;
 
             case smtp_send_state_body_type_6_4:
                 return sendAttachment(msg, attach_type_inline, 1 /* related */, true);
-                break;
 
             case smtp_send_state_body_type_7_1:
                 return sendTextMessage(msg, 0 /* related */, true, false);
-                break;
 
             case smtp_send_state_body_type_7_2:
                 return sendAttachment(msg, attach_type_inline, 0 /* related */, true);
-                break;
 
             case smtp_send_state_body_type_8_2:
                 return sendTextMessage(msg, 0 /* alternative */, true, true);
-                break;
 
             default:
                 break;
             }
-            return true;
+            return false;
         }
 
         bool sendRFC822Header(SMTPMessage &msg)
@@ -849,6 +831,7 @@ namespace ReadyMailSMTP
             {
                 if (cCode() == function_return_success)
                 {
+                    bool ret = true;
                     switch (cState())
                     {
                     case smtp_state_connect_command:
@@ -860,19 +843,20 @@ namespace ReadyMailSMTP
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
                         smtp_ctx->options.processing = false;
+                        // Set the isComplete status.
                         smtp_ctx->status->isComplete = true;
                         break;
 
                     case smtp_state_send_header_sender:
                         if (msg_ptr)
-                            sendRecipient(*msg_ptr);
+                            ret = sendRecipient(*msg_ptr);
                         break;
 
                     case smtp_state_send_header_recipient:
                         if (msg_ptr && !msg_ptr->send_recipient_complete)
-                            sendRecipient(*msg_ptr);
+                            ret = sendRecipient(*msg_ptr);
                         else
-                            startData();
+                            ret = startData();
                         break;
 
                     case smtp_state_wait_data:
@@ -880,20 +864,21 @@ namespace ReadyMailSMTP
                         if (msg_ptr)
                         {
                             setSendState(*msg_ptr, smtp_send_state_body_data);
-                            sendBodyData(*msg_ptr);
+                            ret = sendBodyData(*msg_ptr);
                         }
 
                         break;
 
                     case smtp_state_send_body:
                         if (msg_ptr)
-                            sendBodyData(*msg_ptr);
+                            ret = sendBodyData(*msg_ptr);
                         break;
 
                     case smtp_state_data_termination:
                         setState(smtp_state_prompt, smtp_server_status_code_0);
                         cCode() = function_return_exit;
                         smtp_ctx->options.processing = false;
+                        // Set the isComplete status.
                         smtp_ctx->status->isComplete = true;
                         local_msg.clear();
 #if defined(ENABLE_DEBUG)
@@ -910,6 +895,9 @@ namespace ReadyMailSMTP
                     default:
                         break;
                     }
+
+                    if (!ret)
+                         setError(__func__, SMTP_ERROR_SEND_EMAIL);
                 }
                 else if (cCode() == function_return_failure)
                 {

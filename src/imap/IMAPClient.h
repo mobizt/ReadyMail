@@ -165,7 +165,13 @@ namespace ReadyMailIMAP
 
         /** Stop the server connection and release the allocated resources.
          */
-        void stop() { conn.stop(); }
+        void stop()
+        {
+#if defined(ENABLE_DEBUG)
+                conn.setDebugState(imap_state_stop, "Stop the TCP session...");
+#endif
+            conn.stop();
+        }
 
         /** Provides the SMTP server authentication status.
          * @return boolean status of authentication.
@@ -602,8 +608,8 @@ namespace ReadyMailIMAP
             imap_ctx.cb.file = fileCallback;
             imap_ctx.cb.download_path = downloadFolder;
 #else
-            (void)fileCallback;
-            (void)downloadFolder;
+    (void)fileCallback;
+    (void)downloadFolder;
 #endif
             imap_ctx.cb.data = dataCallback;
             return fetchImpl(uid, true, await, bodySizeLimit);
@@ -628,8 +634,8 @@ namespace ReadyMailIMAP
             imap_ctx.cb.file = fileCallback;
             imap_ctx.cb.download_path = downloadFolder;
 #else
-            (void)fileCallback;
-            (void)downloadFolder;
+    (void)fileCallback;
+    (void)downloadFolder;
 #endif
             imap_ctx.cb.data = dataCallback;
             return fetchImpl(number, false, await, bodySizeLimit);
@@ -730,8 +736,8 @@ namespace ReadyMailIMAP
             if (!imap_ctx.cb.data && !imap_ctx.cb.file)
                 return sender.setError(&imap_ctx, __func__, IMAP_ERROR_NO_CALLBACK);
 #else
-            if (!imap_ctx.cb.data)
-                return sender.setError(&imap_ctx, __func__, IMAP_ERROR_NO_CALLBACK);
+    if (!imap_ctx.cb.data)
+        return sender.setError(&imap_ctx, __func__, IMAP_ERROR_NO_CALLBACK);
 #endif
 
             if (imap_ctx.options.idling)

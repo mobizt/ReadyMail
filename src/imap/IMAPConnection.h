@@ -312,15 +312,17 @@ namespace ReadyMailIMAP
             setState(user ? imap_state_login_user : imap_state_login_psw);
         }
 
-        void startTLS()
+        bool startTLS()
         {
             if (!serverStatus() || imap_ctx->server_status->secured)
-                return;
+                return false;
 #if defined(ENABLE_DEBUG)
             setDebugState(imap_state_start_tls, "Starting TLS...");
 #endif
-            tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "STARTTLS");
+            if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "STARTTLS"))
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_STARTTLS);
             setState(imap_state_start_tls);
+            return true;
         }
 
         bool isAuthenticated() { return imap_ctx->server_status->authenticated; }

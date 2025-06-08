@@ -55,6 +55,10 @@ namespace ReadyMailSMTP
 
             if (smtp_ctx.options.processing)
                 return true;
+
+            // Reset the isComplete status.
+            smtp_ctx.status->isComplete = false;
+
 #if defined(ENABLE_DEBUG)
             conn.setDebugState(smtp_state_authentication, "Authenticating...");
 #endif
@@ -322,7 +326,11 @@ namespace ReadyMailSMTP
          */
         void stop()
         {
+            // Reset the isComplete status.
             smtp_ctx.status->isComplete = false;
+#if defined(ENABLE_DEBUG)
+            conn.setDebugState(smtp_state_stop, "Stop the TCPsession...");
+#endif
             conn.stop();
         }
 

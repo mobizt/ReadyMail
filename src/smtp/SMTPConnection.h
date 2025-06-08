@@ -129,6 +129,7 @@ namespace ReadyMailSMTP
             this->host = host;
             this->port = port;
             smtp_ctx->options.ssl_mode = ssl;
+            // Reset the isComplete status.
             smtp_ctx->status->isComplete = false;
 
             if (serverConnected())
@@ -263,15 +264,17 @@ namespace ReadyMailSMTP
             smtp_ctx->server_status->state_info.esmtp = esmtp;
         }
 
-        void startTLS()
+        bool startTLS()
         {
             if (!serverStatus() || smtp_ctx->server_status->secured)
-                return;
+                return false;
 #if defined(ENABLE_DEBUG)
             setDebugState(smtp_state_start_tls, "Starting TLS...");
 #endif
-            tcpSend(true, 1, "STARTTLS");
+            if (!tcpSend(true, 1, "STARTTLS"))
+                return setError(__func__, TCP_CLIENT_ERROR_STARTTLS);
             setState(smtp_state_start_tls, smtp_server_status_code_250);
+            return true;
         }
 
         void tlsHandshake()

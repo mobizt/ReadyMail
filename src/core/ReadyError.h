@@ -27,6 +27,9 @@ static String rd_err(int code)
     case TCP_CLIENT_ERROR_CONNECTION_TIMEOUT:
         msg = "Connection timed out, see http://bit.ly/437GkRA";
         break;
+    case TCP_CLIENT_ERROR_STARTTLS:
+        msg = "SRART TLS failed";
+        break;
     case TCP_CLIENT_ERROR_TLS_HANDSHAKE:
         msg = "TLS handshake failed";
         break;

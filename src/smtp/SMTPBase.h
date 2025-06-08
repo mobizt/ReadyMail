@@ -347,6 +347,9 @@ namespace ReadyMailSMTP
                 case SMTP_ERROR_UNINITIALIZE_LOCAL_SMTP_MESSAGE:
                     msg = "The internal message is required for async Email sending, use SMTPMessage &msg = smtp.getMessage();";
                     break;
+                case SMTP_ERROR_SEND_EMAIL:
+                    msg = "Email sending failed";
+                    break;
 #endif
                 default:
                     msg = "Unknown";

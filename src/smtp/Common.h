@@ -17,6 +17,7 @@
 #define SMTP_ERROR_SEND_DATA -107
 #define SMTP_ERROR_PROCESSING -108
 #define SMTP_ERROR_UNINITIALIZE_LOCAL_SMTP_MESSAGE -109
+#define SMTP_ERROR_SEND_EMAIL -110
 
 using namespace ReadyMailCallbackNS;
 
@@ -57,7 +58,8 @@ namespace ReadyMailSMTP
         smtp_state_terminated,
         smtp_state_connect_command,
         smtp_state_send_command,
-        smtp_state_send_data
+        smtp_state_send_data,
+        smtp_state_stop
     };
 
     enum smtp_send_state
