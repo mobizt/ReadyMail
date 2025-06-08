@@ -20,6 +20,7 @@
 #define WIFI_PASSWORD "_______"
 
 #define READ_ONLY_MODE true
+#define SSL_MODE true
 #define AWAIT_MODE false
 #define MAX_CONTENT_SIZE 1024 * 1024 // Maximum size in bytes of the body parts (text and attachment) to be downloaded.
 
@@ -114,20 +115,25 @@ void setup()
 
     // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
 
-    imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
+    imap.connect(IMAP_HOST, IMAP_PORT, imapCb, SSL_MODE, AWAIT_MODE);
 }
 
 void loop()
 {
+    // Requires in the loop for async mode usage
     imap.loop();
+
+    if (imap.isProcessing())
+        return;
+
+    if (!imap.isConnected())
+        imap.connect(IMAP_HOST, IMAP_PORT, imapCb, SSL_MODE, AWAIT_MODE);
 
     if (imap.isConnected() && !imap.isAuthenticated())
         imap.authenticate(AUTHOR_EMAIL, AUTHOR_PASSWORD, readymail_auth_password, AWAIT_MODE);
 
     if (imap.isAuthenticated() && imap.getMailbox().name != "INBOX")
-    {
         imap.select("INBOX", READ_ONLY_MODE);
-    }
 
     if ((millis() - ms > 120 * 1000 || ms == 0) && imap.isAuthenticated() && imap.getMailbox().name == "INBOX")
     {

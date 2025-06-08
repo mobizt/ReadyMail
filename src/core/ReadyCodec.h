@@ -431,9 +431,6 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
             if (mode != 1 /* xenc_7bit */)
                 line += "\r\n";
 
-            //  Serial.println("=======");
-            //  Serial.println(sindex);
-
             index = sindex > 0 ? index + sindex : len;
         }
     }
