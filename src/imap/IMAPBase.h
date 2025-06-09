@@ -59,17 +59,21 @@ namespace ReadyMailIMAP
             imap_ctx->status->errorCode = 0;
             imap_ctx->status->text.remove(0, imap_ctx->status->text.length());
         }
+
         int indexOf(const char *str, const char *find)
         {
             const char *s = strstr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
+
         int indexOf(const char *str, char find)
         {
             const char *s = strchr(str, find);
             return (s) ? (int)(s - str) : -1;
         }
+
         void clear(String &s) { s.remove(0, s.length()); }
+
         bool tcpSend(bool crlf, uint8_t argLen, ...)
         {
             String data;
@@ -85,6 +89,7 @@ namespace ReadyMailIMAP
             data += crlf ? "\r\n" : "";
             return tcpSend(rd_cast<const uint8_t *>(data.c_str()), data.length()) == data.length();
         }
+
         size_t tcpSend(const uint8_t *data, size_t len) { return imap_ctx->client ? imap_ctx->client->write(data, len) : 0; }
 
         bool setError(imap_context *imap_ctx, const char *func, int code, const String &msg = "")
@@ -281,6 +286,9 @@ namespace ReadyMailIMAP
                     break;
                 case IMAP_ERROR_COMMAND_NOT_ALLOW:
                     msg = "This command is not allowed";
+                    break;
+                case IMAP_ERROR_FETCH_MESSAGE:
+                    msg = "Fetch message failed";
                     break;
                 default:
                     msg = "Unknown";

@@ -276,7 +276,7 @@ namespace ReadyMailIMAP
             }
 
             if (buf.length() && !tcpSend(true, 2, imap_ctx->tag.c_str(), buf.c_str()))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(state);
             return true;
@@ -285,7 +285,8 @@ namespace ReadyMailIMAP
         bool sendLogout()
         {
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "LOGOUT"))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_logout);
             return true;
         }
@@ -294,7 +295,8 @@ namespace ReadyMailIMAP
         {
             imap_ctx->cmd = cmd;
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", cmd.c_str()))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_send_command);
             return true;
         }
@@ -312,8 +314,9 @@ namespace ReadyMailIMAP
             setDebugState(imap_state_idle, "Starting the mailbox idling...");
 #endif
             res->idle_timer.feed(imap_ctx->options.timeout.idle / 1000);
+            
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "IDLE"))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setProcessFlag(imap_ctx->options.idling);
             setState(imap_state_idle);
@@ -330,7 +333,8 @@ namespace ReadyMailIMAP
             imap_ctx->options.processing = true;
 
             if (!tcpSend(true, 1, "DONE"))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_done);
             return true;
         }
@@ -346,7 +350,8 @@ namespace ReadyMailIMAP
         {
             imap_ctx->mailboxes->clear();
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "LIST \"\" *"))
-                return false;
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_list);
             return true;
         }
@@ -469,7 +474,9 @@ namespace ReadyMailIMAP
             cMsgIndex() = 0;
             imap_ctx->options.fetch_number = number;
             imap_ctx->options.uid_fetch = uid_fetch;
-            return sendFetch(imap_fetch_envelope);
+            if (!sendFetch(imap_fetch_envelope))
+                return setError(imap_ctx, __func__, IMAP_ERROR_FETCH_MESSAGE);
+            return true;
         }
 
         void clearMailboxInfo()

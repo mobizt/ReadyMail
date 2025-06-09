@@ -245,7 +245,7 @@ namespace ReadyMailIMAP
          * @return boolean status of processing state.
          *
          * The following commands are not allowed.
-         * DONE, LOGOUT, STARTTLS, IDLE, ID, CLOSE, AUTHENTICATE, LOGIN, SELECT and EXAMINE.
+         * DONE, LOGOUT, STARTTLS, IDLE, ID, CLOSE, AUTHENTICATE, LOGIN, SELECT,  EXAMINE and NOOP.
          */
         bool sendCommand(const String &cmd, IMAPCustomComandCallback cb, bool await = true)
         {
@@ -269,7 +269,7 @@ namespace ReadyMailIMAP
             String lcmd = " " + cmd;
             lcmd.toLowerCase();
 
-            if (lcmd.indexOf(" done") > -1 || lcmd.indexOf(" logout") > -1 || lcmd.indexOf(" starttls") > -1 || lcmd.indexOf(" idle") > -1 || lcmd.indexOf(" id ") > -1 || lcmd.indexOf(" close") > -1 || lcmd.indexOf(" authenticate") > -1 || lcmd.indexOf(" login") > -1 || lcmd.indexOf(" select") > -1 || lcmd.indexOf(" examine") > -1)
+            if (lcmd.indexOf(" done") > -1 || lcmd.indexOf(" logout") > -1 || lcmd.indexOf(" starttls") > -1 || lcmd.indexOf(" idle") > -1 || lcmd.indexOf(" id ") > -1 || lcmd.indexOf(" close") > -1 || lcmd.indexOf(" authenticate") > -1 || lcmd.indexOf(" login") > -1 || lcmd.indexOf(" select") > -1 || lcmd.indexOf(" examine") > -1 || lcmd.indexOf(" noop") > -1)
                 return sender.setError(&imap_ctx, __func__, IMAP_ERROR_COMMAND_NOT_ALLOW);
 
             imap_ctx.cb.cmd = cb;

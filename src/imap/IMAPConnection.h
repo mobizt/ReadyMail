@@ -123,20 +123,21 @@ namespace ReadyMailIMAP
                     return setError(imap_ctx, __func__, AUTH_ERROR_OAUTH2_NOT_SUPPORTED);
 
                 if (!tcpSend(true, 7, imap_ctx->tag.c_str(), " ", "AUTHENTICATE", " ", "XOAUTH2", imap_ctx->auth_caps[imap_auth_cap_sasl_ir] ? " " : "", imap_ctx->auth_caps[imap_auth_cap_sasl_ir] ? rd_enc_oauth(email, access_token).c_str() : ""))
-                    return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
                 setState(imap_state_auth_xoauth2);
             }
             else if (sasl_auth_plain)
             {
                 if (!tcpSend(true, 7, imap_ctx->tag.c_str(), " ", "AUTHENTICATE", " ", "PLAIN", imap_ctx->auth_caps[imap_auth_cap_sasl_ir] ? " " : "", imap_ctx->auth_caps[imap_auth_cap_sasl_ir] ? rd_enc_plain(email, password).c_str() : ""))
-                    return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
                 setState(imap_state_auth_plain);
             }
             else if (sasl_login)
             {
                 if (!tcpSend(true, 7, imap_ctx->tag.c_str(), " ", "LOGIN", " ", email.c_str(), " ", password.c_str()))
-                    return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+                    
                 setState(imap_state_auth_login);
             }
             else
@@ -154,7 +155,7 @@ namespace ReadyMailIMAP
         bool xoauth2SendNext()
         {
             if (!tcpSend(true, 1, rd_enc_oauth(email, access_token).c_str()))
-                return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(imap_state_auth_xoauth2);
             return true;
@@ -163,7 +164,7 @@ namespace ReadyMailIMAP
         bool authPlainSendNext()
         {
             if (!tcpSend(true, 1, rd_enc_plain(email, password).c_str()))
-                return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(imap_state_auth_plain);
             return true;
@@ -174,7 +175,7 @@ namespace ReadyMailIMAP
             String buf;
             rd_print_to(buf, 50, " (\"name\" \"ReadyMail\" \"version\" \"%s\")", READYMAIL_VERSION);
             if (!tcpSend(true, 4, imap_ctx->tag.c_str(), " ", "ID", buf.c_str()))
-                return setError(imap_ctx, __func__, AUTH_ERROR_AUTHENTICATION);
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(imap_state_id);
             return true;
@@ -211,7 +212,9 @@ namespace ReadyMailIMAP
 
         bool checkCap()
         {
-            tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "CAPABILITY");
+            if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "CAPABILITY"))
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_greeting);
             return true;
         }
@@ -305,7 +308,8 @@ namespace ReadyMailIMAP
             char *enc = rd_b64_enc(rd_cast<const unsigned char *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
             if (enc)
             {
-                tcpSend(true, 1, enc);
+                if (!tcpSend(true, 1, enc))
+                    setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
                 rd_free(&enc);
             }
             // expected server challenge response
@@ -320,7 +324,8 @@ namespace ReadyMailIMAP
             setDebugState(imap_state_start_tls, "Starting TLS...");
 #endif
             if (!tcpSend(true, 3, imap_ctx->tag.c_str(), " ", "STARTTLS"))
-                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_STARTTLS);
+                return setError(imap_ctx, __func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(imap_state_start_tls);
             return true;
         }

@@ -478,7 +478,9 @@ The `ReadyClient` used in [AutoClient.ino](/examples/Network/AutoClient/AutoClie
 
 ### Plain Text Connection
 
-In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for using in plain text mode.
+In plain connection (non-secure), the network besic client (Arduino Client derived class) should be assigned to the `SMTPClient` and `IMAPClient` classes constructors instead of SSL client. The `ssl` option, the fifth or forth param of `SMTPClient::connect()` and fourth param of `IMAPClient::connect()` should set to `false` for using in plain text mode.
+
+There are two `SMTPClient::connect()` methods e.g. with domain and without domain params. Then the`ssl` option will be different in parameter orders.
 
 *This may not support by many mail services and is blocked by many ISPs. Please use SSL or TLS instead*.
 

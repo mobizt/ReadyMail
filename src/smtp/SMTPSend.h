@@ -119,7 +119,9 @@ namespace ReadyMailSMTP
             smtp_ctx->cmd_ctx.resp.text.remove(0, smtp_ctx->cmd_ctx.resp.text.length());
             smtp_ctx->cmd_ctx.cmd = cmd;
             setState(smtp_state_send_command, smtp_server_status_code_220);
-            return sendBuffer(cmd + "\r\n");
+            if (!sendBuffer(cmd + "\r\n"))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+            return true;
         }
 
         bool sendData(const String &data)
@@ -129,7 +131,10 @@ namespace ReadyMailSMTP
             setDebugState(smtp_state_send_data, data);
 #endif
             setState(smtp_state_send_data, smtp_server_status_code_0);
-            return sendBuffer(data);
+            if (!sendBuffer(data))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
+            return true;
         }
 
         size_t headerSize(SMTPMessage &msg, rfc822_header_types type)
@@ -184,7 +189,7 @@ namespace ReadyMailSMTP
                 msg.buf += "\r\n";
 
                 if (!sendBuffer(msg.buf))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
             }
 
             setState(smtp_state_send_header_sender, smtp_server_status_code_250);
@@ -248,7 +253,7 @@ namespace ReadyMailSMTP
                 msg.buf += "\r\n";
 
                 if (!sendBuffer(msg.buf))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
                 if (msg.recipient_index == to_size && msg.cc_index == cc_size && msg.bcc_index == bcc_size)
                     msg.send_recipient_complete = true;
@@ -268,7 +273,7 @@ namespace ReadyMailSMTP
                 setDebugState(smtp_state_send_header_recipient, "Sending headers...");
 #endif
                 if (!sendBuffer(msg.header))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
                 setState(smtp_state_send_body, smtp_server_status_code_0);
                 msg.send_state++;
@@ -402,7 +407,10 @@ namespace ReadyMailSMTP
         {
             String buf;
             rd_print_to(buf, 250, "\r\n--%s\r\nContent-Type: message/rfc822; Name=\"%s\"\r\nContent-Disposition: attachment; filename=\"%s\";\r\n\r\n", msg.parent->content_types[0].boundary.c_str(), msg.rfc822_name.c_str(), msg.rfc822_filename);
-            return sendBuffer(buf);
+            if (!sendBuffer(buf))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
+            return true;
         }
 
         bool sendRFC822Message(SMTPMessage &msg)
@@ -421,7 +429,7 @@ namespace ReadyMailSMTP
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode)
             {
                 if (!sendBuffer("DATA\r\n"))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
             }
             setState(smtp_state_wait_data, smtp_server_status_code_354);
             return true;
@@ -439,7 +447,10 @@ namespace ReadyMailSMTP
         {
             String buf;
             rd_print_to(buf, 250, "\r\n--%s--%s", msg.content_types[content_type_index].boundary.c_str(), content_type_index == 0 && !msg.parent ? "" : "\r\n");
-            return sendBuffer(buf);
+            if (!sendBuffer(buf))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
+            return true;
         }
 
         bool sendBuffer(const String &buf) { return tcpSend(false, 1, buf.c_str()); }
@@ -491,7 +502,7 @@ namespace ReadyMailSMTP
             buf += "MIME-Version: 1.0\r\n";
 
             if (!sendBuffer(buf))
-                return false;
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(smtp_state_send_body, smtp_server_status_code_0);
             msg.send_state++;
@@ -531,7 +542,7 @@ namespace ReadyMailSMTP
                 setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, html ? msg.html.content_type.c_str() : msg.text.content_type.c_str(), ct_prop, msg.getEnc(html ? msg.html.xenc : msg.text.xenc), embed ? (embed_inline ? "inline" : "attachment") : "", html ? msg.html.embed.filename : msg.text.embed.filename, 0, html ? msg.html.embed.filename : msg.text.embed.filename, embed_inline ? getRandomUID() : "");
 
                 if (!sendBuffer(buf))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
             }
             else if ((html && msg.html.data_index < msg.html.data_size) || (!html && msg.text.data_index < msg.text.data_size))
             {
@@ -545,7 +556,7 @@ namespace ReadyMailSMTP
                 String line = rd_qb_encode_chunk(html ? msg.html.src : msg.text.src, html ? msg.html.data_index : msg.text.data_index, html ? msg.html.xenc : msg.text.xenc, html ? false : msg.text.flowed, MAX_LINE_LEN, html ? msg.html.softbreak_buf : msg.text.softbreak_buf, html ? msg.html.softbreak_index : msg.text.softbreak_index);
 
                 if (line.length() && !sendBuffer(line))
-                    return false;
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
             }
 
             if ((html && msg.html.data_index == msg.html.data_size) || (!html && msg.text.data_index == msg.text.data_size))
@@ -668,7 +679,7 @@ namespace ReadyMailSMTP
                         setContentTypeHeader(buf, msg.content_types[content_type_index].boundary, cAttach(msg).mime, ct_prop, "base64", type == attach_type_inline ? "inline" : (type == attach_type_parallel ? "parallel" : "attachment"), cAttach(msg).filename, cAttach(msg).data_size, cAttach(msg).name, type == attach_type_inline ? cAttach(msg).content_id : "");
 
                         if (!sendBuffer(buf))
-                            return false;
+                            return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
                         setState(smtp_state_send_body, smtp_server_status_code_0);
                         return sendAttachData(msg);
@@ -713,9 +724,9 @@ namespace ReadyMailSMTP
             }
 
             if (!smtp_ctx->options.accumulate && !smtp_ctx->options.imap_mode && !sendBuffer("\r\n.\r\n"))
-                return false;
-            else if (smtp_ctx->options.imap_mode && smtp_ctx->options.last_append)
-                sendBuffer("\r\n");
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+            else if (smtp_ctx->options.imap_mode && smtp_ctx->options.last_append && !sendBuffer("\r\n"))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
             setState(smtp_state_data_termination, smtp_server_status_code_250);
             return true;
@@ -772,7 +783,10 @@ namespace ReadyMailSMTP
                     buf += "\r\n";
 
                     if (!sendBuffer(buf))
+                    {
+                        setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
                         goto exit;
+                    }
 
                     setState(smtp_state_send_body, smtp_server_status_code_0);
                     ret = true;
@@ -897,7 +911,7 @@ namespace ReadyMailSMTP
                     }
 
                     if (!ret)
-                         setError(__func__, SMTP_ERROR_SEND_EMAIL);
+                        setError(__func__, SMTP_ERROR_SEND_EMAIL);
                 }
                 else if (cCode() == function_return_failure)
                 {
@@ -927,7 +941,8 @@ namespace ReadyMailSMTP
         bool sendQuit()
         {
             if (!sendBuffer("QUIT\r\n"))
-                return false;
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(smtp_state_terminated, smtp_server_status_code_221);
             return true;
         }
@@ -1079,7 +1094,10 @@ namespace ReadyMailSMTP
             if (parent_boundary.length())
                 rd_print_to(buf, 250, "\r\n--%s\r\n", parent_boundary.c_str());
             rd_print_to(buf, 250, "Content-Type: multipart/%s; boundary=\"%s\"\r\n", mime.c_str(), boundary.c_str());
-            return sendBuffer(buf);
+            if (!sendBuffer(buf))
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
+            return true;
         }
 
     public:

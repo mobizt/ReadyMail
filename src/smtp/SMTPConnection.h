@@ -77,20 +77,22 @@ namespace ReadyMailSMTP
                     return setError(__func__, AUTH_ERROR_OAUTH2_NOT_SUPPORTED);
 
                 if (!tcpSend(true, 3, "AUTH ", "XOAUTH2 ", rd_enc_oauth(email, access_token).c_str()))
-                    return setError(__func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
 
                 setState(smtp_state_auth_xoauth2, smtp_server_status_code_235);
             }
             else if (sasl_auth_plain)
             {
                 if (!tcpSend(true, 3, "AUTH ", "PLAIN ", rd_enc_plain(email, password).c_str()))
-                    return setError(__func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
                 setState(smtp_state_auth_plain, smtp_server_status_code_235);
             }
             else if (sasl_login)
             {
                 if (!tcpSend(true, 2, "AUTH ", "LOGIN"))
-                    return setError(__func__, AUTH_ERROR_AUTHENTICATION);
+                    return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
                 setState(smtp_state_auth_login, smtp_server_status_code_334);
             }
             else
@@ -103,7 +105,9 @@ namespace ReadyMailSMTP
             char *enc = rd_b64_enc(rd_cast<const unsigned char *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
             if (enc)
             {
-                tcpSend(true, 1, enc);
+                if (!tcpSend(true, 1, enc))
+                    setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
                 rd_free(&enc);
             }
             // expected server challenge response
@@ -259,7 +263,11 @@ namespace ReadyMailSMTP
             setDebugState(smtp_state_greeting, "Sending greeting...");
 #endif
             res->auth_caps[smtp_auth_cap_login] = false;
-            tcpSend(true, 2, helo.c_str(), domain.c_str());
+            if (!tcpSend(true, 2, helo.c_str(), domain.c_str()))
+            {
+                setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+                return;
+            }
             setState(smtp_state_greeting, smtp_server_status_code_250);
             smtp_ctx->server_status->state_info.esmtp = esmtp;
         }
@@ -272,7 +280,8 @@ namespace ReadyMailSMTP
             setDebugState(smtp_state_start_tls, "Starting TLS...");
 #endif
             if (!tcpSend(true, 1, "STARTTLS"))
-                return setError(__func__, TCP_CLIENT_ERROR_STARTTLS);
+                return setError(__func__, TCP_CLIENT_ERROR_SEND_DATA);
+
             setState(smtp_state_start_tls, smtp_server_status_code_250);
             return true;
         }

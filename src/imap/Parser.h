@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+// Regex free, direct IMAP response parser.
 #ifndef IMAP_PARSER_H
 #define IMAP_PARSER_H
 #if defined(ENABLE_IMAP)
