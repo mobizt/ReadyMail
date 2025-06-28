@@ -291,14 +291,17 @@ jobs:
         echo "#include <Ethernet.h>" >> src/main.cpp
         echo "#include <ESP_SSLClient.h>" >> src/main.cpp
         echo "#define ENABLE_IMAP" >> src/main.cpp
+        echo "#define ENABLE_SMTP" >> src/main.cpp
         echo "#define ENABLE_DEBUG" >> src/main.cpp
         echo "#include <ReadyMail.h>" >> src/main.cpp
         echo "EthernetClient basic_client;" >> src/main.cpp
         echo "ESP_SSLClient ssl_client;" >> src/main.cpp
+        echo "SMTPClient smtp(ssl_client);" >> src/main.cpp
         echo "IMAPClient imap(ssl_client);" >> src/main.cpp
         echo "void setup() {" >> src/main.cpp
         echo "ssl_client.setClient(&basic_client);" >> src/main.cpp
         echo "ssl_client.setInsecure();" >> src/main.cpp
+        echo "smtp.connect(\"smtp.gmail.com\", 465, \"127.0.0.1\", NULL);" >> src/main.cpp
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
         echo "void loop() {}" >> src/main.cpp
