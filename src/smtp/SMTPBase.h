@@ -142,6 +142,7 @@ namespace ReadyMailSMTP
             smtp_ctx->options.processing = false;
             if (close)
                 stopImpl();
+            smtp_ctx->server_status->ret = function_return_failure;
             return false;
         }
 
@@ -193,7 +194,6 @@ namespace ReadyMailSMTP
 
             serverStatus() = false;
             smtp_ctx->server_status->secured = false;
-            smtp_ctx->server_status->start_tls = false;
             smtp_ctx->server_status->server_greeting_ack = false;
             smtp_ctx->server_status->authenticated = false;
             cState() = smtp_state_prompt;

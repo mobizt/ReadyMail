@@ -60,7 +60,7 @@ jobs:
         echo "void loop() {}" >> src/main.cpp
 
         echo "[env:esp32dev]" >> platformio.ini
-        echo "platform = espressif32" >> platformio.ini
+        echo "platform = https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20/platform-espressif32.zip" >> platformio.ini
         echo "board = esp32dev" >> platformio.ini
         echo "framework = arduino" >> platformio.ini
 

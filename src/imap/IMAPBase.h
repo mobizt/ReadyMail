@@ -108,6 +108,7 @@ namespace ReadyMailIMAP
             }
             resetProcessFlag();
             releaseSMTP();
+            imap_ctx->server_status->ret = function_return_failure;
             return false;
         }
 
@@ -194,7 +195,6 @@ namespace ReadyMailIMAP
 
             serverStatus() = false;
             imap_ctx->server_status->secured = false;
-            imap_ctx->server_status->start_tls = false;
             imap_ctx->server_status->server_greeting_ack = false;
             imap_ctx->server_status->authenticated = false;
             clearAllProcessFlags();
