@@ -4,9 +4,7 @@
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/ReadyMail.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/ReadyMail.svg)
 
-The fast and lightweight async email client library for Arduino.
-
-This library seamlessly works in async and await modes. The chunk data is processed for decodings, encodings, parsing, uploading and downloading.
+The fast and lightweight async email client library for Arduino that built from scratch. This library seamlessly works in async and await modes with simple API. The chunk data is processed for decodings, encodings, parsing, uploading and downloading then it will not block your other task in the same MCU core while working in async mode.
 
 For sending email, the typical inline images and attachments plus the RFC 822 messages are supported.
 
@@ -708,6 +706,10 @@ The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15
 
 [Update on 5/14/2025] This [PR](https://github.com/espressif/arduino-esp32/pull/11356) may fix this issue and the work around can be removed in the next library updates. 
 
+The another issue is when `NetworkClienSecure::setPlainStart()` was called when the server is still connected in secure mode, the `NetworkClienSecure` will cause the unecpected errors.
+
+Then using ESP32 `NetworkClienSecure` in plain text start mode at this time (6/30/2025) is not recommend for production.
+
 **ESP_SSLClient Issues**
 
 When you are using `ESP_SSLClient` in some devices e.g. Renesas devices (Arduino® `UNO R4 WiFi`) and SAMD devices (Arduino MKR WiFi 1010, Arduino MKR 1000 WIFI) etc., it will get stuck in TLS handshake process due to memory allocation failure.
@@ -738,4 +740,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-06-28 UTC.*
+*Last updated 2025-06-30 UTC.*
