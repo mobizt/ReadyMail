@@ -706,7 +706,7 @@ The issue is from [this line](https://github.com/espressif/arduino-esp32/blob/15
 
 [Update on 5/14/2025] This [PR](https://github.com/espressif/arduino-esp32/pull/11356) may fix this issue and the work around can be removed in the next library updates. 
 
-The another issue is when `NetworkClienSecure::setPlainStart()` was called when the server is still connected and operated in the SSL mode, the unexpected error can be occurred due to all incoming and outgoig data will be treated as plain text.
+The another issue is when `NetworkClienSecure::setPlainStart()` was called when the server is still connected and operated in the SSL mode, the unexpected error can be occurred due to all incoming and outgoing data will be treated as plain text.
 
 Then using ESP32 `NetworkClienSecure` in plain text start mode at this time (6/30/2025) is not recommend for production.
 
