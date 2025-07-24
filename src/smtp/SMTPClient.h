@@ -298,6 +298,12 @@ namespace ReadyMailSMTP
         {
             smtp_ctx.cmd_ctx.cb = cb;
             bool ret = sender.sendCmd(cmd);
+            if (ret && cmd.indexOf("QUIT") > -1)
+            {
+                sender.cCode() = function_return_exit;
+                sender.cState() = smtp_state_prompt;
+                return ret;
+            }
             if (ret && await)
                 return awaitLoop();
             return ret;

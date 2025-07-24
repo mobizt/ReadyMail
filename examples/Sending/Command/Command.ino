@@ -35,6 +35,9 @@ WiFiClient basic_client;
 
 SMTPClient smtp(ssl_client);
 
+bool startTLSCap = false;
+bool plainCap = false;
+
 // For debugging
 void smtpCb(SMTPStatus status)
 {
@@ -44,7 +47,16 @@ void smtpCb(SMTPStatus status)
 void cmdCb(SMTPCommandResponse response)
 {
     // The current command can be obtained from status.command.
+    // The response.text provides a response line.
     ReadyMail.printf("ReadyMail[cmd][%d] %s\n", smtp.status().state, response.text.c_str());
+
+    // Check for STARTTLS capability
+    if (response.text.indexOf("STARTTLS") > -1)
+        startTLSCap = true;
+
+    // Check for PLAIN SASL capability.
+    if (response.text.indexOf("PLAIN") > -1)
+        plainCap = true;
 }
 
 void setup()
@@ -97,7 +109,7 @@ void setup()
     }
 
     // Find the "STARTTLS" in the response if server supports STARTTLS.
-    if (SMTP_PORT == 587 && smtp.commandResponse().text.indexOf("STARTTLS") == -1)
+    if (SMTP_PORT == 587 && !startTLSCap)
     {
         // Server does not support STARTTLS, use port 465 for SSL instead.
         return;
@@ -122,7 +134,7 @@ void setup()
     }
 
     // Find the "PLAIN" in the response if server supports the PLAIN SASL mechanism
-    if (smtp.commandResponse().text.indexOf("PLAIN") > -1)
+    if (plainCap)
     {
         String cmd = "AUTH PLAIN " + ReadyMail.plainSASLEncode(AUTHOR_EMAIL, AUTHOR_PASSWORD);
         smtp.sendCommand(cmd, cmdCb);
@@ -174,6 +186,7 @@ void setup()
     }
 
     smtp.sendCommand("QUIT", cmdCb);
+    Serial.println("The Email was sent successfully.");
 }
 
 void loop()

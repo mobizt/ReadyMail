@@ -228,6 +228,11 @@ namespace ReadyMailIMAP
             int p = 0;
             while (tcpAvailable())
             {
+#if defined(ESP8266)
+                sys_yield();
+                if (!imap_ctx->client || !imap_ctx->client->connected())
+                    return -1;
+#endif
                 int res = tcpRead();
                 if (res > -1)
                 {
