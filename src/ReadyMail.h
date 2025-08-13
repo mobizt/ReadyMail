@@ -25,9 +25,13 @@
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
 
-#define READYMAIL_VERSION "0.3.5"
-#define READYMAIL_TIMESTAMP 1753325004
+#define READYMAIL_VERSION "0.3.6"
+#define READYMAIL_TIMESTAMP 1755052104
 #define READYMAIL_LOOPBACK_IPV4 "127.0.0.1"
+
+#if !defined(READYMAIL_TIME_SOURCE)
+#define READYMAIL_TIME_SOURCE READYMAIL_TIMESTAMP;
+#endif
 
 #if defined(READYMAIL_DEBUG_PORT)
 #define READYMAIL_DEFAULT_DEBUG_PORT READYMAIL_DEBUG_PORT
@@ -50,8 +54,6 @@
 #endif
 
 #endif
-
-
 
 #define MAX_LINE_LEN 76
 

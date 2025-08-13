@@ -85,6 +85,10 @@ void setup()
         return;
 
     ssl_client.setClient(&basic_client);
+    
+    // If server SSL certificate verification was ignored for this SSL Client.
+    // To verify root CA or server SSL cerificate,
+    // please consult SSL Client documentation.
     ssl_client.setInsecure();
     ssl_client.setBufferSizes(2048, 1024);
     ssl_client.setDebugLevel(1);

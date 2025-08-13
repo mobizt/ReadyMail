@@ -94,6 +94,7 @@ static char *__attribute__((used)) strsepImpl(char **stringp, const char *delim)
 #define hexval(c) Index_hex[(unsigned int)(c)]
 #define base64val(c) Index_base64[(unsigned int)(c)]
 
+// Quoted-printable and base64 decoder
 class QBDecoder
 {
 

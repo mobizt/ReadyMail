@@ -722,6 +722,8 @@ In addition, please don't forget to set the network client with `ESP_SSLClient::
 
 Anyway, for IMAP usage, the memory allocation may fail and get stuck when fetching the message body that requires more memory in the process, the core SSL client i.e. `WiFiSSLClient` is recommeneded for those devices in this case.
 
+The `ESP_SSLClient` library contains the large anount of C files from `BearSSL` engine. This can increase the compilation time in Arduino IDE compilation due to anti virus software interference.
+
 **IMAP Response Parsing**
 
 The complete responses of the multi-line, large IMAP's headers, envelope and body structures are required especially when decodings and nested list parsing. Parsing or decoding the partial/chunked responses may give the incorrect information. 
@@ -740,4 +742,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-07-01 UTC.*
+*Last updated 2025-08-13 UTC.*

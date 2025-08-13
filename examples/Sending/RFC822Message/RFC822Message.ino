@@ -9,6 +9,14 @@
 #define ENABLE_SMTP  // Allows SMTP class and data
 #define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
+
+// If message timestamp and/or Date header was not set,
+// the message timestamp will be taken from this source, otherwise
+// the default timestamp will be used.
+#if defined(ESP32) || defined(ESP8266)
+#define READYMAIL_TIME_SOURCE time(nullptr); // Or using WiFi.getTime() in WiFiNINA and WiFi101 firmwares.
+#endif
+
 #include <ReadyMail.h>
 
 #define SMTP_HOST "_______"
@@ -145,6 +153,9 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    // If server SSL certificate verification was ignored for this ESP32 WiFiClientSecure.
+    // To verify root CA or server SSL cerificate,
+    // please consult your SSL client documentation.
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));

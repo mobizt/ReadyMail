@@ -107,6 +107,9 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    // If server SSL certificate verification was ignored for this ESP32 WiFiClientSecure.
+    // To verify root CA or server SSL cerificate,
+    // please consult your SSL client documentation.
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
@@ -127,6 +130,7 @@ void setup()
 
 void loop()
 {
+    // This is required to be placed in the loop for idling.
     imap.loop(IDLE_MODE, IDLE_TIMEOUT);
 
     if (imap.available())

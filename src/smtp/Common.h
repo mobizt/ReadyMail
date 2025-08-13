@@ -413,7 +413,7 @@ namespace ReadyMailSMTP
         {
             content.remove(0, content.length());
             // Set to default values unless
-            // content_type shall not be not changed.
+            // content_type shall not be changed.
             charSet = "UTF-8";
             transfer_encoding = "7bit";
             embed.enable = false;

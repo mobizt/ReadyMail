@@ -99,6 +99,9 @@ void setup()
     ssl_client.setClient(&basic_client);
 #endif
 
+    // If server SSL certificate verification was ignored for this SSL Client.
+    // To verify root CA or server SSL cerificate,
+    // please consult SSL Client documentation.
     ssl_client.setInsecure();
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));

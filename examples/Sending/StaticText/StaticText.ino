@@ -10,6 +10,14 @@
 #define ENABLE_DEBUG // Allows debugging
 #define READYMAIL_DEBUG_PORT Serial
 #define ENABLE_FS // Allow filesystem integration
+
+// If message timestamp and/or Date header was not set, 
+// the message timestamp will be taken from this source, otherwise
+// the default timestamp will be used.
+#if defined(ESP32) || defined(ESP8266)
+#define READYMAIL_TIME_SOURCE time(nullptr); // Or using WiFi.getTime() in WiFiNINA and WiFi101 firmwares.
+#endif
+
 #include <ReadyMail.h>
 
 #define SMTP_HOST "_______"
@@ -36,7 +44,7 @@ const char *static_text1 = "A rabies-like disease spreads across the planet, tra
                            "home with his cat, using his wits to survive. Soon, they’ll have to leave for food, looking for safe places on land "
                            "and sea. Apocalypse Z: The Beginning of the End is a story of survival, both physical and emotional, with action, "
                            "tension, a rabid infection... and a grumpy cat.";
-                           
+
 const char *static_text2 = "Speak No Evil is a 2024 American psychological horror thriller film written and directed by James Watkins. A remake "
                            "of the 2022 Danish-Dutch film of the same name, the film stars James McAvoy, Mackenzie Davis, Aisling Franciosi, Alix "
                            "West Lefler, Dan Hough, and Scoot McNairy. Its plot follows an American family who are invited to stay at a remote "
@@ -107,7 +115,10 @@ void setup()
     Serial.print("Connected with IP: ");
     Serial.println(WiFi.localIP());
     Serial.println();
-
+    
+    // If server SSL certificate verification was ignored for this ESP32 WiFiClientSecure.
+    // To verify root CA or server SSL cerificate, 
+    // please consult your SSL client documentation.
     ssl_client.setInsecure();
 
 #if defined(ENABLE_FS)

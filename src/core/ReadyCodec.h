@@ -12,6 +12,7 @@
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
+// msg data source type
 enum src_data_type
 {
     src_data_string,
@@ -19,6 +20,8 @@ enum src_data_type
     src_data_file
 };
 
+// msg data source reader context 
+// that provides the Stream interfaces
 struct src_data_ctx
 {
 public:
@@ -133,6 +136,7 @@ static void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
     a3[2] = ((a4[2] & 0x3) << 6) + a4[3];
 }
 
+// base64 decoder
 static uint8_t *rd_b64_dec_impl(const char *encoded, int &size)
 {
     int encoded_len = strlen(encoded);
@@ -178,6 +182,7 @@ static uint8_t *rd_b64_dec_impl(const char *encoded, int &size)
     return raw;
 }
 
+// base64 decoder
 static char *rd_b64_dec(const char *encoded)
 {
     int len = 0;
@@ -186,6 +191,7 @@ static char *rd_b64_dec(const char *encoded)
     return raw;
 }
 
+// base64 encoder
 static char *rd_b64_enc(const unsigned char *raw, int len)
 {
     uint8_t count = 0;
@@ -225,6 +231,7 @@ static char *rd_b64_enc(const unsigned char *raw, int len)
 
 #if defined(ENABLE_SMTP)
 
+// soft break modifier
 static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index, String &softbreak_buf, int line_max_len)
 {
     for (size_t i = 0; i < softbreak_index.size(); i++)
@@ -252,6 +259,7 @@ static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index,
     return false;
 }
 
+// soft break marking
 static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int> &softbreak_index)
 {
     int last_index = softbreak_index.size() ? softbreak_index[softbreak_index.size() - 1] + 1 : index;
@@ -298,6 +306,7 @@ static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int
     }
 }
 
+// quoted-printable encoder
 static String rd_qp_encode_chunk(src_data_ctx &src, int &index, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
 {
     String sbuf;
@@ -352,6 +361,8 @@ out:
     return sbuf;
 }
 
+// msg data source checking 
+// for cid (inline attachment) and non-ascii (encoding applicable)
 static void rd_src_check(src_data_ctx &src)
 {
     char c[4];
@@ -378,6 +389,7 @@ static void rd_src_check(src_data_ctx &src)
     src.close();
 }
 
+// quoted-printable and base64 encoder
 static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
 {
     String line, buf;
@@ -583,7 +595,7 @@ static void rd_dec_qp_utf8(const char *src, char *out)
     }
 }
 
-// 7-bit decoding per line
+// one line 7-bit decoder
 static char *rd_dec_7bit_utf8(const char *src)
 {
     String buf;
@@ -606,7 +618,7 @@ static char *rd_dec_7bit_utf8(const char *src)
     return decoded;
 }
 
-// 8-bit decoding per line
+// one line 8-bit decoder
 static char *rd_dec_8bit_utf8(const char *src)
 {
     String s;

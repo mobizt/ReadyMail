@@ -142,6 +142,9 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    // If server SSL certificate verification was ignored for this ESP32 WiFiClientSecure.
+    // To verify root CA or server SSL cerificate,
+    // please consult your SSL client documentation.
     ssl_client.setInsecure();
 
     MY_FS.begin(true);
