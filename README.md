@@ -85,46 +85,6 @@ if (smtp.isConnected())
 }
 ```
 
-### Changes from v0.3.0 and newer
-
-Normally, the global defined `SMTPMessage` is required for async Email sending.
-
-Since v0.3.0, the internal `SMTPMessage` is required for async Email sending instead. To use internal `SMTPMessage` for async Email sending, the `SMTPMessage::getMessage()` is required for accessing the internal `SMTPMessage`. The following code is recommended for setting up the message.
-
-```cpp
-// The internal message will be used for async Email sending.
-SMTPMessage &msg = smtp.getMessage();
-
-msg.headers.add(rfc822_subject, "Hello");
-```
-
-### Changes from v0.1.x to v0.2.0 and newer
-
-The `IMAPCallbackData` members are totally changed and cannot migrate from the old code. The `IMAPCallbackData::event()`, `imap_file_info`, `imap_file_chunk` and `imap_file_progress` are introduced.
-
-The `SMTPStatus` class members are moved and renamed. The `SMTPStatus::progressUpdated` is moved and renamed to `SMTPStatus::smtp_file_progress::available`, `SMTPStatus::progress` is moved and renamed to `SMTPStatus::smtp_file_progress::value` and `SMTPStatus::filename` is moved to `SMTPStatus::smtp_file_progress::filename`.
-
-The `STARTTLS` options can be changed directly from `SMTPClient` and `IMAPClient` classes function.
-
-
-### Changes from v0.0.x to v0.1.0 and newer
-
-Many SMTP classes and structs are refactored. The `SMTPMessage` public members are removed or kept private and the methods are added.
-
-There are four structs that are public and access from the `SMTPMessage` class are `SMTPMessage::headers`, `SMTPMessage::text`, `SMTPMessage::html` and `SMTPMessage::attachments`.
-
-The sender, recipients and subject are now provided using `SMTPMessage::headers::add()` function.
-
-The `SMTPMessage::text` and `SMTPMessage::html`'s members are kept private and the new methods are added.
-
-The content should set via `SMTPMessage::text::body()` and `SMTPMessage::html::body()` functions.
-
-The attachments can be added with `SMTPMessage::attachments::add()` function.
-
-The DSN option is added to the `SMTPClient::send()` function.
-
-Plese check the library's [examples](/examples/Sending/) for the changes.
-
 
 ### SMTP Server Rejection and Spam Prevention
 
@@ -151,7 +111,7 @@ Providing the RFC 2822 `Date` haeader with `SMTPMessage::headers.add(rfc822_date
 
 For ESP8266 and ESP32 devices that mentioned above, the message `Date` header will be auto-set, if the device system time was already set before sending the message.
 
-In ESP8266 and ESP32, the system time is able to set e.g. using configTime(0, 0, "pool.ntp.org"); then wait until the time(nullptr) returns the valid timestamp, and library will use the system time for `Date` header setting.
+In ESP8266 and ESP32, the system time is able to set e.g. using `configTime(0, 0, "pool.ntp.org")` then wait until the time(nullptr) returns the valid timestamp, and library will use the system time for `Date` header setting.
 
 In some Arduino devices that work with `WiFiNINA/WiFi101` firmwares, use `SMTPMessage::timestamp = WiFi.getTime();`
 
@@ -452,6 +412,10 @@ The [Command.ino](/examples/Reading/Command/Command.ino) example showed how to u
 
 As the library works with external network/SSL client, the client that was selected, should work with protocols or ports that are used for the server connection.
 
+Not all network/SSL Clients support the protocol upgrades especially when port 587 was selected for sending Email to SMTP server and port 143 for IMAP server. 
+
+In summary, you can't use Raspberry Pi Pico's `WiFiClientSecure`, ESP8266's `WiFiClientSecure` and `WiFiSSLClient` libraries for SMTP port 587 and IMAP port 143.
+
 The network client works only with plain text connection. Some SSL clients support only SSL connection while some SSL clients support plain text, ssl and connecion upgrades (`STARTTLS`).
 
 *Additional to the proper SSL client selected for the ports, the SSL client itself may require some additional settings before use.*
@@ -742,4 +706,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-08-13 UTC.*
+*Last updated 2025-10-04 UTC.*
