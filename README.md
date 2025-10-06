@@ -422,7 +422,7 @@ The network client works only with plain text connection. Some SSL clients suppo
 
 *Some SSL client allows user to use in insecure mode without server or Rooth CA SSL certificate verification e.g. using `WiFiClientSecure::setInsecure()` in ESP32 and ESP8266 `WiFiClientSecure.h`.*
 
-*All examples in this library are for ESP32 for simply demonstation and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`.*
+*All examples in this library are for ESP32 for simply demonstration and `WiFiClientSecure` is used for SSL client and skipping for certificate verification by using `WiFiClientSecure::setInsecure()`.*
 
 *If server supports the SSL fragmentation and some SSL client supports SSL fragmentation by allowing user to allocate the IO buffers in any size, this allows user to operate the SSL client in smaller amount of RAM usage. Such SSL clients are ESP8266's `WiFiClientSecure` and `ESP_SSLClient`.*
 
@@ -706,4 +706,4 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 `THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
 
-*Last updated 2025-10-04 UTC.*
+*Last updated 2025-10-05 UTC.*
