@@ -27,9 +27,9 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 - [Ports & Clients](#-ports--clients)
 - [Known Issues](#-known-issues)
 - [License](#-license)
-- [Advanced Usage](ADVANCED.md)
-- [Troubleshooting Guide](TROUBLESHOOTING.md)
-- [Connection Guide](CONNECTION_GUIDE.md)
+- [Advanced Usage](/resources/docs/ADVANCED.md)
+- [Troubleshooting Guide](/resources/docs/TROUBLESHOOTING.md)
+- [Connection Guide](/resources/docs/CONNECTION_GUIDE.md)
 
 ---
 
@@ -227,7 +227,7 @@ void loop() {}
 | IMAP    | 993  | SSL      | Recommended |
 | IMAP    | 143  | STARTTLS | Requires upgrade-capable client |
 
-> See [Connection Guide](CONNECTION_GUIDE.md) for client selection and port compatibility.
+> See [Connection Guide](/resources/docs/CONNECTION_GUIDE.md) for client selection and port compatibility.
 
 ---
 
@@ -237,7 +237,7 @@ void loop() {}
 - ESP32 v3.x may hang on `setPlainStart()` in plain mode
 - Some devices may fail TLS handshake due to memory limits
 
-> See [Troubleshooting Guide](TROUBLESHOOTING.md) for detailed solutions and platform-specific workarounds.
+> See [Troubleshooting Guide](/resources/docs/TROUBLESHOOTING.md) for detailed solutions and platform-specific workarounds.
 
 ---
 
@@ -250,7 +250,7 @@ See [LICENSE](LICENSE) for details.
 
 ## 📘 Advanced Usage
 
-For developers who need deeper control, debugging, or custom command support, see [Advanced Usage](ADVANCED.md) for:
+For developers who need deeper control, debugging, or custom command support, see [Advanced Usage](/resources/docs/ADVANCED.md) for:
 
 - SMTP and IMAP status monitoring  
 - Custom command responses  
@@ -261,7 +261,7 @@ For developers who need deeper control, debugging, or custom command support, se
 
 ## 🧯 Troubleshooting Guide
 
-If you encounter crashes, SSL handshake failures, or unexpected behavior on ESP8266, ESP32, or Renesas boards, see the [Troubleshooting Guide](TROUBLESHOOTING.md) for:
+If you encounter crashes, SSL handshake failures, or unexpected behavior on ESP8266, ESP32, or Renesas boards, see the [Troubleshooting Guide](/resources/docs/TROUBLESHOOTING.md) for:
 
 - Buffer tuning and heap configuration  
 - TLS handshake issues  
@@ -272,7 +272,7 @@ If you encounter crashes, SSL handshake failures, or unexpected behavior on ESP8
 
 ## 🌐 Connection Guide
 
-To learn how to select the correct ports and SSL/network clients for your board, see the [Connection Guide](CONNECTION_GUIDE.md) for:
+To learn how to select the correct ports and SSL/network clients for your board, see the [Connection Guide](/resources/docs/CONNECTION_GUIDE.md) for:
 
 - SSL vs STARTTLS vs Plain Text  
 - Client compatibility matrix  
