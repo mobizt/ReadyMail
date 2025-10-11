@@ -17,6 +17,7 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 ## 📚 Table of Contents
 
 - [Features](#-features)
+- [Installation](#-installation)
 - [Supported Devices](#-supported-devices)
 - [RFC Compliance](#-rfc-compliance)
 - [Getting Started](#-getting-started)
@@ -44,6 +45,44 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 - 📁 Supports all Arduino-compatible filesystem types: SD, SDMMC, SPIFFS, LittleFS and more  
 - 🧰 Full-featured API for advanced use cases: custom commands, envelope parsing, OTA streaming
 
+---
+
+## 📦 Installation
+
+### 🔧 Arduino IDE
+
+1. Open Arduino IDE  
+2. Go to **Sketch > Include Library > Manage Libraries…**  
+3. Search for `ReadyMail` and click **Install**
+
+Alternatively, install via ZIP file:
+
+```text
+Download the latest release from:
+https://github.com/mobizt/ReadyMail/releases
+
+Then go to Sketch > Include Library > Add .ZIP Library…
+```
+
+---
+
+### ⚙️ PlatformIO
+
+Add this to your `platformio.ini`:
+
+```ini
+lib_deps =
+  mobizt/ReadyMail@^0.3.6
+```
+
+> ✅ Supports ESP32, STM32, RP2040, SAMD, Renesas and more — except AVR
+
+---
+
+### 📁 Manual Installation
+
+1. Download the source from [ReadyMail GitHub](https://github.com/mobizt/ReadyMail)  
+2. Extract to your Arduino `libraries/ReadyMail` folder
 
 ---
 
