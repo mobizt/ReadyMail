@@ -4,7 +4,7 @@
 # ✉️ ReadyMail
 
 **Fast, lightweight, and asynchronous email client library for Arduino.**  
-Supports both **SMTP** and **IMAP** with full RFC compliance. Designed for 32-bit MCUs including ESP32, STM32, RP2040, and more.
+Supports both **SMTP** and **IMAP** with full RFC compliance. Designed for 32-bit MCUs including ESP8266, ESP32, Arduino MKR, SAMD, STM32, RP2040, and more.
 
 ReadyMail is designed to be hardware-agnostic. It supports all filesystem types (e.g. SPIFFS, LittleFS, SD) and all network client libraries, including GSMClient, WiFiClient, EthernetClient, and PPP. This ensures seamless integration across diverse hardware and connectivity environments.
 
@@ -34,14 +34,16 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 
 ## 🚀 Features
 
-- ✅ Asynchronous email sending and receiving  
-- 📎 Supports inline images and attachments  
+- ✅ Simple and intuitive interface — minimal setup, full control  
+- 📎 Supports inline images, attachments, and embedded messages (RFC 822/MIME)  
 - 🔐 SSL/TLS and STARTTLS support  
 - 📥 IMAP search, fetch, and idle  
 - 🧩 Lightweight and non-blocking design  
 - 🧠 RFC-compliant message formatting  
 - 🌐 Compatible with all network client libraries: GSM, WiFi, Ethernet, PPP  
-- 📁 Supports all Arduino-compatible filesystem types
+- 📁 Supports all Arduino-compatible filesystem types: SD, SDMMC, SPIFFS, LittleFS and more  
+- 🧰 Full-featured API for advanced use cases: custom commands, envelope parsing, OTA streaming
+
 
 ---
 
