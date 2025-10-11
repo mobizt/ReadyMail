@@ -6,10 +6,10 @@ This document outlines known issues across supported platforms and provides solu
 
 ## 📚 Table of Contents
 
-- [ESP8266 Issues](#⚠️-esp8266-issues)
-- [ESP32 Issues](#⚠️-esp32-issues)
-- [ESP_SSLClient Issues](#⚠️-esp_sslclient-issues)
-- [IMAP Response Parsing](#⚠️-imap-response-parsing)
+- [ESP8266 Issues](#-esp8266-issues)
+- [ESP32 Issues](#-esp32-issues)
+- [ESP_SSLClient Issues](#-esp_sslclient-issues)
+- [IMAP Response Parsing](#-imap-response-parsing)
 
 ---
 

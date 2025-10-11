@@ -6,12 +6,12 @@ This guide explains how to select the correct ports and SSL/network clients for 
 
 ## 📚 Table of Contents
 
-- [Overview](#📖-overview)
-- [Plain Text Connection](#🔓-plain-text-connection)
-- [SSL Connection](#🔐-ssl-connection)
-- [STARTTLS (TLS Upgrade)](#🔄-starttls-tls-upgrade)
-- [Client Compatibility Matrix](#📊-client-compatibility-matrix)
-- [Dynamic Port Switching](#🔀-dynamic-port-switching)
+- [Overview](#-overview)
+- [Plain Text Connection](#-plain-text-connection)
+- [SSL Connection](#-ssl-connection)
+- [STARTTLS (TLS Upgrade)](#-starttls-tls-upgrade)
+- [Client Compatibility Matrix](#-client-compatibility-matrix)
+- [Dynamic Port Switching](#-dynamic-port-switching)
 
 ---
 

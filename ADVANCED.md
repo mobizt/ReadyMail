@@ -6,11 +6,11 @@ This document provides in-depth information for developers who want to monitor, 
 
 ## 📚 Table of Contents
 
-- [📤 SMTP Processing Information](#smtp-processing-information)
-- [🧪 SMTP Custom Command Processing Information](#smtp-custom-command-processing-information)
-- [📥 IMAP Processing Information](#imap-processing-information)
-- [✉️ IMAP Envelope and Body Data](#imap-envelope-and-body-data)
-- [🧩 IMAP Custom Command Processing Information](#imap-custom-command-processing-information)
+- [📤 SMTP Processing Information](#-smtp-processing-information)
+- [🧪 SMTP Custom Command Processing Information](#-smtp-custom-command-processing-information)
+- [📥 IMAP Processing Information](#-imap-processing-information)
+- [✉️ IMAP Envelope and Body Data](#-imap-envelope-and-body-data)
+- [🧩 IMAP Custom Command Processing Information](#-imap-custom-command-processing-information)
 
 ---
 
