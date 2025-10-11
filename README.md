@@ -35,7 +35,7 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 ## 🚀 Features
 
 - ✅ Simple and intuitive interface — minimal setup, full control  
-- 📎 Supports inline images, attachments, and embedded messages (RFC 822/MIME)  
+- 📎 Supports inline images, attachments, embedded messages (RFC 822/MIME), and large static files (TEXT/HTML body).  
 - 🔐 SSL/TLS and STARTTLS support  
 - 📥 IMAP search, fetch, and idle  
 - 🧩 Lightweight and non-blocking design  
