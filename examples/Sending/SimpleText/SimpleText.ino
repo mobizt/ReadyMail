@@ -24,6 +24,8 @@
 #define AUTHOR_EMAIL "_______"
 #define AUTHOR_PASSWORD "_______"
 #define RECIPIENT_EMAIL "_______"
+#define CC_EMAIL "_______"
+#define BCC_EMAIL "_______"
 
 #define WIFI_SSID "_______"
 #define WIFI_PASSWORD "_______"
@@ -86,7 +88,7 @@ void setup()
     }
 
     SMTPMessage msg;
-    msg.headers.add(rfc822_subject, "ReadyMail test message");
+    msg.headers.add(rfc822_subject, "ReadyMail simple message");
 
     // Using 'name <email>' or <email> or 'email' for the from, sender and recipients.
     // The 'name' section of cc and bcc is ignored.
@@ -95,6 +97,10 @@ void setup()
     msg.headers.add(rfc822_from, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     // msg.headers.add(rfc822_sender, "ReadyMail <" + String(AUTHOR_EMAIL) + ">");
     msg.headers.add(rfc822_to, "User <" + String(RECIPIENT_EMAIL) + ">");
+    
+    // add some cc and bcc recipient emails.
+    // msg.headers.add(rfc822_cc, CC_EMAIL);
+    // msg.headers.add(rfc822_bcc, BCC_EMAIL);
 
     // Use addCustom to add custom header e.g. Imprtance and Priority.
     msg.headers.addCustom("Importance", PRIORITY);

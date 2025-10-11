@@ -138,7 +138,7 @@ void setup()
         return;
 
     SMTPMessage msg;
-    msg.headers.add(rfc822_subject, "ReadyMail test static message");
+    msg.headers.add(rfc822_subject, "ReadyMail static message");
 
     // Using 'name <email>' or <email> or 'email' for the from, sender and recipients.
     // The 'name' section of cc and bcc is ignored.
