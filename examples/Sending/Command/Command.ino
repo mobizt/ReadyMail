@@ -6,11 +6,10 @@
  *
  * For ESP32, WiFiClientSecure or NetworkClientSecure can also be used in this example for STARTTLS.
  *
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include "Networks.h"
 
 #define ENABLE_SMTP  // Allows SMTP class and data
 #define ENABLE_DEBUG // Allows debugging
@@ -103,7 +102,7 @@ void setup()
 
     bool esmtp = true;
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     smtp.connect(SMTP_HOST, SMTP_PORT, cmdCb, smtpCb /* for showing debug info */);
     if (smtp.commandResponse().statusCode != 220)

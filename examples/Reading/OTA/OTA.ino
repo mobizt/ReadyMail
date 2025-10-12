@@ -2,7 +2,7 @@
  * The example to fetch the latest message in the INBOX.
  * If message contains attachment "firmware.bin", the firmware update will begin.
  *
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -31,13 +31,13 @@ IMAPClient imap(ssl_client);
 
 bool otaErr = false;
 
-// For more information, see https://bit.ly/3RH9ock
+// For more information, see https://bit.ly/4h9JR7p
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
 }
 
-// For more information, see https://bit.ly/3GObULu
+// For more information, see https://bit.ly/3KLvz0y
 void dataCb(IMAPCallbackData &data)
 {
     // Showing envelope data.
@@ -141,7 +141,7 @@ void setup()
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())

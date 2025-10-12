@@ -1,9 +1,9 @@
 /**
  * The example to send simple text message which port can be changed at run time.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
+#include "Networks.h"
 #include <WiFiClient.h>
 #include <ESP_SSLClient.h>
 
@@ -24,7 +24,7 @@ WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 SMTPClient smtp(ssl_client);
 
-// For more information, see https://bit.ly/44g9Fuc
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
   if (status.progress.available)
@@ -56,7 +56,7 @@ void sendEmail(int port)
   else
     smtp.setStartTLS(NULL, false);
 
-  // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+  // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
   // Everytime you call connect(), the previouse session will stop.
   // If you want to reuse the session, just skipping the connect() and authenticate().

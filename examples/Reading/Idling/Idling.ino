@@ -1,10 +1,9 @@
 /**
  * The example to listen to the changes in selected mailbox.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include "NetworkClient.h"
 
 #define ENABLE_IMAP  // Allows IMAP class and data
 #define ENABLE_DEBUG // Allows debugging
@@ -28,13 +27,13 @@
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
 
-// For more information, see https://bit.ly/3RH9ock
+// For more information, see https://bit.ly/4h9JR7p
 void imapCb(IMAPStatus status)
 {
     ReadyMail.printf("ReadyMail[imap][%d]%s\n", status.state, status.text.c_str());
 }
 
-// For more information, see https://bit.ly/3GObULu
+// For more information, see https://bit.ly/3KLvz0y
 void dataCb(IMAPCallbackData &data)
 {
     // Showing envelope data.
@@ -114,7 +113,7 @@ void setup()
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     imap.connect(IMAP_HOST, IMAP_PORT, imapCb);
     if (!imap.isConnected())

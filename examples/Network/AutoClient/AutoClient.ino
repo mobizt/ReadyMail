@@ -1,9 +1,9 @@
 /**
  * The example to send simple text message using ReadyClient class which port can be changed at run time.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
+#include "Networks.h"
 #include <WiFiClient.h>
 
 #define ENABLE_SMTP
@@ -45,7 +45,7 @@ NetworkClientSecure ssl_client;
 ReadyClient rClient(ssl_client);
 SMTPClient smtp(rClient);
 
-// For more information, see https://bit.ly/44g9Fuc
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)

@@ -1,10 +1,9 @@
 /**
  * The example to send simple text message.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include "Networks.h"
 
 #define ENABLE_SMTP  // Allows SMTP class and data
 #define ENABLE_DEBUG // Allows debugging
@@ -40,7 +39,7 @@
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
-// For more information, see https://bit.ly/44g9Fuc
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
@@ -74,7 +73,7 @@ void setup()
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb, SSL_MODE);
     if (!smtp.isConnected())
@@ -129,7 +128,7 @@ void setup()
         msg.html.embedFile(true, "msg.html", embed_message_type_attachment);
 
     // Set message timestamp (change this with current time)
-    // See https://bit.ly/4jy8oU1
+    // See https://bit.ly/4nEuBlk
     msg.timestamp = 1746013620;
 
     smtp.send(msg, NOTIFY);

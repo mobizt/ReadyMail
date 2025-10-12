@@ -1,6 +1,6 @@
 /**
  * The example to send image from ESP32 camera.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -54,7 +54,7 @@
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
 
-// For more information, see https://bit.ly/44g9Fuc
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
@@ -156,7 +156,7 @@ void setup()
     msg.html.body("<html><body><div style=\"color:#cc0066;\">" + bodyText + "<br/><br/><img src=\"cid:camera_image\" alt=\"ESP32 camera image\"></div></body></html>");
 
     // Set message timestamp (change this with current time)
-    // See https://bit.ly/4jy8oU1
+    // See https://bit.ly/4nEuBlk
     msg.timestamp = 1746013620;
 
     camera_fb_t *fb = esp_camera_fb_get();

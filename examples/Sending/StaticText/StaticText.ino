@@ -1,10 +1,9 @@
 /**
  * The example to send simple text message from file of flash.
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include "Networks.h"
 
 #define ENABLE_SMTP  // Allows SMTP class and data
 #define ENABLE_DEBUG // Allows debugging
@@ -81,15 +80,15 @@ void fileCb(File &file, const char *filename, readymail_file_operating_mode mode
 
 void createTextFile()
 {
-    MY_FS.begin(true);
+    MY_FS.begin();
 
-    File file = MY_FS.open("/static.txt", FILE_WRITE);
+    File file = MY_FS.open("/static.txt", FILE_OPEN_MODE_WRITE);
     file.print(static_text2);
     file.close();
 }
 #endif
 
-// For more information, see https://bit.ly/44g9Fuc
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
@@ -127,7 +126,7 @@ void setup()
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb);
     if (!smtp.isConnected())
@@ -158,7 +157,7 @@ void setup()
     // msg.text.body(static_text1, strlen(static_text1));
 
     // Set message timestamp (change this with current time)
-    // See https://bit.ly/4jy8oU1
+    // See https://bit.ly/4nEuBlk
     msg.timestamp = 1746013620;
 
     smtp.send(msg);

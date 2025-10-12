@@ -4,7 +4,7 @@
  *
  * The TinyGSMClient and ESP_SSLClient libraries are used in this example.
  *
- * For proper network/SSL client and port selection, please see http://bit.ly/437GkRA
+ * For proper network/SSL client and port selection, please see http://bit.ly/46Xu9Yk
  */
 #include <Arduino.h>
 #include <WiFi.h>
@@ -48,6 +48,7 @@ TinyGsmClient basic_client(modem);
 ESP_SSLClient ssl_client;
 SMTPClient smtp(ssl_client);
 
+// For more information, see http://bit.ly/474niML
 void smtpCb(SMTPStatus status)
 {
     if (status.progress.available)
@@ -137,7 +138,7 @@ void setup()
 
     Serial.println("ReadyMail, version " + String(READYMAIL_VERSION));
 
-    // In case ESP8266 crashes, please see https://bit.ly/4iX1NkO
+    // In case ESP8266 crashes, please see https://bit.ly/48r4wSe
 
     smtp.connect(SMTP_HOST, SMTP_PORT, smtpCb);
     if (!smtp.isConnected())
