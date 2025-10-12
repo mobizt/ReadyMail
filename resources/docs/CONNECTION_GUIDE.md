@@ -540,27 +540,26 @@ void loop() {
 
 ### ETH (ESP32) + NetworkClientSecure
 
+#### 🛠️ ESP32 ↔ LAN8720 Wiring Table
+
+| ESP32 Pin        | Signal Name           | LAN8720 Pin / Function             | Notes              |
+|------------------|------------------------|------------------------------------|---------------------|
+| GPIO17           | EMAC_CLK_OUT_180       | XTAL1 / CLKIN (nINT/REFCLK)        | 4.7kΩ Pulldown      |
+| GPIO22           | EMAC_TXD1              | TX1                                |                     |
+| GPIO19           | EMAC_TXD0              | TX0                                |                     |
+| GPIO21           | EMAC_TX_EN             | TX_EN                              |                     |
+| GPIO26           | EMAC_RXD1              | RX1                                |                     |
+| GPIO25           | EMAC_RXD0              | RX0                                |                     |
+| GPIO27           | EMAC_RX_DV             | CRS                                |                     |
+| GPIO23           | MDC                    | MDC                                |                     |
+| GPIO18           | MDIO                   | MDIO                               |                     |
+| GND              | Ground                 | GND                                | Common ground       |
+| 3V3              | Power Supply           | VCC                                | 3.3V regulated      |
+
+
 > 🔗 Reference: [LAN8720 modified board](/resources/images/lan8720_modified_board.png) and [LAN8720 modified schematic](/resources/images/lan8720_modified_schematic.png)
 
 ```cpp
-
-/**
- * The LAN8720 Ethernet modified board and ESP32 board wiring connection.
- *
- * ESP32                        LAN8720
- *
- * GPIO17 - EMAC_CLK_OUT_180    nINT/REFCLK - LAN8720 XTAL1/CLKIN     4k7 Pulldown
- * GPIO22 - EMAC_TXD1           TX1
- * GPIO19 - EMAC_TXD0           TX0
- * GPIO21 - EMAC_TX_EN          TX_EN
- * GPIO26 - EMAC_RXD1           RX1
- * GPIO25 - EMAC_RXD0           RX0
- * GPIO27 - EMAC_RX_DV          CRS
- * GPIO23 - MDC                 MDC
- * GPIO18 - MDIO                MDIO
- * GND                          GND
- * 3V3                          VCC
- */
 
 #include <Arduino.h>
 #include <ETH.h>
@@ -719,23 +718,21 @@ void loop(){
 
 ### LwipEthernet (ESP8266) + WiFiClientSecure
 
+#### 🌐 ESP8266 ↔ ENC28J60 Wiring Table
+
+| ESP8266 Pin       | Signal Name | ENC28J60 Pin | Description         |
+|-------------------|-------------|--------------|---------------------|
+| GPIO12 (D6)       | MISO        | SO           | Master In Slave Out |
+| GPIO13 (D7)       | MOSI        | SI           | Master Out Slave In |
+| GPIO14 (D5)       | SCK         | SCK          | SPI Clock           |
+| GPIO16 (D0)       | CS          | CS           | Chip Select         |
+| GND               | Ground      | GND          | Common Ground       |
+| 3V3               | Power       | VCC          | 3.3V Supply         |
+
+
 > 🔗 Reference: [EthClient.ino — esp8266/Arduino](https://github.com/esp8266/Arduino/blob/master/libraries/lwIP_Ethernet/examples/EthClient/EthClient.ino)
 
 ```cpp
-
-/**
- * The ENC28J60 Ethernet module and ESP8266 board, SPI port wiring connection.
- *
- * ESP8266 (Wemos D1 Mini or NodeMCU)        ENC28J60
- *
- * GPIO12 (D6) - MISO                        SO
- * GPIO13 (D7) - MOSI                        SI
- * GPIO14 (D5) - SCK                         SCK
- * GPIO16 (D0) - CS                          CS
- * GND                                       GND
- * 3V3                                       VCC
- */
-
 #include <Arduino.h>
 #include <LwipEthernet.h>
 #include <WiFiClientSecure.h>

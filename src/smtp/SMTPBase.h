@@ -38,6 +38,7 @@ namespace ReadyMailSMTP
         }
         bool isValidEmail(const char *email)
         {
+            return true;
             int apos = -1, dpos = -1;
             int len = strlen(email);
 

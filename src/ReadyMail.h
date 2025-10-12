@@ -16,9 +16,11 @@
 #define READYMAIL_USE_STRSEP_IMPL
 #endif
 
+#if !defined(AVR)
 #include <array>
 #include <vector>
 #include <algorithm>
+#endif
 #include <time.h>
 #include <Client.h>
 #include "./core/ReadyTimer.h"
@@ -168,7 +170,7 @@ public:
         return buf;
     }
 
-    /** Provides base64 encoded string used for RFC 4616 PLAIN SASL mechanism
+    /** Provides base64 encozded string used for RFC 4616 PLAIN SASL mechanism
      *
      * @param email The email to convert to base64 PLAIN SASL string.
      * @param email The password to convert to base64 PLAIN SASL string.
@@ -185,6 +187,7 @@ enum readymail_auth_type
 {
     readymail_auth_password,
     readymail_auth_accesstoken,
+    readymail_auth_digest_md5,
     readymail_auth_disabled
 };
 
