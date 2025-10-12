@@ -14,7 +14,13 @@ This guide explains how to select the correct ports and SSL/network clients for 
 - [Why Use ESP_SSLClient?](#-why-use-esp_sslclient)
 - [Installation of ESP_SSLClient](#-installation-of-esp_sslclient)
 - [Network Clients Integration Examples](#-network-clients-integration-examples)
-- [PPPClient Notes](#-pppclient-notes)
+  - [ESP32 + TinyGsmClient + ESP_SSLClient](#-esp32--tinygsmclient--esp_sslclient)
+  - [ESP32 + EThernet + ESP_SSLClient](#-esp32--ethernet--esp_sslclient)
+  - [STM32 + Ethernet + ESP_SSLClient](#-stm32--ethernet--esp_sslclient)
+  - [Teensy4.1 + NativeEthernet + ESP_SSLClient](#-teensy41--nativeethernet--esp_sslclient)
+  - [ESP32 + ETH + NetworkClientSecure](#-esp32--eth--networkclientsecure)
+  - [ESP8266 + LwipEthernet + WiFiClientSecure](#-esp8266--lwipethernet--wificlientsecure)
+  - [ESP32 + PPP + NetworkClientSecure](#🧠-esp32--ppp--networkclientsecure)
 - [Dynamic Port Switching](#-dynamic-port-switching)
 - [License](#-license)
 
@@ -68,7 +74,7 @@ Use `WiFiClientSecure`, `WiFiSSLClient`, `ESP_SSLClient`, or `NetworkClientSecur
 #include <WiFiClientSecure.h>
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
-ssl_client.setInsecure();
+ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 smtp.connect("smtp.example.com", 465, statusCallback);
 ```
 
@@ -78,7 +84,7 @@ smtp.connect("smtp.example.com", 465, statusCallback);
 #include <WiFiClientSecure.h>
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
-ssl_client.setInsecure();
+ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 imap.connect("imap.example.com", 993, statusCallback);
 ```
 
@@ -100,7 +106,7 @@ Requires SSL client that supports protocol upgrade:
 WiFiClient basic_client;
 ESP_SSLClient ssl_client;
 ssl_client.setClient(&basic_client, false); // Start in plain mode
-ssl_client.setInsecure();
+ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 
 auto startTLSCallback = [](bool &success) {
   success = ssl_client.connectSSL();
@@ -122,7 +128,7 @@ imap.connect("imap.example.com", 143, statusCallback);
 ```cpp
 #include <WiFiClientSecure.h>
 WiFiClientSecure ssl_client;
-ssl_client.setInsecure();
+ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 ssl_client.setPlainStart();
 
 auto startTLSCallback = [](bool &success) {
@@ -206,7 +212,16 @@ Or via Arduino IDE:
 
 The following examples demonstrate how to use network clients (WiFi and Ethernet) in combination with SSL clients for secure communication over SSL/TLS. For examples using STARTTLS, please refer to the [Client Compatibility Matrix](#-client-compatibility-matrix) and [Dynamic Port Switching](#-dynamic-port-switching).
 
-### GSMClient + ESP_SSLClient
+---
+
+### 🧠 ESP32 + TinyGsmClient + ESP_SSLClient
+
+| LilyGO T-A7670 Pin | ESP32 GPIO | Signal Description |
+|--------------------|------------|---------------------|
+| RST                | GPIO5      | Module Reset        |
+| TX                 | GPIO26     | ESP32 RX (Receive)  |
+| RX                 | GPIO27     | ESP32 TX (Transmit) |
+
 
 ```cpp
 
@@ -331,7 +346,7 @@ void setup()
         return;
 
     ssl_client.setClient(&gsm_client);
-    ssl_client.setInsecure();
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
     ssl_client.setDebugLevel(1);
     ssl_client.setBufferSizes(1048 /* rx */, 1024 /* tx */);
 
@@ -353,13 +368,21 @@ void setup()
 
 void loop()
 {
-
 }
 ```
 
-## EthernetClient
+---
 
-### EthernetClient (ESP32) + ESP_SSLClient
+### 🧠 ESP32 + EThernet + ESP_SSLClient
+
+| W5500 Pin   | ESP32 GPIO | Signal Description     |
+|-------------|------------|-------------------------|
+| RESET       | GPIO26     | Module Reset            |
+| CS          | GPIO5      | Chip Select (SPI SS)    |
+| MISO        | GPIO19     | Master In Slave Out     |
+| MOSI        | GPIO23     | Master Out Slave In     |
+| SCLK        | GPIO18     | SPI Clock               |
+
 
 ```cpp
 #include <Arduino.h>
@@ -370,11 +393,11 @@ void loop()
 #define ENABLE_DEBUG
 #include <ReadyMail.h>
 
-#define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32 (-1 for no reset pin assigned)
-#define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
-#define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
-#define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
-#define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
+#define WIZNET_RESET_PIN 26 // -1 for no reset pin assigned
+#define WIZNET_CS_PIN 5
+#define WIZNET_MISO_PIN 19
+#define WIZNET_MOSI_PIN 23
+#define WIZNET_SCLK_PIN 18
 
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
@@ -423,7 +446,7 @@ void setup()
         return;
 
     ssl_client.setClient(&eth_client);
-    ssl_client.setInsecure();
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
     ssl_client.setDebugLevel(1);
     ssl_client.setBufferSizes(1048 /* rx */, 1024 /* tx */);
 
@@ -448,11 +471,9 @@ void loop()
 
 }
 ```
+---
 
-
-### EthernetClient (STM32) + ESP_SSLClient
-
-#### 🔌 STM32 ↔ W5500 Wiring Table
+### 🧠 STM32 + Ethernet + ESP_SSLClient
 
 | W5500 Pin | STM32F103C8T6 Pin | Function         |
 |-----------|-------------------|------------------|
@@ -538,9 +559,141 @@ void loop() {
 
 ```
 
-### ETH (ESP32) + NetworkClientSecure
+---
 
-#### 🛠️ ESP32 ↔ LAN8720 Wiring Table
+### 🧠 Teensy4.1 + NativeEthernet + ESP_SSLClient
+
+| Teensy 4.1 Pin | Ethernet Kit Pin | Description           |
+|----------------|------------------|------------------------|
+| Pin 23         | G                | Ground                 |
+| Pin 22         | 4                | Data line              |
+| Pin 21         | 3                | Data line              |
+| Pin 20         | 2                | Data line              |
+| Pin 19         | 1                | Data line              |
+| Pin 18         | 0                | Data line              |
+
+
+```cpp
+#include <Arduino.h>
+#include <SPI.h>
+#include <NativeEthernet.h>
+#include <NativeEthernetUdp.h>
+#include <ESP_SSLClient.h>
+
+#define ENABLE_SMTP
+#define ENABLE_DEBUG
+#include <ReadyMail.h>
+
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}; // Custom MAC
+unsigned int localPort = 8888;                     // UDP port
+const char timeServer[] = "time.nist.gov";         // NTP server
+const int NTP_PACKET_SIZE = 48;
+byte packetBuffer[NTP_PACKET_SIZE];
+
+ESP_SSLClient ssl_client;
+EthernetClient eth_client;
+EthernetUDP Udp;
+
+SMTPClient smtp(ssl_client);
+
+unsigned long ntp_ms = 0;
+unsigned long timestamp = 0;
+bool mail_sent = false;
+
+void sendNTPpacket(const char *address)
+{
+    memset(packetBuffer, 0, NTP_PACKET_SIZE);
+    packetBuffer[0] = 0b11100011;
+    packetBuffer[1] = 0;
+    packetBuffer[2] = 6;
+    packetBuffer[3] = 0xEC;
+    packetBuffer[12] = 49;
+    packetBuffer[13] = 0x4E;
+    packetBuffer[14] = 49;
+    packetBuffer[15] = 52;
+
+    Udp.beginPacket(address, 123);
+    Udp.write(packetBuffer, NTP_PACKET_SIZE);
+    Udp.endPacket();
+}
+
+void getTimestamp()
+{
+    sendNTPpacket(timeServer);
+    delay(1000);
+
+    if (Udp.parsePacket())
+    {
+        Udp.read(packetBuffer, NTP_PACKET_SIZE);
+
+        unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+        unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+        unsigned long secsSince1900 = (highWord << 16) | lowWord;
+
+        const unsigned long seventyYears = 2208988800UL;
+        timestamp = secsSince1900 - seventyYears - millis();
+    }
+}
+
+void setup()
+{
+    Serial.begin(115200);
+
+    while (!Serial)
+        ; // Wait for Serial Monitor
+
+    if (Ethernet.begin(mac) == 0)
+    {
+        Serial.println("DHCP failed");
+        while (true)
+            delay(1);
+    }
+
+    Serial.print("Local IP: ");
+    Serial.println(Ethernet.localIP());
+
+    Udp.begin(localPort);
+
+    delay(1000);
+
+    ssl_client.setClient(&eth_client);
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
+    ssl_client.setDebugLevel(1);
+    ssl_client.setBufferSizes(1048 /* rx */, 1024 /* tx */);
+}
+
+void loop()
+{
+    if (millis() - ntp_ms > 60 * 60 * 1000 || ntp_ms == 0)
+    {
+        ntp_ms = millis();
+        getTimestamp();
+    }
+
+    if (timestamp > 0 && !mail_sent)
+    {
+        mail_sent = true;
+        smtp.connect("smtp.example.com", 465);
+        smtp.authenticate("user@example.com", "password", readymail_auth_password);
+
+        SMTPMessage msg;
+        msg.headers.add(rfc822_from, "ReadyMail <user@example.com>");
+        msg.headers.add(rfc822_to, "Recipient <recipient@example.com>");
+        msg.headers.add(rfc822_subject, "PPP Email");
+        msg.text.body("Sent via PPPClient + NetworkClientSecure");
+
+        msg.timestamp = timestamp + millis();
+
+        smtp.send(msg);
+    }
+
+    Ethernet.maintain();
+}
+```
+
+---
+
+### 🧠 ESP32 + ETH + NetworkClientSecure
 
 | ESP32 Pin        | Signal Name           | LAN8720 Pin / Function             | Notes              |
 |------------------|------------------------|------------------------------------|---------------------|
@@ -692,7 +845,7 @@ void setup()
       delay(200);
     }
 
-    ssl_client.setInsecure();
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 
     smtp.connect("smtp.example.com", 465);
     smtp.authenticate("user@example.com", "password", readymail_auth_password);
@@ -710,15 +863,13 @@ void setup()
     smtp.send(msg);
 }
 
-void loop(){
-
+void loop()
+{
 }
 ```
+---
 
-
-### LwipEthernet (ESP8266) + WiFiClientSecure
-
-#### 🌐 ESP8266 ↔ ENC28J60 Wiring Table
+### 🧠 ESP8266 + LwipEthernet + WiFiClientSecure
 
 | ESP8266 Pin       | Signal Name | ENC28J60 Pin | Description         |
 |-------------------|-------------|--------------|---------------------|
@@ -769,7 +920,7 @@ void setup()
         delay(500);
     }
 
-    ssl_client.setInsecure();
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 
     smtp.connect("smtp.example.com", 465);
     smtp.authenticate("user@example.com", "password", readymail_auth_password);
@@ -789,14 +940,20 @@ void setup()
 
 void loop()
 {
-
 }
 ```
-
 ---
 
+### 🧠 ESP32 + PPP + NetworkClientSecure
 
-### PPP Client (ESP32 only) + NetworkClientSecure
+| ESP32 GPIO       | PPP Modem Pin | Signal Description         |
+|------------------|----------------|-----------------------------|
+| GPIO21           | TX             | ESP32 TX → Modem RX         |
+| GPIO22           | RX             | ESP32 RX ← Modem TX         |
+| GPIO26           | RTS            | Request to Send (ESP32 → Modem) |
+| GPIO27           | CTS            | Clear to Send (ESP32 ← Modem)   |
+| GPIO25           | RST            | Module Reset                |
+
 
 ```cpp
 #include <Arduino.h>
@@ -959,7 +1116,7 @@ void setup() {
         Serial.println("Failed to connect to network!");
     }
 
-    ssl_client.setInsecure();
+    ssl_client.setInsecure(); // For testing only — use setRootCA() in production
 
     smtp.connect("smtp.example.com", 465);
     smtp.authenticate("user@example.com", "password", readymail_auth_password);
@@ -979,7 +1136,6 @@ void setup() {
 
 void loop()
 {
-
 }
 ```
 
