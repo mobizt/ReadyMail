@@ -11,7 +11,9 @@ This guide explains how to select the correct ports and SSL/network clients for 
 - [SSL Connection](#-ssl-connection)
 - [STARTTLS (TLS Upgrade)](#-starttls-tls-upgrade)
 - [Client Compatibility Matrix](#-client-compatibility-matrix)
-- [ESP_SSLClient Integration Examples](#-esp_sslclient-integration-examples)
+- [Why Use ESP_SSLClient?](#-why-use-esp_sslclient)
+- [Installation of ESP_SSLClient](#-installation-of-esp_sslclient)
+- [Network Clients Integration Examples](#-network-clients-integration-examples)
 - [PPPClient Notes](#-pppclient-notes)
 - [Dynamic Port Switching](#-dynamic-port-switching)
 - [License](#-license)
@@ -145,6 +147,53 @@ smtp.connect("smtp.example.com", 587, statusCallback);
 | GSMClient + [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)      | ✅  | ✅       | ✅    | GSM          | GSM modules via wrapper                    |
 | EthernetClient + [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)| ✅  | ✅       | ✅    | Ethernet     | W5500 or ENC28J60 via wrapper              |
 | PPP + NetworkClientSecure| ✅  | ✅       | ✅    | PPP (ESP32)  | ESP32 only — required for PPP modem support|
+
+
+---
+
+## 🧠 Why Use ESP_SSLClient?
+
+[`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient) offers several advantages over other SSL libraries:
+
+- 🔄 **Cross-platform**  
+  Works on ESP32, STM32, RP2040, SAMD, Renesas, and more
+
+- 🔐 **Full SSL/TLS support**  
+  TLS 1.2, root CA, fingerprint
+
+- 🧩 **Universal client compatibility**  
+  Supports `WiFiClient`, `GSMClient`, `EthernetClient`, `PPPClient`
+
+- 🧠 **PSRAM-friendly**  
+  Optimized for large buffers and secure streaming
+
+- ⚙️ **Buffer tuning for low-memory devices**  
+  Allows manual configuration of RX/TX buffer sizes via `setBufferSizes(rx, tx)`  
+  Ideal for boards with limited RAM or when sending large data e.g., camera image
+
+  ```cpp
+  ssl_client.setBufferSizes(2048, 1024); // RX = 2KB, TX = 1KB
+  ```
+
+- 🧰 **Simple API**  
+  Similar to `WiFiClientSecure` on ESP8266
+
+
+---
+
+## 📦 Installation of ESP_SSLClient
+
+Install via PlatformIO:
+
+```ini
+lib_deps =
+  mobizt/ESP_SSLClient
+```
+
+Or via Arduino IDE:
+
+1. Download from [ESP_SSLClient GitHub](https://github.com/mobizt/ESP_SSLClient)  
+2. Add to `libraries/ESP_SSLClient` folder
 
 ---
 
@@ -873,5 +922,5 @@ smtp.connect("smtp.example.com", 587, statusCallback);
 
 ## 📄 License
 
-MIT License © 2025 Suwatchai K.  
+MIT License © 2025 Suwatchai K (Mobizt).  
 See [LICENSE](../../LICENSE) for details.

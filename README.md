@@ -243,7 +243,7 @@ void loop() {}
 
 ## 📄 License
 
-MIT License © 2025 Suwatchai K.  
+MIT License © 2025 Suwatchai K (Mobizt).  
 See [LICENSE](LICENSE) for details.
 
 ---

@@ -101,5 +101,5 @@ Parsing large multi-line IMAP responses may fail on low-RAM devices. Consider us
 
 ## 📄 License
 
-MIT License © 2025 Suwatchai K.  
+MIT License © 2025 Suwatchai K (Mobizt).  
 See [LICENSE](LICENSE) for details.
