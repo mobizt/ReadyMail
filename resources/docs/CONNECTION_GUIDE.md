@@ -148,7 +148,7 @@ smtp.connect("smtp.example.com", 587, statusCallback);
 | WiFiClientSecure (ESP8266)     | ✅  | ❌       | ❌    | WiFi         | SSL only                                   |
 | NetworkClientSecure (ESP32 v3)    | ✅  | ✅       | ✅    | WiFi         | Use `setPlainStart()`, [STARTTLS issue](https://github.com/mobizt/ReadyMail/blob/main/resources/docs/TROUBLESHOOTING.md?tab=readme-ov-file#%EF%B8%8F-esp32-issues)                      |
 | [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)                  | ✅  | ✅       | ✅    | Any          | `Cross-platform, simplified APIs*, supports PSRAM`             |
-| OPEnSLab-OSU' s SSLClient                  | ✅  | ❌       | ✅    | Any          | complicated APIs, buggy 
+| OPEnSLab-OSU' s SSLClient                  | ✅  | ❌       | ❌    | Any          | complicated APIs, buggy 
 | govorox's SSLClient                  | ✅  | ❌       | ❌    | Any          | ESP32 only 
 | WiFiSSLClient                  | ✅  | ❌       | ❌    | WiFi         | Lightweight, SSL only                      |
 | WiFiClient                     | ❌  | ❌       | ✅    | WiFi         | Plain only                                 |
