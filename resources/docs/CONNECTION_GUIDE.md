@@ -449,6 +449,95 @@ void loop()
 }
 ```
 
+
+### EthernetClient (STM32) + ESP_SSLClient
+
+#### 🔌 STM32 ↔ W5500 Wiring Table
+
+| W5500 Pin | STM32F103C8T6 Pin | Function         |
+|-----------|-------------------|------------------|
+| VCC       | 3.3V              | Power supply     |
+| GND       | GND               | Ground           |
+| SCS (CS)  | PA4               | SPI Chip Select  |
+| SCLK      | PA5               | SPI Clock        |
+| MISO      | PA6               | SPI MISO         |
+| MOSI      | PA7               | SPI MOSI         |
+| INT       | PA0 (optional)    | Interrupt        |
+| RST       | PB13 (optional)   | Hardware Reset   |
+
+[STM32 ↔ W5500 Wiring Image](/resources/images/stm32_w5500.svg)
+
+```cpp
+#include <Arduino.h>
+#include <SPI.h>
+#include <Ethernet.h>
+#include <time.h>
+#include <EthernetUdp.h>
+#include <NTPClient.h>
+#include <ESP_SSLClient.h>
+
+#define ENABLE_SMTP
+#define ENABLE_DEBUG
+#include <ReadyMail.h>
+
+
+// Ethernet settings
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+// NTP client
+EthernetUDP udp;
+NTPClient timeClient(udp, "pool.ntp.org", 0, 60000); // GMT+0
+
+// Network and SSL clients
+EthernetClient eth_client;
+ESP_SSLClient ssl_client;
+
+// ReadyMail SMTP client
+SMTPClient smtp(ssl_client);
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize Ethernet
+  Ethernet.begin(mac);
+  delay(1000);
+
+  // Sync time via NTP
+  timeClient.begin();
+  timeClient.update();
+  time_t now = timeClient.getEpochTime();
+  struct timeval tv = { now, 0 };
+  settimeofday(&tv, nullptr);
+
+  Serial.print("Synced time: ");
+  Serial.println(ctime(&now));
+
+  // Configure SSL client
+  ssl_client.setClient(&eth_client);
+  ssl_client.setInsecure(); // For testing only — use setRootCA() in production
+
+  // Connect to SMTP server
+  smtp.connect("smtp.example.com", 465);
+  smtp.authenticate("user@example.com", "password", readymail_auth_password);
+
+  // Compose and send email
+  SMTPMessage msg;
+  msg.headers.add(rfc822_from, "ReadyMail <user@example.com>");
+  msg.headers.add(rfc822_to, "Recipient <recipient@example.com>");
+  msg.headers.add(rfc822_subject, "STM32 Ethernet Email");
+  msg.text.body("Sent from STM32 + W5500 + ESP_SSLClient with NTP time");
+
+  msg.timestamp = time(nullptr);
+  smtp.send(msg);
+}
+
+void loop() {
+  // Optional: update time periodically
+  timeClient.update();
+}
+
+```
+
 ### ETH (ESP32) + NetworkClientSecure
 
 > 🔗 Reference: [LAN8720 modified board](/resources/images/lan8720_modified_board.png) and [LAN8720 modified schematic](/resources/images/lan8720_modified_schematic.png)
@@ -622,8 +711,7 @@ void setup()
     smtp.send(msg);
 }
 
-void loop()
-{
+void loop(){
 
 }
 ```

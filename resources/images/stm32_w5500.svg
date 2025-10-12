@@ -1,0 +1,41 @@
+<svg width="600" height="320" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: sans-serif; font-size: 14px; }
+    .pin { fill: #f0f0f0; stroke: #333; stroke-width: 1; }
+    .wire { stroke: #007acc; stroke-width: 2; }
+  </style>
+
+  <!-- STM32 -->
+  <rect x="50" y="40" width="120" height="220" fill="#d0eaff" stroke="#333" />
+  <text x="60" y="30">STM32F103C8T6</text>
+  <text x="55" y="60">PA4 (CS)</text>
+  <text x="55" y="80">PA5 (SCLK)</text>
+  <text x="55" y="100">PA6 (MISO)</text>
+  <text x="55" y="120">PA7 (MOSI)</text>
+  <text x="55" y="140">PA0 (INT)</text>
+  <text x="55" y="160">PB13 (RST)</text>
+  <text x="55" y="180">3.3V</text>
+  <text x="55" y="200">GND</text>
+
+  <!-- W5500 -->
+  <rect x="400" y="40" width="120" height="220" fill="#ffe0d0" stroke="#333" />
+  <text x="410" y="30">W5500 Module</text>
+  <text x="405" y="60">SCS</text>
+  <text x="405" y="80">SCLK</text>
+  <text x="405" y="100">MISO</text>
+  <text x="405" y="120">MOSI</text>
+  <text x="405" y="140">INT</text>
+  <text x="405" y="160">RST</text>
+  <text x="405" y="180">VCC</text>
+  <text x="405" y="200">GND</text>
+
+  <!-- Wires -->
+  <line x1="170" y1="60" x2="400" y2="60" class="wire" />
+  <line x1="170" y1="80" x2="400" y2="80" class="wire" />
+  <line x1="170" y1="100" x2="400" y2="100" class="wire" />
+  <line x1="170" y1="120" x2="400" y2="120" class="wire" />
+  <line x1="170" y1="140" x2="400" y2="140" class="wire" />
+  <line x1="170" y1="160" x2="400" y2="160" class="wire" />
+  <line x1="170" y1="180" x2="400" y2="180" class="wire" />
+  <line x1="170" y1="200" x2="400" y2="200" class="wire" />
+</svg>
