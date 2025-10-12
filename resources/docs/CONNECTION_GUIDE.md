@@ -140,13 +140,18 @@ smtp.connect("smtp.example.com", 587, statusCallback);
 | Client Type                    | SSL | STARTTLS | Plain | Network Type | Notes                                      |
 |--------------------------------|-----|----------|-------|--------------|--------------------------------------------|
 | WiFiClientSecure (ESP8266)     | ✅  | ❌       | ❌    | WiFi         | SSL only                                   |
-| WiFiClientSecure (ESP32 v3)    | ✅  | ✅       | ✅    | WiFi         | Use `setPlainStart()`                      |
+| NetworkClientSecure (ESP32 v3)    | ✅  | ✅       | ✅    | WiFi         | Use `setPlainStart()`, [Usage issue](/resources/docs/TROUBLESHOOTING.md?tab=readme-ov-file#-esp32-issues)                      |
 | [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)                  | ✅  | ✅       | ✅    | Any          | `Cross-platform, Simplified APIs*, supports PSRAM`             |
+| OPEnSLab-OSU' s SSLClient                  | ✅  | ❌       | ✅    | Any          | `Cross-platform`, Not intuitive APIs 
+| govorox's SSLClient                  | ✅  | ❌       | ❌    | Any          | ESP32 only 
 | WiFiSSLClient                  | ✅  | ❌       | ❌    | WiFi         | Lightweight, SSL only                      |
 | WiFiClient                     | ❌  | ❌       | ✅    | WiFi         | Plain only                                 |
+| GSMClient                     | ❌  | ❌       | ✅    | GSM         | Plain only                                 |
+| EthernetClient                     | ❌  | ❌       | ✅    | Ethernet         | Plain only                                 |
+| WiFiClient + [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)| ✅  | ✅       | ✅    | WiFi     | Suitable for all WiFiClient libraries on all WiFi-capable devices     
 | GSMClient + [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)      | ✅  | ✅       | ✅    | GSM          | GSM modules via wrapper                    |
 | EthernetClient + [`ESP_SSLClient`](https://github.com/mobizt/ESP_SSLClient)| ✅  | ✅       | ✅    | Ethernet     | W5500 or ENC28J60 via wrapper              |
-| PPP + NetworkClientSecure| ✅  | ✅       | ✅    | PPP (ESP32)  | ESP32 only — required for PPP modem support|
+| PPP + NetworkClientSecure| ✅  | ❌       | ❌    | PPP/GSM  | ESP32 only — required for PPP modem support|
 
 
 ---
