@@ -162,7 +162,7 @@ smtp.connect("smtp.example.com", 587, statusCallback);
   TLS 1.2, root CA, fingerprint
 
 - 🧩 **Universal client compatibility**  
-  Supports `WiFiClient`, `GSMClient`, `EthernetClient`, `PPPClient`
+  Supports `WiFiClient`, `GSMClient`, `EthernetClient`
 
 - 🧠 **PSRAM-friendly**  
   Optimized for large buffers and secure streaming
