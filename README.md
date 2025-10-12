@@ -36,9 +36,9 @@ ReadyMail is designed to be hardware-agnostic. It supports all filesystem types 
 ## 🚀 Features
 
 - ✅ Simple and intuitive interface — minimal setup, full control  
-- 📎 Supports inline images, attachments, and large static files (TEXT/HTML body).  
+- 📎 Supports inline images, attachments (file and nested RFC822 messages), and large static files (text/html).  
 - 🔐 SSL/TLS and STARTTLS support  
-- 📥 IMAP search, fetch, and idle  
+- 📥 IMAP search, fetch, append, and idle support 
 - 🧩 Lightweight and non-blocking design  
 - 🧠 RFC-compliant message formatting  
 - 🌐 Compatible with all network client libraries: GSM, WiFi, Ethernet, PPP  
@@ -119,7 +119,7 @@ ReadyMail adheres to key email protocol standards:
 
 #define ENABLE_SMTP
 #define ENABLE_DEBUG
-#include "ReadyMail.h"
+#include <ReadyMail.h>
 
 WiFiClientSecure ssl_client;
 SMTPClient smtp(ssl_client);
@@ -180,7 +180,7 @@ To ensure successful email delivery and avoid rejection or spam filtering by SMT
 
 #define ENABLE_IMAP
 #define ENABLE_DEBUG
-#include "ReadyMail.h"
+#include <ReadyMail.h>
 
 WiFiClientSecure ssl_client;
 IMAPClient imap(ssl_client);
