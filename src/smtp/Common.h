@@ -255,19 +255,6 @@ namespace ReadyMailSMTP
         embed_message_type_inline
     };
 
-    enum smtp_content_xenc
-    {
-        xenc_none,
-        /* rfc2045 section 2.7 */
-        xenc_7bit,
-        xenc_qp,
-        xenc_base64,
-        /* rfc2045 section 2.8 */
-        xenc_8bit,
-        /* rfc2045 section 2.9 */
-        xenc_binary
-    };
-
     struct smtp_attach_file_config
     {
         String path;
@@ -500,16 +487,48 @@ namespace ReadyMailSMTP
                 data_size = src.type == src_data_static ? static_size : content.length();
             }
 
-            if (xenc != xenc_base64 && xenc != xenc_qp)
-                enc = (src.nonascii || src.cid) ? "quoted-printable" : transfer_encoding;
+            if (xenc == xenc_none)
+            {
+                if (src.cid)
+                {
+                    xenc = xenc_base64;
+                    enc = "base64";
+                }
+                else if (src.flowed || src.nonascii)
+                {
+                    xenc = xenc_qp;
+                    enc = "quoted-printable";
+                }
+                else
+                {
+                    xenc = xenc_7bit;
+                    enc = "7bit";
+                }
+            }
         }
 #else
         void beginSource(String &enc)
         {
             rd_src_check(src);
+            if (xenc == xenc_none)
+            {
+                if (src.cid)
+                {
+                    xenc = xenc_base64;
+                    enc = "base64";
+                }
+                else if (src.flowed || src.nonascii)
+                {
+                    xenc = xenc_qp;
+                    enc = "quoted-printable";
+                }
+                else
+                {
+                    xenc = xenc_7bit;
+                    enc = "7bit";
+                }
+            }
             data_size = src.type == src_data_static ? static_size : content.length();
-            if (xenc != xenc_base64 && xenc != xenc_qp)
-                enc = (src.nonascii || src.cid) ? "quoted-printable" : transfer_encoding;
         }
 #endif
     };

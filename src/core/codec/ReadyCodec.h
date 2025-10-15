@@ -18,88 +18,8 @@
 #define vec Vector<int>
 #endif
 
-// msg data source type
-enum src_data_type
-{
-    src_data_string,
-    src_data_static,
-    src_data_file
-};
 
-// msg data source reader context
-// that provides the Stream interfaces
-struct src_data_ctx
-{
-public:
-    const char *str = nullptr;
-#if defined(ENABLE_FS)
-    File fs;
-#endif
-    src_data_type type = src_data_string;
-    bool valid = false, cid = false, nonascii = false;
-    char c = 0;
-    int index = 0;
-    bool available()
-    {
-        if (type <= src_data_static)
-            return index < (int)size();
-#if defined(ENABLE_FS)
-        else if (fs)
-            return fs.available();
-#endif
-        return false;
-    }
-    size_t size()
-    {
-        if (type <= src_data_static)
-            return strlen(str);
-#if defined(ENABLE_FS)
-        else if (fs)
-            return fs.size();
-#endif
-        return false;
-    }
-
-    char read()
-    {
-        if (available())
-        {
-            if (type <= src_data_static)
-            {
-                c = str[index];
-                index++;
-            }
-#if defined(ENABLE_FS)
-            else if (fs)
-                c = fs.read();
-#endif
-            return c;
-        }
-        return 0;
-    }
-
-    void close()
-    {
-#if defined(ENABLE_FS)
-        if (type == src_data_file && fs)
-            fs.close();
-#endif
-    }
-
-    void seek(int index)
-    {
-        if (type <= src_data_static)
-            this->index = index;
-#if defined(ENABLE_FS)
-        else if (fs)
-            fs.seek(index);
-#endif
-    }
-};
-
-static const unsigned char rd_b64_map[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-static void __attribute__((used)) sys_yield()
+static inline void __attribute__((used)) sys_yield()
 {
 #if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION) && ((ARDUINO_ESP8266_MAJOR == 3 && ARDUINO_ESP8266_MINOR >= 1) || ARDUINO_ESP8266_MAJOR > 3)
     esp_yield();
@@ -108,34 +28,7 @@ static void __attribute__((used)) sys_yield()
 #endif
 }
 
-static void rd_print_to(String &buff, int size, const char *format, ...)
-{
-    size += strlen(format) + 10;
-    char *s = rd_mem<char *>(size);
-    va_list va;
-    va_start(va, format);
-    vsnprintf(s, size, format, va);
-    va_end(va);
-    buff += rd_cast<const char *>(s);
-    rd_free(&s);
-}
-
-static unsigned char rd_b64_lookup(char c)
-{
-    if (c >= 'A' && c <= 'Z')
-        return c - 'A';
-    if (c >= 'a' && c <= 'z')
-        return c - 71;
-    if (c >= '0' && c <= '9')
-        return c + 4;
-    if (c == '+')
-        return 62;
-    if (c == '/')
-        return 63;
-    return -1;
-}
-
-static void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
+static inline void rd_a4_to_a3(unsigned char *a3, unsigned char *a4)
 {
     a3[0] = (a4[0] << 2) + ((a4[1] & 0x30) >> 4);
     a3[1] = ((a4[1] & 0xf) << 4) + ((a4[2] & 0x3c) >> 2);
@@ -197,43 +90,6 @@ static char *rd_b64_dec(const char *encoded)
     return raw;
 }
 
-// base64 encoder
-static char *rd_b64_enc(const unsigned char *raw, int len)
-{
-    uint8_t count = 0;
-    char buffer[3];
-    char *encoded = rd_mem<char *>(len * 4 / 3 + 4);
-    int c = 0;
-    for (int i = 0; i < len; i++)
-    {
-        buffer[count++] = raw[i];
-        if (count == 3)
-        {
-            encoded[c++] = rd_b64_map[buffer[0] >> 2];
-            encoded[c++] = rd_b64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            encoded[c++] = rd_b64_map[((buffer[1] & 0x0f) << 2) + (buffer[2] >> 6)];
-            encoded[c++] = rd_b64_map[buffer[2] & 0x3f];
-            count = 0;
-        }
-    }
-    if (count > 0)
-    {
-        encoded[c++] = rd_b64_map[buffer[0] >> 2];
-        if (count == 1)
-        {
-            encoded[c++] = rd_b64_map[(buffer[0] & 0x03) << 4];
-            encoded[c++] = '=';
-        }
-        else if (count == 2)
-        {
-            encoded[c++] = rd_b64_map[((buffer[0] & 0x03) << 4) + (buffer[1] >> 4)];
-            encoded[c++] = rd_b64_map[(buffer[1] & 0x0f) << 2];
-        }
-        encoded[c++] = '=';
-    }
-    encoded[c] = '\0';
-    return encoded;
-}
 
 #if defined(ENABLE_SMTP)
 
@@ -367,34 +223,6 @@ out:
     return sbuf;
 }
 
-// msg data source checking
-// for cid (inline attachment) and non-ascii (encoding applicable)
-static void rd_src_check(src_data_ctx &src)
-{
-    char c[4];
-    for (int i = 0; i < 4; i++)
-        c[i] = 0;
-
-    while (src.available())
-    {
-        unsigned char v = (unsigned char)src.read();
-        if (v > 127)
-            src.nonascii = true;
-
-        c[3] = c[2];
-        c[2] = c[1];
-        c[1] = c[0];
-        c[0] = v;
-
-        if (c[3] == 'c' && c[2] == 'i' && c[1] == 'd' && c[0] == ':')
-            src.cid = true;
-
-        if (src.cid && src.nonascii)
-            break;
-    }
-    src.close();
-}
-
 // quoted-printable and base64 encoder
 static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, vec &softbreak_index)
 {
@@ -457,7 +285,7 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
 
 #endif
 
-static String rd_enc_oauth(const String &email, const String &accessToken)
+static inline String rd_enc_oauth(const String &email, const String &accessToken)
 {
     String out;
     String raw;
@@ -471,7 +299,7 @@ static String rd_enc_oauth(const String &email, const String &accessToken)
     return out;
 }
 
-static String rd_enc_plain(const String &email, const String &password)
+static inline String rd_enc_plain(const String &email, const String &password)
 {
     // rfc4616
     String out;
@@ -516,7 +344,7 @@ static inline char *rd_strsep(char **sp, const char *delim)
     return start;
 }
 #else
-static char *rd_strsep(char **stringp, const char *delim)
+static inline char *rd_strsep(char **stringp, const char *delim)
 {
     char *rv = *stringp;
     if (rv)
@@ -603,7 +431,7 @@ static void rd_dec_tis620_utf8(char *out, const char *in, size_t len)
     }
 }
 
-static int rd_dec_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
+static inline int rd_dec_char(const char *s) { return 16 * hexval(*(s + 1)) + hexval(*(s + 2)); }
 
 static void rd_dec_qp_utf8(const char *src, char *out)
 {

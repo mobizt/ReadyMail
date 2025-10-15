@@ -16,6 +16,16 @@
 #define READYMAIL_USE_STRSEP_IMPL
 #endif
 
+namespace ReadyMailCallbackNS
+{
+#if defined(ENABLE_FS)
+    typedef void (*FileCallback)(File &file, const char *filename, readymail_file_operating_mode mode);
+#else
+    typedef void (*FileCallback)();
+#endif
+    typedef void (*TLSHandshakeCallback)(bool &success);
+}
+
 #ifndef MAX_SMTP_TEXT_SOFTBREAK
 #define MAX_SMTP_TEXT_SOFTBREAK 5
 #endif
@@ -36,6 +46,11 @@
 #define MAX_SMTP_CONTENT_TYPE 2
 #endif
 
+#ifndef READYMAIL_FILEBUF_SIZE
+#define READYMAIL_FILEBUF_SIZE 64
+#endif
+
+
 #if !defined(AVR)
 #include <array>
 #include <vector>
@@ -43,9 +58,17 @@
 #endif
 #include <time.h>
 #include <Client.h>
+#include "./core/NumString.h"
 #include "./core/vector/Vector.h"
+#include "./core/codec/ReadyCodec_Utils.h"
+#include "./core/codec/ReadyStream.h"
+#include "./core/codec/ReadyCodec_Base64.h"
+#include "./core/codec/ReadyCodec_QP.h"
+#include "./core/codec/ReadyCodec_Chunk.h"
+#include "./core/codec/ReadyCodec.h"
+
 #include "./core/ReadyTimer.h"
-#include "./core/ReadyCodec.h"
+
 #include "./core/Utils.h"
 
 
@@ -252,15 +275,6 @@ struct readymail_port_function
 #include "./core/ReadyClient.h"
 #endif
 
-namespace ReadyMailCallbackNS
-{
-#if defined(ENABLE_FS)
-    typedef void (*FileCallback)(File &file, const char *filename, readymail_file_operating_mode mode);
-#else
-    typedef void (*FileCallback)();
-#endif
-    typedef void (*TLSHandshakeCallback)(bool &success);
-}
 
 #include "./core/ReadyError.h"
 

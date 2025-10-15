@@ -534,6 +534,8 @@ namespace ReadyMailSMTP
                 String buf, ct_prop;
                 bool embed = (html && msg.html.embed.enable) || (!html && msg.text.embed.enable);
                 bool embed_inline = embed && ((html && msg.html.embed.type == embed_message_type_inline) || (!html && msg.text.embed.type == embed_message_type_inline));
+                if (msg.text.src.flowed)
+                    msg.text.flowed;
                 rd_print_to(ct_prop, 250, "; charset=\"%s\";%s%s", html ? msg.html.charSet.c_str() : msg.text.charSet.c_str(), html ? "" : (msg.text.flowed ? " format=\"flowed\"; delsp=\"yes\";" : ""), msg.html.embed.enable ? (html ? " Name=\"msg.html\";" : " Name=\"msg.txt\";") : "");
 #if defined(ENABLE_FS)
                 if ((html ? msg.html.src.type : msg.text.src.type) == src_data_file)
@@ -1022,10 +1024,9 @@ namespace ReadyMailSMTP
 
                 for (size_t i = 0; i < msg.rfc822.size(); i++)
                 {
-                    SMTPMessage *msg_ptr = reinterpret_cast<SMTPMessage*>(msg.rfc822[i]);
+                    SMTPMessage *msg_ptr = reinterpret_cast<SMTPMessage *>(msg.rfc822[i]);
                     msg_ptr->parent = &msg;
                 }
-                    
             }
         }
 
