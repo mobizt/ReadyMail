@@ -291,6 +291,21 @@ namespace ReadyMailSMTP
         friend class smtp_attachment;
 
     public:
+        smtp_attachment_t() {}
+
+        smtp_attachment_t &operator=(const smtp_attachment_t &other)
+        {
+            this->name = other.name;
+            this->filename = other.filename;
+            return *this;
+        }
+
+        smtp_attachment_t(const smtp_attachment_t &other)
+        {
+            this->name = other.name;
+            this->filename = other.filename;
+        };
+
         /* The name of attachment */
         String name;
 
@@ -338,6 +353,19 @@ namespace ReadyMailSMTP
         friend class SMTPMessage;
 
     public:
+        smtp_message_body_t() {}
+
+        smtp_message_body_t &operator=(const smtp_message_body_t &other)
+        {
+            this->content = other.content;
+            return *this;
+        }
+
+        smtp_message_body_t(const smtp_message_body_t &other)
+        {
+            this->content = other.content;
+        };
+
         /* Set the body */
         smtp_message_body_t &body(const String &body)
         {
@@ -436,7 +464,13 @@ namespace ReadyMailSMTP
         FileCallback cb = NULL;
 #endif
         src_data_ctx src;
-        std::vector<int> softbreak_index;
+
+#ifdef USE_STATIC_VECTOR
+        Vector<int, MAX_SMTP_TEXT_SOFTBREAK> softbreak_index;
+#else
+        Vector<int> softbreak_index; // initial capacity
+#endif
+
         embed_message_body_t embed;
 
 #if defined(ENABLE_FS)
@@ -484,6 +518,24 @@ namespace ReadyMailSMTP
     {
         String name, value;
         rfc822_header_types type = rfc822_custom;
+
+    public:
+        smtp_header_item() {}
+
+        smtp_header_item &operator=(const smtp_header_item &other)
+        {
+            this->name = other.name;
+            this->value = other.value;
+            this->type = other.type;
+            return *this;
+        }
+
+        smtp_header_item(const smtp_header_item &other)
+        {
+            this->name = other.name;
+            this->value = other.value;
+            this->type = other.type;
+        };
     };
 
     struct smtp_file_progress

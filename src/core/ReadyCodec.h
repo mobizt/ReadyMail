@@ -12,6 +12,12 @@
 
 #if defined(ENABLE_IMAP) || defined(ENABLE_SMTP)
 
+#ifdef USE_STATIC_VECTOR
+#define vec Vector<int, MAX_SMTP_TEXT_SOFTBREAK>
+#else
+#define vec Vector<int>
+#endif
+
 // msg data source type
 enum src_data_type
 {
@@ -20,7 +26,7 @@ enum src_data_type
     src_data_file
 };
 
-// msg data source reader context 
+// msg data source reader context
 // that provides the Stream interfaces
 struct src_data_ctx
 {
@@ -232,13 +238,13 @@ static char *rd_b64_enc(const unsigned char *raw, int len)
 #if defined(ENABLE_SMTP)
 
 // soft break modifier
-static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index, String &softbreak_buf, int line_max_len)
+static bool rd_add_sb(String &buf, int index, vec &softbreak_index, String &softbreak_buf, int line_max_len)
 {
     for (size_t i = 0; i < softbreak_index.size(); i++)
     {
         if ((index == softbreak_index[i]))
         {
-            softbreak_index.erase(softbreak_index.begin() + i);
+            softbreak_index.erase(i);
             if ((int)buf.length() + 2 <= line_max_len)
                 buf += "\r\n"; // to complete soft break
             else if ((int)buf.length() + 1 <= line_max_len)
@@ -252,7 +258,7 @@ static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index,
         }
         else if (index == -1 * softbreak_index[i])
         {
-            softbreak_index.erase(softbreak_index.begin() + i);
+            softbreak_index.erase(i);
             return true;
         }
     }
@@ -260,7 +266,7 @@ static bool rd_add_sb(String &buf, int index, std::vector<int> &softbreak_index,
 }
 
 // soft break marking
-static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int> &softbreak_index)
+static void rd_get_sb(src_data_ctx &src, int index, int max_len, vec &softbreak_index)
 {
     int last_index = softbreak_index.size() ? softbreak_index[softbreak_index.size() - 1] + 1 : index;
 
@@ -307,7 +313,7 @@ static void rd_get_sb(src_data_ctx &src, int index, int max_len, std::vector<int
 }
 
 // quoted-printable encoder
-static String rd_qp_encode_chunk(src_data_ctx &src, int &index, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
+static String rd_qp_encode_chunk(src_data_ctx &src, int &index, bool flowed, int max_len, String &softbreak_buf, vec &softbreak_index)
 {
     String sbuf;
     int sindex = 0;
@@ -361,7 +367,7 @@ out:
     return sbuf;
 }
 
-// msg data source checking 
+// msg data source checking
 // for cid (inline attachment) and non-ascii (encoding applicable)
 static void rd_src_check(src_data_ctx &src)
 {
@@ -390,7 +396,7 @@ static void rd_src_check(src_data_ctx &src)
 }
 
 // quoted-printable and base64 encoder
-static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, std::vector<int> &softbreak_index)
+static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool flowed, int max_len, String &softbreak_buf, vec &softbreak_index)
 {
     String line, buf;
     buf.reserve(100);
@@ -484,6 +490,32 @@ static String rd_enc_plain(const String &email, const String &password)
 }
 
 #if defined(READYMAIL_USE_STRSEP_IMPL)
+#ifdef __AVR__
+static inline char *rd_strsep(char **sp, const char *delim)
+{
+    if (!sp || !*sp)
+        return NULL;
+    char *start = *sp;
+    char *p = start;
+    while (*p)
+    {
+        const char *d = delim;
+        while (*d)
+        {
+            if (*p == *d)
+            {
+                *p = '\0';
+                *sp = p + 1;
+                return start;
+            }
+            ++d;
+        }
+        ++p;
+    }
+    *sp = NULL;
+    return start;
+}
+#else
 static char *rd_strsep(char **stringp, const char *delim)
 {
     char *rv = *stringp;
@@ -497,8 +529,10 @@ static char *rd_strsep(char **stringp, const char *delim)
     }
     return rv;
 }
+#endif
+
 #else
-static char *rd_strsep(char **stringp, const char *delim) { return strsep(stringp, delim); }
+static inline char *rd_strsep(char **stringp, const char *delim) { return strsep(stringp, delim); }
 #endif
 
 #if defined(ENABLE_IMAP)

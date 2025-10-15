@@ -16,6 +16,26 @@
 #define READYMAIL_USE_STRSEP_IMPL
 #endif
 
+#ifndef MAX_SMTP_TEXT_SOFTBREAK
+#define MAX_SMTP_TEXT_SOFTBREAK 5
+#endif
+
+#ifndef MAX_SMTP_HEADER
+#define MAX_SMTP_HEADER 4
+#endif
+
+#ifndef MAX_SMTP_ATTACHMENT
+#define MAX_SMTP_ATTACHMENT 1
+#endif
+
+#ifndef MAX_SMTP_RFC822_MSG
+#define MAX_SMTP_RFC822_MSG 1
+#endif
+
+#ifndef MAX_SMTP_CONTENT_TYPE
+#define MAX_SMTP_CONTENT_TYPE 2
+#endif
+
 #if !defined(AVR)
 #include <array>
 #include <vector>
@@ -23,9 +43,11 @@
 #endif
 #include <time.h>
 #include <Client.h>
+#include "./core/vector/Vector.h"
 #include "./core/ReadyTimer.h"
 #include "./core/ReadyCodec.h"
 #include "./core/Utils.h"
+
 
 #define READYMAIL_VERSION "0.3.6"
 #define READYMAIL_TIMESTAMP 1755052104

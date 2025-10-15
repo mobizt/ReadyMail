@@ -415,7 +415,7 @@ namespace ReadyMailSMTP
 
         bool sendRFC822Message(SMTPMessage &msg)
         {
-            msg_ptr = &msg.rfc822[msg.rfc822_idx];
+            msg_ptr = reinterpret_cast<SMTPMessage *>(msg.rfc822[msg.rfc822_idx]);
             if (!sendRFC822Header(*msg_ptr))
                 return false;
 
@@ -1021,7 +1021,11 @@ namespace ReadyMailSMTP
                     msg.content_types.push_back(content_type_data("parallel"));
 
                 for (size_t i = 0; i < msg.rfc822.size(); i++)
-                    msg.rfc822[i].parent = &msg;
+                {
+                    SMTPMessage *msg_ptr = reinterpret_cast<SMTPMessage*>(msg.rfc822[i]);
+                    msg_ptr->parent = &msg;
+                }
+                    
             }
         }
 

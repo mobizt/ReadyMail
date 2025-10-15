@@ -46,6 +46,22 @@ namespace ReadyMailSMTP
       rd_free(&buf);
       return s;
     }
+
+  public:
+    content_type_data() {}
+
+    content_type_data &operator=(const content_type_data &other)
+    {
+      this->boundary = other.boundary;
+      this->mime = other.mime;
+      return *this;
+    }
+
+    content_type_data(const content_type_data &other)
+    {
+      this->boundary = other.boundary;
+      this->mime = other.mime;
+    };
   };
 
   struct smtp_headers
@@ -54,7 +70,12 @@ namespace ReadyMailSMTP
     friend class SMTPSend;
 
   private:
-    std::vector<smtp_header_item> el;
+#ifdef USE_STATIC_VECTOR
+    Vector<smtp_header_item, MAX_SMTP_HEADER> el;
+#else
+    Vector<smtp_header_item> el; // initial capacity
+#endif
+
     smtp_header_item default_hdr;
 
     void push_back(smtp_header_item hdr) { el.push_back(hdr); }
@@ -204,9 +225,15 @@ namespace ReadyMailSMTP
 
   private:
     NumString numString;
-    std::vector<Attachment> el;
+
+#ifdef USE_STATIC_VECTOR
+    Vector<Attachment, MAX_SMTP_ATTACHMENT> el;
+#else
+    Vector<Attachment> el; // initial capacity
+#endif
+
     Attachment att;
-    uint32_t parent_addr =0;
+    uint32_t parent_addr = 0;
     int attachments_idx = 0, attachment_idx = 0, inline_idx = 0, parallel_idx = 0;
 
     void setParent(uint32_t addr) { parent_addr = addr; }
@@ -270,7 +297,7 @@ namespace ReadyMailSMTP
       for (int i = (int)size() - 1; i >= 0; i--)
       {
         if (el[i].type == type)
-          el.erase(el.begin() + i);
+          el.erase(i);
       }
     }
 
@@ -302,6 +329,19 @@ namespace ReadyMailSMTP
       html.contentType("text/html");
     }
 
+    SMTPMessage &operator=(const SMTPMessage &other)
+    {
+      this->headers.el = other.headers.el;
+      this->attachments.el = other.attachments.el;
+      return *this;
+    }
+
+    SMTPMessage(const SMTPMessage &other)
+    {
+      this->headers.el = other.headers.el;
+      this->attachments.el = other.attachments.el;
+    };
+
     /** SMTPMessage class deconstructor
      */
     ~SMTPMessage() { clear(); };
@@ -325,9 +365,9 @@ namespace ReadyMailSMTP
      */
     void addMessage(SMTPMessage &msg, const String &name = "msg.eml", const String &filename = "msg.eml")
     {
-      rfc822.push_back(msg);
-      rfc822[rfc822.size() - 1].rfc822_name = name;
-      rfc822[rfc822.size() - 1].rfc822_filename = filename;
+      rfc822.push_back(reinterpret_cast <uint32_t>(&msg));
+      msg.rfc822_name = name;
+      msg.rfc822_filename = filename;
     }
 
     // The text version message.
@@ -358,9 +398,19 @@ namespace ReadyMailSMTP
     int send_state = smtp_send_state_undefined, send_state_root = smtp_send_state_undefined;
     int rfc822_idx = 0;
     SMTPMessage *parent = nullptr;
-    std::vector<SMTPMessage> rfc822;
+#ifdef USE_STATIC_VECTOR
+     Vector<uint32_t, MAX_SMTP_RFC822_MSG> rfc822;
+   // std::vector<SMTPMessage> rfc822;
+#else
+    Vector<SMTPMessage> rfc822; // initial capacity
+#endif
+
     bool file_opened = false;
-    std::vector<content_type_data> content_types;
+#ifdef USE_STATIC_VECTOR
+    Vector<content_type_data, MAX_SMTP_CONTENT_TYPE> content_types;
+#else
+    Vector<content_type_data> content_types; // initial capacity
+#endif
 
     void resetIndex()
     {

@@ -13,10 +13,10 @@
 
 // Renesas devices
 #if defined(ARDUINO_UNOWIFIR4) || defined(ARDUINO_MINIMA) || defined(ARDUINO_PORTENTA_C33)
-#define XMAILER_STRSEP strsepImpl
+#define ReadyMailStrsep strsepImpl
 #define XMAILER_USE_STRSEP_IMPL
 #else
-#define XMAILER_STRSEP strsep
+#define ReadyMailStrsep strsep
 #endif
 
 // Re-interpret cast
@@ -171,7 +171,7 @@ private:
     while (pp != NULL)
     {
       // See RFC2047.h
-      XMAILER_STRSEP(&end, "?");
+      ReadyMailStrsep(&end, "?");
       count++;
       switch (count)
       {
