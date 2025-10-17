@@ -358,7 +358,7 @@ namespace ReadyMailSMTP
         {
             content = body;
             src.type = src_data_string;
-            src.str = content.c_str();
+            src.src =  (uint8_t *)content.c_str();
             src.valid = body.length() > 0;
             return *this;
         }
@@ -369,7 +369,7 @@ namespace ReadyMailSMTP
             static_content = body;
             static_size = size;
             src.type = src_data_static;
-            src.str = static_content;
+            src.src =  (uint8_t *)static_content;
             src.valid = size > 0;
             return *this;
         }

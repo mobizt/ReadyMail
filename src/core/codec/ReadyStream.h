@@ -29,7 +29,8 @@ enum smtp_content_xenc
 
 struct src_data_ctx
 {
-    const char *str = nullptr;
+    const uint8_t *src = nullptr; // renamed from str
+    size_t src_len = 0;           // required for src_data_static
 
 #if defined(ENABLE_FS)
     File fs;
@@ -43,20 +44,17 @@ struct src_data_ctx
     bool cid = false;
     bool nonascii = false;
     bool utf8 = false;
-    bool flowed = false;  // detected format=flowed
-
-    smtp_content_xenc xenc = xenc_none; // base64, qp, 7bit
-    String transfer_encoding = "7bit";  // fallback
-
-
+    bool flowed = false;
+    smtp_content_xenc xenc = xenc_none;
+    String transfer_encoding = "7bit";
     char c = 0;
     int index = 0;
 
     // Diagnostics
     int bytes_read = 0;
     int seeks = 0;
-    int lines_encoded = 0;   // total number of encoded lines
-    int max_line_length = 0; // longest line seen during encoding
+    int lines_encoded = 0;
+    int max_line_length = 0;
 
     inline bool available() const
     {
@@ -71,8 +69,10 @@ struct src_data_ctx
 
     inline size_t size() const
     {
-        if (type <= src_data_static)
-            return strlen(str);
+        if (type == src_data_static)
+            return src_len;
+        if (type == src_data_string)
+            return src ? strlen(reinterpret_cast<const char *>(src)) : 0;
 #if defined(ENABLE_FS)
         else if (fs)
             return fs.size();
@@ -80,16 +80,14 @@ struct src_data_ctx
         return 0;
     }
 
-    inline char read()
+    inline uint8_t read()
     {
         if (!available())
             return 0;
-
         bytes_read++;
-
         if (type <= src_data_static)
         {
-            c = str[index++];
+            return src[index++];
         }
 #if defined(ENABLE_FS)
         else if (fs)
@@ -99,38 +97,38 @@ struct src_data_ctx
                 buf_len = fs.read((uint8_t *)buf, READYMAIL_FILEBUF_SIZE);
                 buf_pos = 0;
             }
-            c = (buf_pos < buf_len) ? buf[buf_pos++] : 0;
             index++;
-        }
-#endif
-        return c;
-    }
-
-    inline char peek()
-    {
-        if (type <= src_data_static)
-        {
-            return str[index];
-        }
-#if defined(ENABLE_FS)
-        else if (fs)
-        {
-            if (buf_pos >= buf_len)
-            {
-                buf_len = fs.read((uint8_t *)buf, READYMAIL_FILEBUF_SIZE);
-                buf_pos = 0;
-            }
-            return (buf_pos < buf_len) ? buf[buf_pos] : 0;
+            return (buf_pos < buf_len) ? static_cast<uint8_t>(buf[buf_pos++]) : 0;
         }
 #endif
         return 0;
     }
 
-    inline char peekN(int n)
+    inline uint8_t peek()
     {
         if (type <= src_data_static)
         {
-            return str[index + n];
+            return src[index];
+        }
+#if defined(ENABLE_FS)
+        else if (fs)
+        {
+            if (buf_pos >= buf_len)
+            {
+                buf_len = fs.read((uint8_t *)buf, READYMAIL_FILEBUF_SIZE);
+                buf_pos = 0;
+            }
+            return (buf_pos < buf_len) ? static_cast<uint8_t>(buf[buf_pos]) : 0;
+        }
+#endif
+        return 0;
+    }
+
+    inline uint8_t peekN(int n)
+    {
+        if (type <= src_data_static)
+        {
+            return src[index + n];
         }
 #if defined(ENABLE_FS)
         else if (fs)
@@ -138,10 +136,20 @@ struct src_data_ctx
             int pos = buf_pos + n;
             if (pos >= buf_len)
                 return 0;
-            return buf[pos];
+            return static_cast<uint8_t>(buf[pos]);
         }
 #endif
         return 0;
+    }
+
+    inline int readN(uint8_t *out, int n)
+    {
+        int count = 0;
+        while (available() && count < n)
+        {
+            out[count++] = read();
+        }
+        return count;
     }
 
     inline String readN(int n)
@@ -149,7 +157,7 @@ struct src_data_ctx
         String out;
         for (int i = 0; i < n && available(); i++)
         {
-            out += read();
+            out += static_cast<char>(read());
         }
         return out;
     }
@@ -186,6 +194,7 @@ struct src_data_ctx
         cid = false;
         nonascii = false;
         utf8 = false;
+        flowed = false;
         bytes_read = 0;
         seeks = 0;
         lines_encoded = 0;
@@ -195,69 +204,95 @@ struct src_data_ctx
         buf_pos = 0;
 #endif
     }
+
+    inline void init_static(const uint8_t *data, size_t len)
+    {
+        src = data;
+        src_len = len;
+        type = src_data_static;
+        index = 0;
+        valid = true;
+    }
 };
 
-// Content scanner for auto-encoding
-static inline void rd_src_check(src_data_ctx &ctx) {
-    ctx.nonascii = false;
-    ctx.cid = false;
-    ctx.utf8 = false;
-    ctx.flowed = false;
+static inline void rd_src_check(src_data_ctx &ctx)
+    {
+        ctx.nonascii = false;
+        ctx.cid = false;
+        ctx.utf8 = false;
+        ctx.flowed = false;
 
-    bool saw_space = false;
-    bool saw_newline = false;
+        bool saw_space = false;
+        bool saw_newline = false;
 
-    ctx.seek(0);
-    while (ctx.available()) {
-        char c = ctx.read();
+        ctx.seek(0);
 
-        // UTF-8 detection
-        if ((uint8_t)c >= 0xC2 && (uint8_t)c <= 0xF4) {
-            char next = ctx.read();
-            if ((uint8_t)next >= 0x80 && (uint8_t)next <= 0xBF) {
-                ctx.utf8 = true;
+        while (ctx.available())
+        {
+            uint8_t c = ctx.read();
+
+            // UTF-8 detection
+            if (c >= 0xC2 && c <= 0xF4)
+            {
+                uint8_t next = ctx.read();
+                if (next >= 0x80 && next <= 0xBF)
+                {
+                    ctx.utf8 = true;
+                    ctx.nonascii = true;
+                }
+                else
+                {
+                    ctx.seek(ctx.index - 1); // rewind
+                }
+            }
+
+            // Non-ASCII detection
+            if (c < 32 || c > 126)
+            {
                 ctx.nonascii = true;
-            } else {
-                ctx.seek(ctx.index - 1);
             }
-        }
 
-        // Non-ASCII detection
-        if (c < 32 || c > 126) {
-            ctx.nonascii = true;
-        }
-
-        // CID detection
-        if (c == 'c') {
-            char i = ctx.read();
-            char d = ctx.read();
-            char colon = ctx.read();
-            if (i == 'i' && d == 'd' && colon == ':') {
-                ctx.cid = true;
-            } else {
-                ctx.seek(ctx.index - 3);
+            // CID detection: look for "cid:"
+            if (c == 'c')
+            {
+                uint8_t i = ctx.read();
+                uint8_t d = ctx.read();
+                uint8_t colon = ctx.read();
+                if (i == 'i' && d == 'd' && colon == ':')
+                {
+                    ctx.cid = true;
+                }
+                else
+                {
+                    ctx.seek(ctx.index - 3);
+                }
             }
-        }
 
-        // Flowed detection: space before newline
-        if (c == ' ') {
-            saw_space = true;
-        } else if (c == '\n' || c == '\r') {
-            if (saw_space) {
-                ctx.flowed = true;
-                ctx.nonascii = true;  // force encoding
+            // Flowed detection: space before newline
+            if (c == ' ')
+            {
+                saw_space = true;
             }
-            saw_space = false;
-            saw_newline = true;
-        } else {
-            saw_space = false;
+            else if (c == '\n' || c == '\r')
+            {
+                if (saw_space)
+                {
+                    ctx.flowed = true;
+                    ctx.nonascii = true; // force encoding
+                }
+                saw_space = false;
+                saw_newline = true;
+            }
+            else
+            {
+                saw_space = false;
+            }
+
+            if (ctx.nonascii && ctx.cid && ctx.flowed)
+                break;
         }
 
-        if (ctx.nonascii && ctx.cid && ctx.flowed) break;
+        ctx.seek(0);
     }
-
-    ctx.seek(0);
-}
-
 
 #endif // READY_STREAM_H

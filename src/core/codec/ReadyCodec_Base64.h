@@ -10,16 +10,14 @@
 
 // Default trait for Base64 encoding
 struct rd_b64_traits {
-  static constexpr const char map[65] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
 #if defined(__AVR__)
   static char read(uint8_t i) {
-    static const char flash_map[] PROGMEM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    return pgm_read_byte(&flash_map[i]);
+    static const char map[] PROGMEM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    return pgm_read_byte(&map[i]);
   }
 #else
   static char read(uint8_t i) {
+    static constexpr const char map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     return map[i];
   }
 #endif
@@ -33,22 +31,12 @@ struct rd_b64_traits {
   }
 };
 
-// Lookup table for decoding (used in decoder, optional)
-static inline unsigned char rd_b64_lookup(char c) {
-  if (c >= 'A' && c <= 'Z') return c - 'A';
-  if (c >= 'a' && c <= 'z') return c - 71;
-  if (c >= '0' && c <= '9') return c + 4;
-  if (c == '+') return 62;
-  if (c == '/') return 63;
-  return 255;
-}
-
-// Internal encoder: raw → base64 string
+// Base64 encoder: raw → base64 string
 template <typename Traits = rd_b64_traits>
-static inline char *rd_b64_enc(const unsigned char *raw, int len) {
+static inline char* rd_b64_enc(const uint8_t* raw, int len) {
   uint8_t count = 0;
   char buffer[3];
-  char *encoded = Traits::alloc(len * 4 / 3 + 4);
+  char* encoded = Traits::alloc(len * 4 / 3 + 4);
   int c = 0;
 
   for (int i = 0; i < len; i++) {
@@ -78,26 +66,37 @@ static inline char *rd_b64_enc(const unsigned char *raw, int len) {
   return encoded;
 }
 
-// Chunked base64 encoder: reads 57 bytes, returns 76-char line
+// Chunked Base64 encoder: reads 57 bytes, returns 76-char line
 template <typename Traits = rd_b64_traits>
-static inline String rd_b64_encode_chunk(src_data_ctx &ctx, int &index) {
-  String raw;
+static inline String rd_b64_encode_chunk(src_data_ctx& ctx, int& index) {
+  uint8_t raw[57];
+  int len = 0;
+
   ctx.seek(index);
-  while (ctx.available() && raw.length() < 57) {
-    raw += ctx.read();
+  while (ctx.available() && len < 57) {
+    raw[len++] = ctx.read();
     index++;
   }
 
-  char *enc = rd_b64_enc<Traits>(reinterpret_cast<const unsigned char *>(raw.c_str()), raw.length());
+  char* enc = rd_b64_enc<Traits>(raw, len);
   String out = enc;
   Traits::free(&enc);
 
-  // Diagnostics
   ctx.lines_encoded++;
   if ((int)out.length() > ctx.max_line_length)
     ctx.max_line_length = out.length();
 
   return out;
+}
+
+// Base64 character → 6-bit value (for decoding)
+static inline uint8_t rd_b64_lookup(char c) {
+  if (c >= 'A' && c <= 'Z') return c - 'A';         // 0–25
+  if (c >= 'a' && c <= 'z') return c - 'a' + 26;    // 26–51
+  if (c >= '0' && c <= '9') return c - '0' + 52;    // 52–61
+  if (c == '+') return 62;
+  if (c == '/') return 63;
+  return 255;  // invalid
 }
 
 #endif // READY_CODEC_BASE64_H
