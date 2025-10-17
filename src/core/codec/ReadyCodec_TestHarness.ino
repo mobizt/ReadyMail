@@ -4,6 +4,7 @@
 #include "ReadyCodec_Chunk.h"
 #include "ReadyCodec.h"
 
+
 String decode_base64(const String &in)
 {
     return rd_b64_dec(in.c_str());
@@ -50,7 +51,47 @@ String normalize(const String &s)
     return out;
 }
 
-void test_encoding(const char *label, const char *input, smtp_content_xenc mode, String (*encoder)(src_data_ctx &, int &) = nullptr)
+void chunk_stats(const String &chunk, int index, src_data_ctx &ctx)
+{
+    int bytes = chunk.length();
+    bool has_utf8 = false;
+    bool has_trailing_space = false;
+
+    for (int i = 0; i < chunk.length(); ++i)
+    {
+        uint8_t c = chunk[i];
+        if (c >= 0xC2 && c <= 0xF4)
+        {
+            if (i + 1 < chunk.length())
+            {
+                uint8_t next = chunk[i + 1];
+                if (next >= 0x80 && next <= 0xBF)
+                {
+                    has_utf8 = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (chunk.endsWith(" ") || chunk.endsWith("=20"))
+    {
+        has_trailing_space = true;
+    }
+
+    const char *enc_name = (ctx.xenc == xenc_base64) ? "base64" : (ctx.xenc == xenc_qp) ? "quoted-printable"
+                                                              : (ctx.xenc == xenc_7bit) ? "7bit"
+                                                                                        : "unknown";
+
+    Serial.printf("Chunk %d: %d bytes, UTF-8: %s, Trailing space: %s, Encoding: %s\n",
+                  index, bytes,
+                  has_utf8 ? "✅" : "❌",
+                  has_trailing_space ? "✅" : "❌",
+                  enc_name);
+}
+
+void test_encoding(const char *label, const char *input, smtp_content_xenc mode,
+                   String (*encoder)(src_data_ctx &, int &) = nullptr, bool smtp_mode = true)
 {
     Serial.printf("\n[TEST] %s\n", label);
 
@@ -61,10 +102,19 @@ void test_encoding(const char *label, const char *input, smtp_content_xenc mode,
     ctx.xenc = mode;
 
     int index = 0;
+    int chunk_index = 0;
     while (ctx.available())
     {
         String line = encoder ? encoder(ctx, index) : rd_encode_chunk(ctx, index);
         Serial.printf("Line (%d): %s\n", line.length(), line.c_str());
+        if (smtp_mode)
+            Serial.print("\r\n");
+
+        String clean_encoded = line;
+        clean_encoded.replace("=\r\n", ""); // remove soft breaks
+        clean_encoded.replace("\r\n", "");  // remove hard breaks
+
+        chunk_stats(clean_encoded, chunk_index++, ctx);
 
         ctx.lines_encoded++;
         if (line.length() > ctx.max_line_length)
@@ -87,7 +137,8 @@ String clean_base64(const String &in)
     return out;
 }
 
-void verify_round_trip(const char *label, const char *original, smtp_content_xenc mode, String (*encoder)(src_data_ctx &, int &))
+void verify_round_trip(const char *label, const char *original, smtp_content_xenc mode,
+                       String (*encoder)(src_data_ctx &, int &), bool test_mode = true)
 {
     Serial.printf("\n[VERIFY] %s\n", label);
 
@@ -101,31 +152,30 @@ void verify_round_trip(const char *label, const char *original, smtp_content_xen
     String encoded;
     while (ctx.available())
     {
-        encoded += encoder(ctx, index);
-        encoded += "\r\n";
+        String chunk = encoder(ctx, index);
+        encoded += chunk;
+        if (!test_mode)
+            encoded += "\r\n"; // SMTP-safe
     }
+
+    String clean_encoded = encoded;
+    clean_encoded.replace("=\r\n", ""); // remove soft breaks
+    clean_encoded.replace("\r\n", "");  // remove hard breaks
 
     String decoded;
     if (mode == xenc_base64)
-        decoded = decode_base64(clean_base64(encoded));
+        decoded = decode_base64(clean_encoded);
     else if (mode == xenc_qp)
-    {
-        String clean_encoded = encoded;
-        clean_encoded.replace("=\r\n", ""); // remove soft breaks
-        clean_encoded.replace("\r\n", "");  // remove hard breaks that added by encoder which ready for sending per rfc
         decoded = decode_qp(clean_encoded);
-    }
 
     bool match = (normalize(decoded) == normalize(original));
     Serial.printf("Match: %s\n", match ? "✅ YES" : "❌ NO");
     if (!match)
     {
         Serial.println("Original:");
-        Serial.println(original);
+        Serial.println("[" + normalize(original) + "]");
         Serial.println("Decoded:");
-        Serial.println(decoded);
-        Serial.println(strlen(original));
-        Serial.println(decoded.length());
+        Serial.println("[" + normalize(decoded) + "]");
     }
 }
 
@@ -153,13 +203,13 @@ void setup()
 
     verify_round_trip("Base64 Round-Trip",
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-                      xenc_base64, rd_b64_encode_chunk);
+                      xenc_base64, rd_b64_encode_chunk, true); // test mode
 
     verify_round_trip("QP Thai Flowed Round-Trip",
                       "สวัสดีครับ นี่คือข้อความที่ยาวมากและควรจะถูกตัดบรรทัดแบบ flowed "
                       "เพื่อให้สามารถจัดรูปแบบใหม่ได้โดยไคลเอนต์อีเมลที่รองรับ format=flowed "
                       "ข้อความนี้มีเว้นวรรคท้ายบรรทัดเพื่อให้สามารถรวมบรรทัดได้อย่างถูกต้อง ",
-                      xenc_qp, rd_qp_encode_chunk_flowed);
+                      xenc_qp, rd_qp_encode_chunk_flowed, true); // test mode
 }
 
 void loop() {}
