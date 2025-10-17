@@ -20,6 +20,7 @@ enum smtp_content_xenc
     /* rfc2045 section 2.7 */
     xenc_7bit,
     xenc_qp,
+    xenc_qp_flowed,  // extension: flowed text variant
     xenc_base64,
     /* rfc2045 section 2.8 */
     xenc_8bit,
