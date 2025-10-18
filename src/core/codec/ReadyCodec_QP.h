@@ -45,13 +45,12 @@ namespace rd
     template <typename Mode>
     struct qp_traits
     {
-        static const char *encode_chunk(src_data_ctx &src, int &index)
+        static int encode_chunk(src_data_ctx &src, int &index, char *out, size_t out_size)
         {
+            if (out_size < QP_MAX_LINE_SIZE)
+                return -1;
             bool is_flowed = (sizeof(Mode) == sizeof(flowed_text));
             src.seek(index);
-
-            // Static buffer for the output. Compatible across MCUs.
-            static char buffer[QP_MAX_LINE_SIZE];
 
             size_t current_len = 0;
             int line_len_tracker = 0;
@@ -87,8 +86,8 @@ namespace rd
                 if (line_len_tracker + bytes_to_add > 72)
                 {
                     // Insert soft break: "=\r\n"
-                    if (!append_str_helper("=\r\n", 3, buffer, current_len, QP_MAX_LINE_SIZE))
-                        return nullptr;
+                    if (!append_str_helper("=\r\n", 3, out, current_len, QP_MAX_LINE_SIZE))
+                        return -1;
 
                     is_soft_break_added = true;
                     break; // Ends the QP line
@@ -99,14 +98,14 @@ namespace rd
                 {
                     char hex[4];
                     sprintf(hex, "=%02X", c);
-                    if (!append_str_helper(hex, 3, buffer, current_len, QP_MAX_LINE_SIZE))
-                        return nullptr;
+                    if (!append_str_helper(hex, 3, out, current_len, QP_MAX_LINE_SIZE))
+                        return -1;
                     line_len_tracker += 3;
                 }
                 else
                 {
-                    if (!append_byte_helper((char)c, buffer, current_len, QP_MAX_LINE_SIZE))
-                        return nullptr;
+                    if (!append_byte_helper((char)c, out, current_len, QP_MAX_LINE_SIZE))
+                        return -1;
                     line_len_tracker += 1;
                 }
 
@@ -119,15 +118,15 @@ namespace rd
             if (is_flowed && !is_soft_break_added)
             {
                 // Check for trailing space:
-                if (current_len > 0 && buffer[current_len - 1] == ' ')
+                if (current_len > 0 && out[current_len - 1] == ' ')
                 {
                     current_len--; // Remove the space
-                    if (!append_str_helper("=20", 3, buffer, current_len, QP_MAX_LINE_SIZE))
-                        return nullptr;
+                    if (!append_str_helper("=20", 3, out, current_len, QP_MAX_LINE_SIZE))
+                        return -1;
                 }
                 // Add required Flowed line break (which is =\r\n)
-                if (!append_str_helper("=\r\n", 3, buffer, current_len, QP_MAX_LINE_SIZE))
-                    return nullptr;
+                if (!append_str_helper("=\r\n", 3, out, current_len, QP_MAX_LINE_SIZE))
+                    return -1;
                 is_soft_break_added = true;
             }
 
@@ -135,35 +134,33 @@ namespace rd
             if (current_len > 0 && !is_soft_break_added)
             {
                 // Append a hard break to complete the RFC line
-                if (!append_str_helper("\r\n", 2, buffer, current_len, QP_MAX_LINE_SIZE))
-                    return nullptr;
+                if (!append_str_helper("\r\n", 2, out, current_len, QP_MAX_LINE_SIZE))
+                    return -1;
             }
 
             // Null-terminate and return
-            buffer[current_len] = '\0';
+            out[current_len] = '\0';
 
             // Update the index before returning
             if (current_len > 0)
             {
                 index += bytes_read;
-                return buffer;
+                return bytes_read;
             }
-
-            // Return nullptr if no data was processed
-            return nullptr;
+            return -1;
         }
     };
 
 }
 
-static inline const char *rd_qp_encode_chunk(src_data_ctx &ctx, int &index)
+static inline int rd_qp_encode_chunk(src_data_ctx &ctx, int &index, char *out, size_t out_size)
 {
-    return rd::qp_traits<rd::plain_text>::encode_chunk(ctx, index);
+    return rd::qp_traits<rd::plain_text>::encode_chunk(ctx, index, out, out_size);
 }
 
-static inline const char *rd_qp_encode_chunk_flowed(src_data_ctx &ctx, int &index)
+static inline int rd_qp_encode_chunk_flowed(src_data_ctx &ctx, int &index, char *out, size_t out_size)
 {
-    return rd::qp_traits<rd::flowed_text>::encode_chunk(ctx, index);
+    return rd::qp_traits<rd::flowed_text>::encode_chunk(ctx, index, out, out_size);
 }
 
 #endif // READY_CODEC_QP_H

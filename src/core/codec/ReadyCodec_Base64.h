@@ -27,7 +27,6 @@ struct rd_b64_traits
     return map[i];
   }
 #endif
-  // NOTE: Dynamic memory alloc/free are removed to ensure AVR compatibility.
 };
 
 // Base64 encoder: raw → base64 string
@@ -36,7 +35,7 @@ static inline int rd_b64_enc(const uint8_t *raw, int len, char *encoded, size_t 
 {
   uint8_t count = 0;
   char buffer[3];
-  int c = 0; // Current index in the 'encoded' output buffer
+  int c = 0;
 
   // Check if the provided buffer is large enough for the worst-case encoding
   size_t required_size = ((size_t)len * 4 + 2) / 3 + 1;
@@ -78,15 +77,16 @@ static inline int rd_b64_enc(const uint8_t *raw, int len, char *encoded, size_t 
 
 // Chunked Base64 encoder: reads 57 bytes, returns 76-char line
 template <typename Traits = rd_b64_traits>
-static inline const char *rd_b64_encode_chunk(src_data_ctx &ctx, int &index)
+static inline int rd_b64_encode_chunk(src_data_ctx &ctx, int &index, char *out, size_t out_size)
 {
   // 76 chars (max data) + 2 chars (\r\n) + 1 char (\0) = 79.
-  static char out[79];
+  if (out_size < 79)
+    return -1; // Requires at least 79 bytes: 76 data + \r\n + null terminator
 
   uint8_t raw[57];
   int len = 0;
 
-  // 1. SEEK and read up to 57 bytes of raw data
+  // SEEK and read up to 57 bytes of raw data
   ctx.seek(index);
   while (ctx.available() && len < 57)
   {
@@ -94,27 +94,26 @@ static inline const char *rd_b64_encode_chunk(src_data_ctx &ctx, int &index)
     index++;
   }
 
-  // If no data was read, return nullptr
+  // If no data was read, return -1
   if (len == 0)
-    return nullptr;
+    return -1;
 
-  // 2. Encode the 57 bytes using the non-allocating helper
   // The max output size for 57 bytes is 76 chars. The 'out' buffer is 79.
   int encoded_len = rd_b64_enc<Traits>(raw, len, out, 77); // Use 77 for the max data space (76 + \0)
-
   if (encoded_len < 0)
-  {
-    // Should not happen as we pre-sized the buffer, but good practice
-    return nullptr;
-  }
+    return -1;
 
-  // 3. Add SMTP mandatory hard break (\r\n) after the encoded data
+  // Add SMTP mandatory hard break (\r\n) after the encoded data
   int c = encoded_len;
   out[c++] = '\r';
   out[c++] = '\n';
   out[c] = '\0'; // Re-terminate after adding \r\n
 
-  return out;
+  ctx.lines_encoded++;
+  if (c > ctx.max_line_length)
+    ctx.max_line_length = c;
+
+  return c;
 }
 
 static inline char *rd_b64_enc_dynamic(const uint8_t *raw, int len)
@@ -127,13 +126,13 @@ static inline char *rd_b64_enc_dynamic(const uint8_t *raw, int len)
   char *encoded_ptr = rd_mem<char *>(required_size);
 
   if (encoded_ptr == nullptr)
-    return nullptr; // Allocation failed
+    return nullptr; 
 
-  int actual_len = rd_b64_enc( raw,len, encoded_ptr,required_size );
+  int actual_len = rd_b64_enc(raw, len, encoded_ptr, required_size);
 
   if (actual_len < 0)
   {
-    rd_free(&encoded_ptr); 
+    rd_free(&encoded_ptr);
     return nullptr;
   }
 

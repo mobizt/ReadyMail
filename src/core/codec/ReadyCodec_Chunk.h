@@ -6,38 +6,79 @@
 #include "ReadyCodec_Base64.h"
 
 // Raw 7bit encoder
-static inline String rd_chunk_encode_raw(src_data_ctx &ctx, int &index)
+static inline int rd_chunk_encode_raw(src_data_ctx &ctx, int &index, char *out, size_t out_size)
 {
-    String out;
-    while (ctx.available())
-        out += (char)ctx.read();
-    return out;
+    if (out_size < 3)
+        return -1; // minimal space for \r\n\0
+
+    int len = 0;
+    ctx.seek(index);
+
+    while (ctx.available() && len < (int)(out_size - 3))
+    {
+        char c = ctx.read();
+        index++;
+
+        // SMTP 7bit: allow printable ASCII and TAB
+        if ((c >= 32 && c <= 126) || c == '\t')
+        {
+            out[len++] = c;
+        }
+        else if (c == '\r' || c == '\n')
+        {
+            // Normalize line breaks to CRLF
+            if (len + 2 > (int)(out_size - 1))
+                break;
+            out[len++] = '\r';
+            out[len++] = '\n';
+        }
+        else
+        {
+            // Replace invalid control chars with '?'
+            out[len++] = '?';
+        }
+    }
+
+    // Ensure final CRLF
+    if (len + 2 <= (int)(out_size - 1))
+    {
+        out[len++] = '\r';
+        out[len++] = '\n';
+    }
+
+    out[len] = '\0';
+
+    ctx.lines_encoded++;
+    if (len > ctx.max_line_length)
+        ctx.max_line_length = len;
+
+    return len;
 }
 
 // Dispatcher for safe encodings
-static inline String encode_chunk(src_data_ctx &ctx, int &index)
+static inline int encode_chunk(src_data_ctx &ctx, int &index, char *out, size_t out_size)
 {
     switch (ctx.xenc)
     {
     case xenc_7bit:
-        return rd_chunk_encode_raw(ctx, index);
+        return rd_chunk_encode_raw(ctx, index, out, out_size);
     case xenc_qp:
-        return rd_qp_encode_chunk(ctx, index);
+        return rd_qp_encode_chunk(ctx, index, out, out_size);
     case xenc_qp_flowed:
-        return rd_qp_encode_chunk_flowed(ctx, index);
+        return rd_qp_encode_chunk_flowed(ctx, index, out, out_size);
     case xenc_base64:
-        return rd_b64_encode_chunk(ctx, index);
+        return rd_b64_encode_chunk(ctx, index, out, out_size);
     default:
-        return "";
+        return -1;
     }
 }
 
 // Ex:
 // String encoded = rd::rd_encode_chunk(ctx, index);
 
-static inline String rd_encode_chunk(src_data_ctx &ctx, int &index)
+static inline int rd_encode_chunk(src_data_ctx &ctx, int &index, char *out, size_t out_sizex)
 {
-    return encode_chunk(ctx, index);
+    return encode_chunk(ctx, index, out, out_sizex);
 }
 
 // Binary-safe writers
@@ -77,8 +118,9 @@ struct chunk_writer_traits
         default:
         {
             int index = 0;
-            String encoded = encode_chunk(ctx, index);
-            out.print(encoded);
+            char buf[100];
+            String encoded = encode_chunk(ctx, index, buf, 100);
+            out.print(buf);
             break;
         }
         }
@@ -385,8 +427,9 @@ static inline void rd_chunk_write_mime_html(src_data_ctx &ctx, Sink &out, const 
     out.println();
 
     int index = 0;
-    String encoded = rd_qp_encode_chunk(ctx, index);
-    out.print(encoded);
+    char buf[100];
+    rd_qp_encode_chunk(ctx, index, buf, 100);
+    out.print(buf);
     out.println();
 }
 
