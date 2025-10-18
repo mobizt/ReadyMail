@@ -267,7 +267,7 @@ static String rd_qb_encode_chunk(src_data_ctx &src, int &index, int mode, bool f
         {
             if (mode == 3 /* xenc_base64 */)
             {
-                char *enc = rd_b64_enc(rd_cast<const unsigned char *>(buf.c_str()), buf.length());
+                char *enc = rd_b64_enc_dynamic(rd_cast<const unsigned char *>(buf.c_str()), buf.length());
                 line = enc;
                 rd_free(&enc);
             }
@@ -290,7 +290,7 @@ static inline String rd_enc_oauth(const String &email, const String &accessToken
     String out;
     String raw;
     rd_print_to(raw, email.length() + accessToken.length() + 30, "user=%s\1auth=Bearer %s\1\1", email.c_str(), accessToken.c_str());
-    char *enc = rd_b64_enc(rd_cast<const unsigned char *>(raw.c_str()), raw.length());
+    char *enc = rd_b64_enc_dynamic(rd_cast<const unsigned char *>(raw.c_str()), raw.length());
     if (enc)
     {
         out = enc;
@@ -307,7 +307,7 @@ static inline String rd_enc_plain(const String &email, const String &password)
     uint8_t *buf = rd_mem<uint8_t *>(len, true);
     memcpy(buf + 1, email.c_str(), email.length());
     memcpy(buf + email.length() + 2, password.c_str(), password.length());
-    char *enc = rd_b64_enc(buf, len);
+    char *enc = rd_b64_enc_dynamic(buf, len);
     if (enc)
     {
         out = enc;

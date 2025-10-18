@@ -771,7 +771,7 @@ namespace ReadyMailSMTP
 
                     if (cAttach(msg).content_encoding != cAttach(msg).transfer_encoding)
                     {
-                        char *enc = rd_b64_enc(readBuf, read);
+                        char *enc = rd_b64_enc_dynamic(readBuf, read);
                         if (enc)
                         {
                             buf = enc;

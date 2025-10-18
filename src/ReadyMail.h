@@ -66,6 +66,7 @@ namespace ReadyMailCallbackNS
 #include "./core/codec/ReadyCodec_QP.h"
 #include "./core/codec/ReadyCodec_Chunk.h"
 #include "./core/codec/ReadyCodec.h"
+#include "./core/codec/ReadyRingBuffer.h"
 
 #include "./core/ReadyTimer.h"
 
@@ -206,7 +207,7 @@ public:
     String base64Encode(const String &str)
     {
         String buf;
-        char *enc = rd_b64_enc(rd_cast<const unsigned char *>(str.c_str()), str.length());
+        char *enc = rd_b64_enc_dynamic(rd_cast<const unsigned char *>(str.c_str()), str.length());
         if (enc)
         {
             buf = enc;

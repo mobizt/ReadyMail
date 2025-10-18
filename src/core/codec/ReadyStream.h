@@ -7,6 +7,16 @@
 #include <FS.h>
 #endif
 
+// Platform-specific flash access
+#if defined(ARDUINO_ARCH_AVR) || defined(ESP8266)
+#include <pgmspace.h>
+#define RD_READ_BYTE(p) pgm_read_byte(p)
+#elif defined(ESP32) || defined(ARDUINO_ARCH_STM32)
+#define RD_READ_BYTE(p) (*(p)) // direct access
+#else
+#define RD_READ_BYTE(p) (*(p)) // fallback
+#endif
+
 enum src_data_type
 {
     src_data_string,
@@ -20,7 +30,7 @@ enum smtp_content_xenc
     /* rfc2045 section 2.7 */
     xenc_7bit,
     xenc_qp,
-    xenc_qp_flowed,  // extension: flowed text variant
+    xenc_qp_flowed, // extension: flowed text variant
     xenc_base64,
     /* rfc2045 section 2.8 */
     xenc_8bit,
@@ -28,26 +38,28 @@ enum smtp_content_xenc
     xenc_binary
 };
 
+// Source data context
 struct src_data_ctx
 {
-    const uint8_t *src = nullptr; // renamed from str
-    size_t src_len = 0;           // required for src_data_static
-
+    const uint8_t *src = nullptr;
+    size_t src_len = 0;
 #if defined(ENABLE_FS)
     File fs;
     char buf[READYMAIL_FILEBUF_SIZE];
     int buf_len = 0;
     int buf_pos = 0;
 #endif
-
     src_data_type type = src_data_string;
     bool valid = false;
     bool cid = false;
     bool nonascii = false;
     bool utf8 = false;
     bool flowed = false;
+    bool is_progmem = false;
+
     smtp_content_xenc xenc = xenc_none;
     String transfer_encoding = "7bit";
+
     char c = 0;
     int index = 0;
 
@@ -73,7 +85,7 @@ struct src_data_ctx
         if (type == src_data_static)
             return src_len;
         if (type == src_data_string)
-            return src ? strlen(reinterpret_cast<const char *>(src)) : 0;
+            return src ? (is_progmem ? strlen_P(reinterpret_cast<const char *>(src)) : strlen(reinterpret_cast<const char *>(src))) : 0;
 #if defined(ENABLE_FS)
         else if (fs)
             return fs.size();
@@ -88,7 +100,7 @@ struct src_data_ctx
         bytes_read++;
         if (type <= src_data_static)
         {
-            return src[index++];
+            return is_progmem ? RD_READ_BYTE(src + index++) : src[index++];
         }
 #if defined(ENABLE_FS)
         else if (fs)
@@ -109,7 +121,7 @@ struct src_data_ctx
     {
         if (type <= src_data_static)
         {
-            return src[index];
+            return is_progmem ? RD_READ_BYTE(src + index) : src[index];
         }
 #if defined(ENABLE_FS)
         else if (fs)
@@ -129,7 +141,7 @@ struct src_data_ctx
     {
         if (type <= src_data_static)
         {
-            return src[index + n];
+            return is_progmem ? RD_READ_BYTE(src + index + n) : src[index + n];
         }
 #if defined(ENABLE_FS)
         else if (fs)
@@ -206,94 +218,110 @@ struct src_data_ctx
 #endif
     }
 
-    inline void init_static(const uint8_t *data, size_t len)
+    inline void init_static(const uint8_t *data, size_t len, bool progmem = false)
     {
         src = data;
         src_len = len;
         type = src_data_static;
         index = 0;
         valid = true;
+        is_progmem = progmem;
     }
+
+    inline void init_static_progmem(const __FlashStringHelper *data, size_t len)
+    {
+        src = reinterpret_cast<const uint8_t *>(data);
+        src_len = len;
+        type = src_data_static;
+        index = 0;
+        valid = true;
+        is_progmem = true;
+    }
+
+    // Ex:
+    // const char msg[] PROGMEM = "This is from flash!";
+    // src_data_ctx ctx;
+    // RD_INIT_PROGMEM(ctx, msg);
+
+#define RD_INIT_PROGMEM(ctx, str) \
+    (ctx).init_static_progmem(reinterpret_cast<const __FlashStringHelper *>(str), strlen_P(str))
 };
 
+// Source analysis for encoding decisions
 static inline void rd_src_check(src_data_ctx &ctx)
+{
+    ctx.nonascii = false;
+    ctx.cid = false;
+    ctx.utf8 = false;
+    ctx.flowed = false;
+    bool saw_space = false;
+    bool saw_newline = false;
+    ctx.seek(0);
+    while (ctx.available())
     {
-        ctx.nonascii = false;
-        ctx.cid = false;
-        ctx.utf8 = false;
-        ctx.flowed = false;
+        uint8_t c = ctx.read();
 
-        bool saw_space = false;
-        bool saw_newline = false;
-
-        ctx.seek(0);
-
-        while (ctx.available())
+        // UTF-8 detection
+        if (c >= 0xC2 && c <= 0xF4)
         {
-            uint8_t c = ctx.read();
-
-            // UTF-8 detection
-            if (c >= 0xC2 && c <= 0xF4)
+            uint8_t next = ctx.read();
+            if (next >= 0x80 && next <= 0xBF)
             {
-                uint8_t next = ctx.read();
-                if (next >= 0x80 && next <= 0xBF)
-                {
-                    ctx.utf8 = true;
-                    ctx.nonascii = true;
-                }
-                else
-                {
-                    ctx.seek(ctx.index - 1); // rewind
-                }
-            }
-
-            // Non-ASCII detection
-            if (c < 32 || c > 126)
-            {
+                ctx.utf8 = true;
                 ctx.nonascii = true;
-            }
-
-            // CID detection: look for "cid:"
-            if (c == 'c')
-            {
-                uint8_t i = ctx.read();
-                uint8_t d = ctx.read();
-                uint8_t colon = ctx.read();
-                if (i == 'i' && d == 'd' && colon == ':')
-                {
-                    ctx.cid = true;
-                }
-                else
-                {
-                    ctx.seek(ctx.index - 3);
-                }
-            }
-
-            // Flowed detection: space before newline
-            if (c == ' ')
-            {
-                saw_space = true;
-            }
-            else if (c == '\n' || c == '\r')
-            {
-                if (saw_space)
-                {
-                    ctx.flowed = true;
-                    ctx.nonascii = true; // force encoding
-                }
-                saw_space = false;
-                saw_newline = true;
             }
             else
             {
-                saw_space = false;
+                ctx.seek(ctx.index - 1);
             }
-
-            if (ctx.nonascii && ctx.cid && ctx.flowed)
-                break;
         }
 
-        ctx.seek(0);
+        // Non-ASCII detection
+        if (c < 32 || c > 126)
+        {
+            ctx.nonascii = true;
+        }
+
+        // CID detection
+        if (c == 'c')
+        {
+            uint8_t i = ctx.read();
+            uint8_t d = ctx.read();
+            uint8_t colon = ctx.read();
+            if (i == 'i' && d == 'd' && colon == ':')
+            {
+                ctx.cid = true;
+            }
+            else
+            {
+                ctx.seek(ctx.index - 3);
+            }
+        }
+
+        // Flowed detection
+        if (c == ' ')
+        {
+            saw_space = true;
+        }
+        else if (c == '\n' || c == '\r')
+        {
+            if (saw_space)
+            {
+                ctx.flowed = true;
+                ctx.nonascii = true;
+            }
+            saw_space = false;
+            saw_newline = true;
+        }
+        else
+        {
+            saw_space = false;
+        }
+
+        if (ctx.nonascii && ctx.cid && ctx.flowed)
+            break;
     }
+    ctx.seek(0);
+}
 
 #endif // READY_STREAM_H

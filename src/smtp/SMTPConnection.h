@@ -102,7 +102,7 @@ namespace ReadyMailSMTP
 
         void authLogin(bool user)
         {
-            char *enc = rd_b64_enc(rd_cast<const unsigned char *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
+            char *enc = rd_b64_enc_dynamic(rd_cast<const unsigned char *>((user ? email.c_str() : password.c_str())), user ? email.length() : password.length());
             if (enc)
             {
                 if (!tcpSend(true, 1, enc))

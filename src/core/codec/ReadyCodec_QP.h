@@ -2,92 +2,168 @@
 #define READY_CODEC_QP_H
 
 #include "ReadyStream.h"
+#include <stdio.h>
+#include <string.h>
 
 namespace rd
 {
+// Max line length is 76 characters, plus 2 for \r\n, plus 1 for \0.
+#define QP_MAX_LINE_SIZE 79
 
-    template <typename T>
+    // Mode tags
+    struct plain_text
+    {
+    };
+    struct flowed_text
+    {
+    };
+
+    // Compatible across AVR, ARM, ESP, etc.
+    // Append a single byte to the buffer
+    static inline bool append_byte_helper(char b, char *buf, size_t &len, size_t max_size)
+    {
+        if (len < max_size - 1)
+        { // -1 for null terminator
+            buf[len++] = b;
+            return true;
+        }
+        return false;
+    }
+
+    // Append a string (sequence of bytes) to the buffer
+    static inline bool append_str_helper(const char *s, size_t len_s, char *buf, size_t &len, size_t max_size)
+    {
+        if (len + len_s < max_size)
+        {
+            memcpy(buf + len, s, len_s);
+            len += len_s;
+            return true;
+        }
+        return false;
+    }
+
+    template <typename Mode>
     struct qp_traits
     {
-        static constexpr bool flowed = T::flowed;
-        static constexpr int max_len = T::max_len;
-
-        static String encode_chunk(src_data_ctx &src, int &index)
+        static const char *encode_chunk(src_data_ctx &src, int &index)
         {
-            String out;
-            char *buf = rd_mem<char *>(10);
+            bool is_flowed = (sizeof(Mode) == sizeof(flowed_text));
             src.seek(index);
 
-            int c1 = 0;
-            while (src.available() || c1 > 0)
+            // Static buffer for the output. Compatible across MCUs.
+            static char buffer[QP_MAX_LINE_SIZE];
+
+            size_t current_len = 0;
+            int line_len_tracker = 0;
+            bool is_soft_break_added = false;
+            int bytes_read = 0;
+
+            while (src.available())
             {
-                int c = c1 == 0 ? src.read() : c1;
-                c1 = src.available() ? src.read() : 0;
+                uint8_t c = src.peek();
+                int bytes_to_add = 0;
 
-                if ((int)out.length() >= max_len - 3 && c != 10 && c != 13)
+                // Check for hard line break in source stream: \r or \n
+                if (c == '\r' || c == '\n')
                 {
-                    out += "=\r\n";
-                    break;
+                    // Consume the \r and optionally the following \n
+                    src.read();
+                    bytes_read++;
+                    if (c == '\r' && src.peek() == '\n')
+                    {
+                        src.read();
+                        bytes_read++;
+                    }
+                    break; // Ends the QP line
                 }
 
-                if (c == 10 || c == 13)
+                // Determine bytes to add for the current character
+                if (c == '=' || c < 32 || c > 126 || (c == '\t' && is_flowed))
+                    bytes_to_add = 3; // Encoded as '=XX'
+                else
+                    bytes_to_add = 1; // Literal character
+
+                // Check Line Length Constraint (72 max before soft break '=\r\n')
+                if (line_len_tracker + bytes_to_add > 72)
                 {
-                    out += (char)c;
+                    // Insert soft break: "=\r\n"
+                    if (!append_str_helper("=\r\n", 3, buffer, current_len, QP_MAX_LINE_SIZE))
+                        return nullptr;
+
+                    is_soft_break_added = true;
+                    break; // Ends the QP line
                 }
-                else if (c < 32 || c == '=' || c > 126)
+
+                // Process the character
+                if (bytes_to_add == 3)
                 {
-                    memset(buf, 0, 10);
-                    sprintf(buf, "=%02X", (unsigned char)c);
-                    out += buf;
-                }
-                else if (c == ' ' && (c1 == 10 || c1 == 13))
-                {
-                    out += "=20";
+                    char hex[4];
+                    sprintf(hex, "=%02X", c);
+                    if (!append_str_helper(hex, 3, buffer, current_len, QP_MAX_LINE_SIZE))
+                        return nullptr;
+                    line_len_tracker += 3;
                 }
                 else
                 {
-                    out += (char)c;
+                    if (!append_byte_helper((char)c, buffer, current_len, QP_MAX_LINE_SIZE))
+                        return nullptr;
+                    line_len_tracker += 1;
                 }
 
-                index++;
+                // Consume the byte and update the read count
+                src.read();
+                bytes_read++;
             }
 
-            rd_free(&buf);
+            // Flowed mode finalization
+            if (is_flowed && !is_soft_break_added)
+            {
+                // Check for trailing space:
+                if (current_len > 0 && buffer[current_len - 1] == ' ')
+                {
+                    current_len--; // Remove the space
+                    if (!append_str_helper("=20", 3, buffer, current_len, QP_MAX_LINE_SIZE))
+                        return nullptr;
+                }
+                // Add required Flowed line break (which is =\r\n)
+                if (!append_str_helper("=\r\n", 3, buffer, current_len, QP_MAX_LINE_SIZE))
+                    return nullptr;
+                is_soft_break_added = true;
+            }
 
-            // Diagnostics
-            src.lines_encoded++;
-            if ((int)out.length() > src.max_line_length)
-                src.max_line_length = out.length();
+            // Mandatory Hard Break (\r\n) for transmission, unless already added
+            if (current_len > 0 && !is_soft_break_added)
+            {
+                // Append a hard break to complete the RFC line
+                if (!append_str_helper("\r\n", 2, buffer, current_len, QP_MAX_LINE_SIZE))
+                    return nullptr;
+            }
 
-            return out;
+            // Null-terminate and return
+            buffer[current_len] = '\0';
+
+            // Update the index before returning
+            if (current_len > 0)
+            {
+                index += bytes_read;
+                return buffer;
+            }
+
+            // Return nullptr if no data was processed
+            return nullptr;
         }
     };
 
-    // Traits for plain text
-    struct plain_text
-    {
-        static constexpr bool flowed = false;
-        static constexpr int max_len = 76;
-    };
+}
 
-    // Traits for flowed text (e.g., format=flowed)
-    struct flowed_text
-    {
-        static constexpr bool flowed = true;
-        static constexpr int max_len = 76;
-    };
-
-} // namespace rd
-
-// Default quoted-printable encoder (plain text, non-flowed)
-static inline String rd_qp_encode_chunk(src_data_ctx &ctx, int &index)
+static inline const char *rd_qp_encode_chunk(src_data_ctx &ctx, int &index)
 {
     return rd::qp_traits<rd::plain_text>::encode_chunk(ctx, index);
 }
 
-static inline String rd_qp_encode_chunk_flowed(src_data_ctx &ctx, int &index) {
+static inline const char *rd_qp_encode_chunk_flowed(src_data_ctx &ctx, int &index)
+{
     return rd::qp_traits<rd::flowed_text>::encode_chunk(ctx, index);
 }
-
 
 #endif // READY_CODEC_QP_H
