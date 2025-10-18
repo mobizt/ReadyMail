@@ -18,6 +18,17 @@ namespace rd
     {
     };
 
+    template <typename T>
+    struct is_flowed_mode
+    {
+        static constexpr bool value = false;
+    };
+    template <>
+    struct is_flowed_mode<flowed_text>
+    {
+        static constexpr bool value = true;
+    };
+
     // Compatible across AVR, ARM, ESP, etc.
     // Append a single byte to the buffer
     static inline bool append_byte_helper(char b, char *buf, size_t &len, size_t max_size)
@@ -49,7 +60,8 @@ namespace rd
         {
             if (out_size < QP_MAX_LINE_SIZE)
                 return -1;
-            bool is_flowed = (sizeof(Mode) == sizeof(flowed_text));
+
+            bool is_flowed = rd::is_flowed_mode<Mode>::value;
             src.seek(index);
 
             size_t current_len = 0;

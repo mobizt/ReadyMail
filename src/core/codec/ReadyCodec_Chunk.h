@@ -83,19 +83,21 @@ static inline int rd_encode_chunk(src_data_ctx &ctx, int &index, char *out, size
 
 // Binary-safe writers
 template <typename Sink>
-static inline void rd_chunk_write_8bit(src_data_ctx &ctx, Sink &out)
+static inline void rd_chunk_write_8bit(src_data_ctx &ctx, Sink &out, int &index)
 {
     while (ctx.available())
+    {
         out.write(ctx.read());
+        index++;
+    }
 }
 
 // Ex:
 // rd::rd_chunk_write_binary(ctx, Serial);
 template <typename Sink>
-static inline void rd_chunk_write_binary(src_data_ctx &ctx, Sink &out)
+static inline void rd_chunk_write_binary(src_data_ctx &ctx, Sink &out, int &index)
 {
-    while (ctx.available())
-        out.write(ctx.read());
+    rd_chunk_write_8bit(ctx, out, index);
 }
 
 // Ex:
@@ -105,21 +107,20 @@ static inline void rd_chunk_write_binary(src_data_ctx &ctx, Sink &out)
 template <smtp_content_xenc Mode, typename Sink>
 struct chunk_writer_traits
 {
-    static void write(src_data_ctx &ctx, Sink &out)
+    static void write(src_data_ctx &ctx, Sink &out, int &index)
     {
         switch (Mode)
         {
         case xenc_8bit:
-            rd_chunk_write_8bit(ctx, out);
+            rd_chunk_write_8bit(ctx, out, index);
             break;
         case xenc_binary:
-            rd_chunk_write_binary(ctx, out);
+            rd_chunk_write_binary(ctx, out, index);
             break;
         default:
         {
-            int index = 0;
             char buf[100];
-            String encoded = encode_chunk(ctx, index, buf, 100);
+            encode_chunk(ctx, index, buf, 100);
             out.print(buf);
             break;
         }
@@ -149,65 +150,6 @@ static inline size_t max_chunk_size(uint8_t xenc)
         return 0;
     }
 }
-
-// 1. Ex:
-// rd_ring_buffer<256> txBuf;
-
-// void test_chunk_to_ring(src_data_ctx &ctx) {
-//  int index = 0;
-//  chunk_writer_traits_ring<decltype(txBuf)> writer(txBuf);
-
-//  while (ctx.available()) {
-//    const char *chunk = encode_chunk(ctx, index);
-//    writer.write(chunk);
-//    writer.write("\r\n");
-//  }
-//}
-
-// 2. Ex:
-// rd_ring_buffer<256> txBuf;
-
-// const char msg[] = "Hello, this is a test of Base64 chunked encoding!";
-// src_data_ctx ctx;
-// ctx.init_static((const uint8_t *)msg, strlen(msg));
-// ctx.xenc = xenc_base64;
-
-// int index = 0;
-// chunk_writer_traits_ring<decltype(txBuf)> writer(txBuf);
-
-// while (ctx.available()) {
-// const char *chunk = encode_chunk(ctx, index);
-//  writer.write(chunk);
-// writer.write("\r\n");
-// }
-
-// flush_ring_to_print(txBuf, Serial);
-
-template <typename Buffer>
-struct chunk_writer_traits_ring
-{
-    Buffer &buf;
-
-    chunk_writer_traits_ring(Buffer &b) : buf(b) {}
-
-    void write(const char *s)
-    {
-        while (*s)
-        {
-            buf.push(static_cast<uint8_t>(*s++));
-        }
-    }
-
-    void write(const uint8_t *data, size_t len)
-    {
-        for (size_t i = 0; i < len; i++)
-        {
-            buf.push(data[i]);
-        }
-    }
-
-    void flush() {} // no-op for ring buffer
-};
 
 // Ex:
 //  rd::src_data_ctx ctx = ...;

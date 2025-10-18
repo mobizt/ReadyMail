@@ -126,7 +126,7 @@ static inline char *rd_b64_enc_dynamic(const uint8_t *raw, int len)
   char *encoded_ptr = rd_mem<char *>(required_size);
 
   if (encoded_ptr == nullptr)
-    return nullptr; 
+    return nullptr;
 
   int actual_len = rd_b64_enc(raw, len, encoded_ptr, required_size);
 
