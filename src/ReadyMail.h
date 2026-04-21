@@ -172,7 +172,13 @@ public:
 private:
 };
 
-extern ReadyMailClass ReadyMail;
+#if !defined(READYMAIL_NO_GLOBAL_INSTANCE)
+#if defined(ESP8266) || defined(ESP32)
+inline ReadyMailClass ReadyMail;
+#else
+static ReadyMailClass ReadyMail;
+#endif
+#endif
 
 enum readymail_auth_type
 {
