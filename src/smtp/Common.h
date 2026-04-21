@@ -529,17 +529,22 @@ namespace ReadyMailSMTP
         bool multi; // multi fields
         bool enc;   // needs encoding
         int8_t sub_type;
-        uint8_t padding;
+        uint8_t padding; // for esp266 flash memory alignment
     };
 
     struct smtp_auth_cap_t
     {
-        char text[24];
+        char text[24]; // for esp266 flash memory alignment
     };
 
     struct smtp_send_cap_t
     {
-        char text[16];
+        char text[16]; // for esp266 flash memory alignment
+    };
+
+    struct smtp_send_cap_t
+    {
+        char text[16]; // for esp266 flash memory alignment
     };
 
     const struct smtp_rfc822_envelope rfc822_headers[rfc822_max_type] PROGMEM = {{"Date", false, false, -1}, {"Subject", false, true, -1}, {"From", false, true, 0}, {"Sender", false, true, 0}, {"Reply-To", false, false, 0}, {"To", true, true, 0}, {"Cc", true, false, 1}, {"Bcc", true, false, 1}, {"In-Reply-To", false, false, -1}, {"Message-ID", false, false, -1}, {"References", false, false, -1}, {"Comments", true, false, -1}, {"Keywords", true, false, -1}, {"", true, false, -1}};

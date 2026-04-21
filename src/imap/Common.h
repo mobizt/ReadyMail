@@ -261,17 +261,17 @@ namespace ReadyMailIMAP
 
     struct imap_auth_cap_t
     {
-        char text[20];
+        char text[24]; // for esp266 flash memory alignment
     };
 
     struct imap_read_cap_t
     {
-        char text[15];
+        char text[16]; // for esp266 flash memory alignment
     };
 
     struct imap_envelope_t
     {
-        char text[12];
+        char text[12]; // for esp266 flash memory alignment
     };
 
     struct imap_char_encoding_t
