@@ -72,7 +72,7 @@ Add this to your `platformio.ini`:
 
 ```ini
 lib_deps =
-  mobizt/ReadyMail@^0.3.8
+  mobizt/ReadyMail@^0.3.9
 ```
 
 > ✅ Supports ESP32, STM32, RP2040, SAMD, Renesas and more — except AVR
@@ -236,6 +236,11 @@ void loop() {}
 - ESP8266 requires buffer tuning via `setBufferSizes()`
 - ESP32 v3.x may hang on `setPlainStart()` in plain mode
 - Some devices may fail TLS handshake due to memory limits
+- If you include `ReadyMail.h` from multiple `.cpp` files, you may get multiple definition linker errors for the global `ReadyMail` instance. To fix this, either:
+  - Add `-DREADYMAIL_NO_GLOBAL_INSTANCE` as a compiler flag (recommended — applies to all files), or
+  - Add `#define READYMAIL_NO_GLOBAL_INSTANCE` before `#include <ReadyMail.h>` in **every** `.cpp` file that includes the header.
+
+  Then create your own `ReadyMailClass` instance where needed.
 
 > See [Troubleshooting Guide](/resources/docs/TROUBLESHOOTING.md) for detailed solutions and platform-specific workarounds.
 
