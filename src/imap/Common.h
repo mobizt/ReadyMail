@@ -261,28 +261,30 @@ namespace ReadyMailIMAP
 
     struct imap_auth_cap_t
     {
-        char text[24]; // for esp266 flash memory alignment
+        const char *text;
     };
 
     struct imap_read_cap_t
     {
-        char text[16]; // for esp266 flash memory alignment
+        const char *text;
     };
 
     struct imap_envelope_t
     {
-        char text[12]; // for esp266 flash memory alignment
+        const char *text;
     };
 
     struct imap_char_encoding_t
     {
-        char text[12];
+        const char *text;
     };
 
-    const struct imap_envelope_t imap_envelopes[imap_envelpe_max_type] PROGMEM = {"Date", "Subject", "From", "Sender", "Reply-To", "To", "Cc", "Bcc", "In-Reply-To", "Message-ID"};
-    const struct imap_auth_cap_t imap_auth_cap_token[imap_auth_cap_max_type] PROGMEM = {"AUTH=PLAIN", "AUTH=XOAUTH2", "AUTH=CRAM-MD5", "AUTH=DIGEST-MD5", "AUTH=LOGIN", "STARTTLS", "SASL-IR"};
-    const struct imap_read_cap_t imap_read_cap_token[imap_read_cap_max_type] PROGMEM = {"IMAP4", "IMAP4rev1", "IDLE", "LITERAL+", "LITERAL-", "MULTIAPPEND", "UIDPLUS", "ACL", "BINARY", "LOGINDISABLED", "MOVE", "QUOTA", "NAMESPACE", "ENABLE", "ID", "UNSELECT", "CHILDREN", "CONDSTORE", "" /* Auto cap */};
-    const struct imap_char_encoding_t imap_char_encodings[imap_char_encoding_max_type] PROGMEM = {"utf-8", "iso-8859-1", "iso-8859-11", "tis-620", "windows-874"};
+    // Pointer-based tables: struct stores const char* to string literals.
+    // Portable across all platforms — no PROGMEM, no dependence on ESP8266 non32xfer handler, no alignment concerns.
+    const struct imap_envelope_t imap_envelopes[imap_envelpe_max_type] = {{"Date"}, {"Subject"}, {"From"}, {"Sender"}, {"Reply-To"}, {"To"}, {"Cc"}, {"Bcc"}, {"In-Reply-To"}, {"Message-ID"}};
+    const struct imap_auth_cap_t imap_auth_cap_token[imap_auth_cap_max_type] = {{"AUTH=PLAIN"}, {"AUTH=XOAUTH2"}, {"AUTH=CRAM-MD5"}, {"AUTH=DIGEST-MD5"}, {"AUTH=LOGIN"}, {"STARTTLS"}, {"SASL-IR"}};
+    const struct imap_read_cap_t imap_read_cap_token[imap_read_cap_max_type] = {{"IMAP4"}, {"IMAP4rev1"}, {"IDLE"}, {"LITERAL+"}, {"LITERAL-"}, {"MULTIAPPEND"}, {"UIDPLUS"}, {"ACL"}, {"BINARY"}, {"LOGINDISABLED"}, {"MOVE"}, {"QUOTA"}, {"NAMESPACE"}, {"ENABLE"}, {"ID"}, {"UNSELECT"}, {"CHILDREN"}, {"CONDSTORE"}, {"" /* Auto cap */}};
+    const struct imap_char_encoding_t imap_char_encodings[imap_char_encoding_max_type] = {{"utf-8"}, {"iso-8859-1"}, {"iso-8859-11"}, {"tis-620"}, {"windows-874"}};
 
     struct imap_state_info
     {

@@ -525,26 +525,28 @@ namespace ReadyMailSMTP
 
     struct smtp_rfc822_envelope
     {
-        char text[12];
+        const char *text;
         bool multi; // multi fields
         bool enc;   // needs encoding
         int8_t sub_type;
-        uint8_t padding; // for esp266 flash memory alignment
     };
 
     struct smtp_auth_cap_t
     {
-        char text[24]; // for esp266 flash memory alignment
+        const char *text;
     };
 
     struct smtp_send_cap_t
     {
-        char text[16]; // for esp266 flash memory alignment
+        const char *text;
     };
 
-    const struct smtp_rfc822_envelope rfc822_headers[rfc822_max_type] PROGMEM = {{"Date", false, false, -1}, {"Subject", false, true, -1}, {"From", false, true, 0}, {"Sender", false, true, 0}, {"Reply-To", false, false, 0}, {"To", true, true, 0}, {"Cc", true, false, 1}, {"Bcc", true, false, 1}, {"In-Reply-To", false, false, -1}, {"Message-ID", false, false, -1}, {"References", false, false, -1}, {"Comments", true, false, -1}, {"Keywords", true, false, -1}, {"", true, false, -1}};
-    const struct smtp_auth_cap_t smtp_auth_cap_token[smtp_auth_cap_max_type] PROGMEM = {"PLAIN", "XOAUTH2", "CRAM-MD5", "DIGEST-MD5", "LOGIN", "STARTTLS"};
-    const struct smtp_send_cap_t smtp_send_cap_token[smtp_send_cap_max_type] PROGMEM = {"BINARYMIME", "8BITMIME", "CHUNKING", "SMTPUTF8", "PIPELINING", "DSN", "" /* ESMTP */};
+    // Pointer-based tables: struct stores const char* to string literals.
+    // Portable across all platforms (ESP32, ESP8266, STM32, SAMD, RP2040, Renesas, Teensy) —
+    // no PROGMEM, no dependence on ESP8266 non32xfer handler, no alignment concerns.
+    const struct smtp_rfc822_envelope rfc822_headers[rfc822_max_type] = {{"Date", false, false, -1}, {"Subject", false, true, -1}, {"From", false, true, 0}, {"Sender", false, true, 0}, {"Reply-To", false, false, 0}, {"To", true, true, 0}, {"Cc", true, false, 1}, {"Bcc", true, false, 1}, {"In-Reply-To", false, false, -1}, {"Message-ID", false, false, -1}, {"References", false, false, -1}, {"Comments", true, false, -1}, {"Keywords", true, false, -1}, {"", true, false, -1}};
+    const struct smtp_auth_cap_t smtp_auth_cap_token[smtp_auth_cap_max_type] = {{"PLAIN"}, {"XOAUTH2"}, {"CRAM-MD5"}, {"DIGEST-MD5"}, {"LOGIN"}, {"STARTTLS"}};
+    const struct smtp_send_cap_t smtp_send_cap_token[smtp_send_cap_max_type] = {{"BINARYMIME"}, {"8BITMIME"}, {"CHUNKING"}, {"SMTPUTF8"}, {"PIPELINING"}, {"DSN"}, {"" /* ESMTP */}};
 
     typedef struct smtp_attachment_t Attachment;
     typedef struct smtp_message_body_t TextMessage;
