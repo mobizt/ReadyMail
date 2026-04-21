@@ -542,11 +542,6 @@ namespace ReadyMailSMTP
         char text[16]; // for esp266 flash memory alignment
     };
 
-    struct smtp_send_cap_t
-    {
-        char text[16]; // for esp266 flash memory alignment
-    };
-
     const struct smtp_rfc822_envelope rfc822_headers[rfc822_max_type] PROGMEM = {{"Date", false, false, -1}, {"Subject", false, true, -1}, {"From", false, true, 0}, {"Sender", false, true, 0}, {"Reply-To", false, false, 0}, {"To", true, true, 0}, {"Cc", true, false, 1}, {"Bcc", true, false, 1}, {"In-Reply-To", false, false, -1}, {"Message-ID", false, false, -1}, {"References", false, false, -1}, {"Comments", true, false, -1}, {"Keywords", true, false, -1}, {"", true, false, -1}};
     const struct smtp_auth_cap_t smtp_auth_cap_token[smtp_auth_cap_max_type] PROGMEM = {"PLAIN", "XOAUTH2", "CRAM-MD5", "DIGEST-MD5", "LOGIN", "STARTTLS"};
     const struct smtp_send_cap_t smtp_send_cap_token[smtp_send_cap_max_type] PROGMEM = {"BINARYMIME", "8BITMIME", "CHUNKING", "SMTPUTF8", "PIPELINING", "DSN", "" /* ESMTP */};
