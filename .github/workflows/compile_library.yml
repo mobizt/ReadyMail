@@ -92,7 +92,8 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
@@ -150,7 +151,8 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
@@ -206,7 +208,8 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
@@ -263,7 +266,8 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
@@ -329,7 +333,8 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
@@ -385,14 +390,15 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - name: Set up Python
       uses: actions/setup-python@v4
-
+    - name: Clean PlatformIO
+      run: rm -rf ~/.platformio
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade platformio
 
     - name: Install library
-      run: | 
+      run: |
         pio lib -g install \
         https://github.com/mobizt/ReadyMail
 
@@ -414,7 +420,7 @@ jobs:
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
         echo "void loop() {}" >> src/main.cpp
-        
+
 
     - name: Run PlatformIO
       run: pio ci --board=${{ matrix.board }} src
