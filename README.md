@@ -8,7 +8,7 @@ Supports both **SMTP** and **IMAP** with full RFC compliance. Designed for 32-bi
 
 ReadyMail is designed to be hardware-agnostic. It supports all filesystem types (e.g. SPIFFS, LittleFS, SD) and all network client libraries, including GSMClient, WiFiClient, EthernetClient, and PPP. This ensures seamless integration across diverse hardware and connectivity environments.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)  
+![License](https://img.shields.io/badge/license-Custom%20NonCommercial-red.svg)  
 ![Platform](https://img.shields.io/badge/platform-Arduino%2032--bit-green)  
 ![RFC](https://img.shields.io/badge/RFC-5321%2C%209051%2C%20822-important)
 
@@ -248,8 +248,12 @@ void loop() {}
 
 ## 📄 License
 
-MIT License © 2025 Suwatchai K (Mobizt).  
-See [LICENSE](LICENSE) for details.
+Copyright © 2026 Suwatchai K (Mobizt).
+
+- **Non-Commercial Use** — Free. You may use, modify, and redistribute under the terms of this license.
+- **Commercial Use** — Requires a one-time Commercial License fee of **USD 25** via [GitHub Sponsors](https://github.com/sponsors/mobizt).
+
+See [LICENSE](LICENSE) for full terms.
 
 ---
 

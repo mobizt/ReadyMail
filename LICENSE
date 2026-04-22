@@ -1,21 +1,50 @@
-MIT License
+ReadyMail Custom License
 
-Copyright (c) 2025 Suwatchai K. <suwatchai@outlook.com>
+Copyright (c) 2026 Suwatchai K. <suwatchai@outlook.com>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+TERMS AND CONDITIONS
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. DEFINITIONS
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   "Software" means the ReadyMail source code, documentation, and associated files.
+   "Commercial Use" means any use of the Software, including modified versions, intended
+   for or resulting in commercial advantage or monetary compensation.
+   "Non-Commercial Use" means personal, educational, research, or open-source use where
+   no commercial advantage or monetary compensation is involved.
+
+2. NON-COMMERCIAL USE — FREE OF CHARGE
+
+   Permission is granted, free of charge, to any person obtaining a copy of this Software
+   to use, copy, modify, merge, and distribute the Software or modified versions thereof,
+   subject to the following conditions:
+
+   a) This license notice and copyright must be included in all copies or substantial
+      portions of the Software.
+   b) The Software or any modified version may not be used for Commercial Use without
+      a valid Commercial License (see Section 3).
+
+3. COMMERCIAL USE — LICENSE REQUIRED
+
+   Any Commercial Use of this Software, including modified or derived versions, requires
+   a Commercial License obtained by sponsoring the author via GitHub Sponsors:
+
+      https://github.com/sponsors/mobizt
+
+   A one-time payment of USD 25 grants a perpetual, non-exclusive, non-transferable
+   Commercial License for a single organization or individual to use the Software in
+   commercial products or services.
+
+4. RESTRICTIONS
+
+   a) You may not sublicense, sell, or transfer the Commercial License to any third party.
+   b) Modified versions distributed publicly must retain this license and may not be
+      relicensed under terms that permit Commercial Use without a valid Commercial License.
+   c) Use of the Software in a commercial product without a valid Commercial License
+      constitutes copyright infringement.
+
+5. DISCLAIMER
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+   PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+   ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
