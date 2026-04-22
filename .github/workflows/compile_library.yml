@@ -157,12 +157,9 @@ jobs:
         pip install --upgrade platformio
 
     - name: Install library
-      run: | 
+      run: |
         pio lib -g install \
         https://github.com/mobizt/ReadyMail
-
-        pio lib -g install \
-        https://github.com/arduino-libraries/WiFiNINA
 
 
     - name: Create main file
@@ -182,10 +179,10 @@ jobs:
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
         echo "void loop() {}" >> src/main.cpp
-        
+
 
     - name: Run PlatformIO
-      run: pio ci --board=${{ matrix.board }} src
+      run: pio ci --board=${{ matrix.board }} --project-option="lib_deps=https://github.com/arduino-libraries/WiFiNINA" src
 
   mkr1000USB:
     runs-on: ubuntu-latest
@@ -216,12 +213,9 @@ jobs:
         pip install --upgrade platformio
 
     - name: Install library
-      run: | 
+      run: |
         pio lib -g install \
         https://github.com/mobizt/ReadyMail
-
-        pio lib -g install \
-        https://github.com/arduino-libraries/WiFi101
 
 
     - name: Create main file
@@ -241,10 +235,10 @@ jobs:
         echo "imap.connect(\"imap.gmail.com\", 993, NULL);" >> src/main.cpp
         echo "}" >> src/main.cpp
         echo "void loop() {}" >> src/main.cpp
-        
+
 
     - name: Run PlatformIO
-      run: pio ci --board=${{ matrix.board }} src
+      run: pio ci --board=${{ matrix.board }} --project-option="lib_deps=https://github.com/arduino-libraries/WiFi101" src
 
   teensy_stm32:
     runs-on: ubuntu-latest
